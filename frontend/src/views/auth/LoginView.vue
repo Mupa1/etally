@@ -1,5 +1,7 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-900 px-4">
+  <div
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-900 px-4"
+  >
     <div class="max-w-md w-full">
       <!-- Logo and Title -->
       <div class="text-center mb-8">
@@ -12,9 +14,12 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
 
         <!-- Error Message -->
-        <div v-if="authStore.error" class="mb-4 p-4 bg-danger-50 border border-danger-200 rounded-lg">
-          <p class="text-sm text-danger-800">{{ authStore.error }}</p>
-        </div>
+        <Alert
+          v-if="authStore.error"
+          variant="danger"
+          :message="authStore.error"
+          class="mb-4"
+        />
 
         <!-- Login Form -->
         <form @submit.prevent="handleLogin">
@@ -54,10 +59,7 @@
           >
             <span v-if="!authStore.loading">Sign In</span>
             <span v-else class="flex items-center justify-center">
-              <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
+              <LoadingSpinner size="md" class="mr-2" />
               Signing In...
             </span>
           </button>
@@ -67,7 +69,10 @@
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-600">
             Don't have an account?
-            <router-link to="/register" class="text-primary-600 hover:text-primary-700 font-medium">
+            <router-link
+              to="/register"
+              class="text-primary-600 hover:text-primary-700 font-medium"
+            >
               Register here
             </router-link>
           </p>
@@ -88,6 +93,8 @@
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import Alert from '@/components/common/Alert.vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
