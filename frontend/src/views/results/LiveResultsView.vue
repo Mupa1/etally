@@ -1,14 +1,28 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl font-bold text-gray-900 mb-6">Live Results</h2>
-      <div class="card">
-        <p class="text-gray-600">Live results dashboard coming soon...</p>
+  <MainLayout
+    page-title="Live Results"
+    page-description="Real-time election results dashboard"
+  >
+    <div class="card">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+          <div
+            class="w-3 h-3 bg-danger-500 rounded-full mr-2 animate-pulse"
+          ></div>
+          <span class="text-sm font-medium text-gray-900">LIVE</span>
+        </div>
+        <span class="text-sm text-gray-500">Updated just now</span>
       </div>
+      <p class="text-gray-600">
+        Live results dashboard will be displayed here...
+      </p>
+      <p class="text-sm text-gray-500 mt-2">
+        Real-time updates with Chart.js visualizations!
+      </p>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-// Live results placeholder
+import MainLayout from '@/components/layout/MainLayout.vue';
 </script>

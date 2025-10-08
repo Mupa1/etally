@@ -1,14 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <h2 class="text-3xl font-bold text-gray-900 mb-6">Candidates</h2>
-      <div class="card">
-        <p class="text-gray-600">Candidates list coming soon...</p>
-      </div>
+  <MainLayout
+    page-title="Candidates"
+    page-description="Manage election candidates and their details"
+  >
+    <div class="card">
+      <p class="text-gray-600">Candidates list will be displayed here...</p>
+      <p class="text-sm text-gray-500 mt-2">
+        Component ready for your implementation!
+      </p>
     </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-// Candidates list placeholder
+import MainLayout from '@/components/layout/MainLayout.vue';
 </script>
