@@ -1,0 +1,814 @@
+KENYA ELECTION MANAGEMENT SYSTEM
+DEVELOPMENT GUARD RAILS & CHANGE CONTROL RULES
+================================================
+
+VERSION: 1.0
+LAST UPDATED: 2024-01-15
+PURPOSE: Mandatory guidelines for ALL code changes to prevent breaking changes and maintain code quality
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 1: PRE-CHANGE VALIDATION RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 1.1: FUNCTION/COMPONENT REUSE VERIFICATION
+--------------------------------------------------
+Before creating ANY new function, component, service, or utility:
+
+✓ SEARCH the codebase for existing implementations:
+  - Use grep/search: "function functionName", "class ClassName", "const componentName"
+  - Check common locations:
+    * backend/src/shared/utils/
+    * backend/src/domains/*/
+    * frontend/src/utils/
+    * frontend/src/composables/
+    * mobile/src/utils/
+    * mobile/src/hooks/
+
+✓ CHECK if similar functionality exists:
+  - Look for functions with similar names
+  - Review utility files in the domain you're working in
+  - Check if the functionality is already in a shared library
+
+✓ DOCUMENT your search:
+  - List files searched
+  - Note why existing solutions don't fit (if creating new)
+  
+✓ PREFER:
+  - Extending existing functions over creating new ones
+  - Creating utility functions in shared/ if used in multiple places
+  - Refactoring existing code to be more generic
+
+❌ NEVER:
+  - Create duplicate functions
+  - Copy-paste code from other files
+  - Create new utility when existing one can be extended
+
+EXAMPLE:
+```typescript
+// ❌ BAD: Creating duplicate
+function formatElectionDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+// ✓ GOOD: Check if formatDate() already exists in utils/date.ts
+import { formatDate } from '@/shared/utils/date';
+const formatted = formatDate(date, 'YYYY-MM-DD');
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 2: IMPACT ANALYSIS RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 2.1: MANDATORY IMPACT ASSESSMENT
+---------------------------------------
+Before modifying ANY existing code, you MUST:
+
+✓ IDENTIFY all usages:
+  - Search for all imports of the function/class
+  - Find all references in the codebase
+  - Check both direct calls and indirect usage
+  - Tools: grep, IDE "Find Usages", global search
+
+✓ ANALYZE the impact:
+  - List all files that will be affected
+  - Identify which features depend on this code
+  - Note any API contracts that might break
+  - Check if used by mobile app (offline considerations)
+
+✓ CREATE an impact map:
+  File: impact-maps/YYYY-MM-DD-change-description.md
+  Template provided in Section 8
+
+✓ TEST all affected areas:
+  - Run existing tests for affected files
+  - Manually test all affected features
+  - Verify mobile sync still works (if applicable)
+  - Check audit logs are still captured
+
+❌ NEVER:
+  - Change function signatures without checking all usages
+  - Remove or rename functions without global search
+  - Modify shared utilities without impact assessment
+  - Change database models without migration plan
+
+RULE 2.2: BREAKING CHANGE PROTOCOL
+------------------------------------
+If your change will break existing code:
+
+✓ REQUIRED STEPS:
+  1. Document the breaking change in BREAKING_CHANGES.md
+  2. Create migration guide for affected code
+  3. Update all usages in the codebase BEFORE merging
+  4. Increment version number (MAJOR version for breaking changes)
+  5. Notify team via required channels
+  6. Add deprecation warnings if phasing out gradually
+
+✓ GRADUAL MIGRATION (PREFERRED):
+  - Keep old function, mark as @deprecated
+  - Create new function with new signature
+  - Migrate usage gradually over sprints
+  - Remove deprecated function in next major version
+
+EXAMPLE:
+```typescript
+// ❌ BAD: Direct breaking change
+// Old: function getElection(id: number)
+// New: function getElection(id: string) // BREAKS ALL EXISTING CODE
+
+// ✓ GOOD: Gradual migration
+/**
+ * @deprecated Use getElectionById(id: string) instead
+ * Will be removed in v2.0.0
+ */
+function getElection(id: number): Promise<Election> {
+  return getElectionById(id.toString());
+}
+
+function getElectionById(id: string): Promise<Election> {
+  // New implementation
+}
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 3: TESTING REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 3.1: MANDATORY UNIT TESTS FOR ALL NEW CODE
+-------------------------------------------------
+EVERY new function, class, component MUST have unit tests:
+
+✓ MINIMUM TEST COVERAGE:
+  - Backend services: 80% coverage minimum
+  - Utility functions: 90% coverage minimum
+  - API controllers: 70% coverage minimum
+  - Frontend components: 70% coverage minimum
+
+✓ REQUIRED TEST CASES:
+  1. Happy path (expected behavior)
+  2. Error cases (all possible errors)
+  3. Edge cases (boundary conditions)
+  4. Null/undefined handling
+  5. Invalid input handling
+
+✓ TEST FILE NAMING:
+  - Backend: filename.test.ts (next to source file)
+  - Frontend: ComponentName.spec.ts
+  - Integration: filename.integration.test.ts
+
+✓ TEST STRUCTURE:
+```typescript
+describe('ServiceName', () => {
+  describe('methodName', () => {
+    it('should return expected result for valid input', () => {
+      // Arrange
+      // Act
+      // Assert
+    });
+
+    it('should throw error for invalid input', () => {
+      // Test error case
+    });
+
+    it('should handle edge case: empty array', () => {
+      // Test edge case
+    });
+  });
+});
+```
+
+RULE 3.2: INTEGRATION TESTS FOR DATABASE CHANGES
+-------------------------------------------------
+For ANY database schema or query changes:
+
+✓ REQUIRED:
+  - Integration test with actual test database
+  - Test all CRUD operations
+  - Test relationships and foreign keys
+  - Test unique constraints
+  - Test cascade deletes
+  - Test database triggers (if any)
+
+✓ TEST DATABASE SETUP:
+  - Use separate test database
+  - Reset database before each test
+  - Seed with known test data
+  - Clean up after tests
+
+RULE 3.3: E2E TESTS FOR CRITICAL FLOWS
+---------------------------------------
+For critical user flows, create E2E tests:
+
+✓ CRITICAL FLOWS:
+  - User authentication (login/logout)
+  - Election creation workflow
+  - Result submission (mobile to server)
+  - Result verification workflow
+  - Audit trail generation
+
+✓ E2E TEST REQUIREMENTS:
+  - Test complete user journey
+  - Test across frontend + backend + database
+  - Test mobile sync (if applicable)
+  - Use realistic test data
+
+RULE 3.4: TEST BEFORE COMMIT
+-----------------------------
+Before committing ANY code:
+
+✓ RUN:
+  ```bash
+  # Backend
+  npm run test
+  npm run test:integration
+  npm run lint
+  npm run type-check
+  
+  # Frontend
+  npm run test:unit
+  npm run lint
+  npm run type-check
+  
+  # Mobile
+  npm run test
+  npm run lint
+  ```
+
+✓ VERIFY:
+  - All tests pass
+  - No linting errors
+  - No TypeScript errors
+  - Test coverage meets minimum requirements
+
+❌ NEVER commit if tests fail or coverage drops
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 4: DATABASE CHANGE RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 4.1: SCHEMA CHANGES REQUIRE MIGRATIONS
+--------------------------------------------
+For ANY Prisma schema changes:
+
+✓ REQUIRED STEPS:
+  1. Update prisma/schema.prisma
+  2. Run: npx prisma migrate dev --name descriptive_name
+  3. Review generated migration SQL
+  4. Test migration on local database
+  5. Test rollback: npx prisma migrate reset
+  6. Create data migration script if needed (for existing data)
+  7. Document migration in migrations/README.md
+
+✓ MIGRATION NAMING:
+  - Use descriptive names: add_polling_station_location
+  - Not: migration_001 or update_schema
+
+✓ DATA MIGRATIONS:
+  - If existing data needs transformation, create separate SQL script
+  - File: migrations/data/YYYY-MM-DD-description.sql
+  - Test on copy of production data
+  - Include rollback script
+
+RULE 4.2: BACKWARD COMPATIBILITY FOR APIs
+------------------------------------------
+When changing database models used by APIs:
+
+✓ REQUIRED:
+  - Keep old API endpoints working during transition
+  - Version APIs if breaking changes (e.g., /api/v2/)
+  - Provide migration period (minimum 2 releases)
+  - Update API documentation
+  - Notify mobile app team (offline considerations)
+
+❌ NEVER:
+  - Remove columns that APIs depend on without deprecation period
+  - Change column types without data migration
+  - Rename tables/columns without view/alias for compatibility
+
+RULE 4.3: RAW SQL CHANGES
+--------------------------
+For raw SQL in migrations/002_advanced_features.sql:
+
+✓ REQUIRED:
+  - Document purpose at top of SQL block
+  - Test on local PostgreSQL 15+
+  - Verify PostGIS functions work
+  - Check RLS policies don't break existing queries
+  - Test materialized view refresh performance
+  - Ensure partitioning logic is correct
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 5: SECURITY & AUDIT RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 5.1: AUDIT LOGGING MANDATORY
+-----------------------------------
+For ANY operation that:
+- Creates/updates/deletes elections, candidates, results
+- Changes user permissions
+- Modifies critical system settings
+
+✓ REQUIRED:
+  - Call audit logging middleware
+  - Capture: userId, action, entityType, entityId, old/new values
+  - Include GPS coordinates (mobile submissions)
+  - Store IP address and user agent
+
+✓ IMPLEMENTATION:
+```typescript
+await auditService.log({
+  action: 'create',
+  entityType: 'election_result',
+  entityId: result.id,
+  userId: req.user.id,
+  newValues: result,
+  ipAddress: req.ip,
+  userAgent: req.get('User-Agent'),
+  latitude: req.body.latitude,
+  longitude: req.body.longitude
+});
+```
+
+RULE 5.2: AUTHENTICATION & AUTHORIZATION
+-----------------------------------------
+For ALL API endpoints:
+
+✓ REQUIRED:
+  - Use authentication middleware (except public endpoints)
+  - Verify user permissions (role-based access control)
+  - Use RLS wrapper for database queries (withUserContext)
+  - Validate JWT tokens
+  - Check session validity
+
+✓ NEVER:
+  - Trust client-provided user IDs
+  - Skip authentication for "internal" endpoints
+  - Use hard-coded credentials
+  - Store passwords in plain text
+
+RULE 5.3: INPUT VALIDATION
+---------------------------
+For ALL user inputs:
+
+✓ REQUIRED:
+  - Validate with Zod schemas
+  - Sanitize HTML inputs
+  - Validate file uploads (type, size, content)
+  - Check GPS coordinates are valid ranges
+  - Validate UUIDs are proper format
+  - Validate dates are reasonable
+
+✓ EXAMPLE:
+```typescript
+import { z } from 'zod';
+
+const createResultSchema = z.object({
+  electionId: z.string().uuid(),
+  contestId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+  pollingStationId: z.string().uuid(),
+  votes: z.number().int().min(0).max(100000),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional()
+});
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 6: CODE QUALITY RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 6.1: SOLID PRINCIPLES MANDATORY
+-------------------------------------
+Follow SOLID principles (see technical considerations.txt):
+
+✓ SINGLE RESPONSIBILITY:
+  - One class/function = one responsibility
+  - Services handle business logic only
+  - Controllers handle HTTP only
+  - Repositories handle data access only
+
+✓ DEPENDENCY INJECTION:
+  - Inject dependencies via constructor
+  - Don't create dependencies inside classes
+  - Use interfaces for loose coupling
+
+RULE 6.2: NAMING CONVENTIONS
+-----------------------------
+✓ FILES:
+  - Backend services: service-name.service.ts
+  - Controllers: entity.controller.ts
+  - Repositories: entity.repository.ts
+  - Tests: filename.test.ts
+  - Vue components: PascalCase.vue
+  - React components: PascalCase.tsx
+
+✓ FUNCTIONS:
+  - camelCase for functions
+  - Verb-first: getUser, createElection, validateResult
+  - Boolean returns: isValid, hasPermission, canSubmit
+
+✓ VARIABLES:
+  - camelCase for variables
+  - Descriptive names: electionResult not er
+  - Constants: UPPER_SNAKE_CASE
+
+✓ TYPES/INTERFACES:
+  - PascalCase: ElectionResult, UserRole
+  - Interfaces start with I only if needed for distinction
+
+RULE 6.3: DOCUMENTATION REQUIREMENTS
+-------------------------------------
+✓ REQUIRED FOR:
+  - All public functions (JSDoc)
+  - Complex algorithms (inline comments)
+  - API endpoints (OpenAPI/Swagger)
+  - Database schema changes (migration docs)
+
+✓ JSDoc TEMPLATE:
+```typescript
+/**
+ * Submits election results from mobile device with offline support
+ * 
+ * @param resultData - The election result data
+ * @param deviceId - Unique device identifier (IMEI)
+ * @returns Promise<ElectionResult> - Created result with ID
+ * @throws {ValidationError} If result data is invalid
+ * @throws {DuplicateError} If result already submitted
+ * 
+ * @example
+ * const result = await submitResult({
+ *   electionId: '123',
+ *   votes: 100
+ * }, 'device-123');
+ */
+```
+
+RULE 6.4: ERROR HANDLING
+-------------------------
+✓ REQUIRED:
+  - Use try-catch for all async operations
+  - Create custom error classes
+  - Log errors with context
+  - Return meaningful error messages
+  - Don't expose internal errors to users
+
+✓ CUSTOM ERRORS:
+```typescript
+class ValidationError extends Error {
+  constructor(message: string, public field: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+class NotFoundError extends Error {
+  constructor(entity: string, id: string) {
+    super(`${entity} with id ${id} not found`);
+    this.name = 'NotFoundError';
+  }
+}
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 7: MOBILE-SPECIFIC RULES
+════════════════════════════════════════════════════════════════════════════════
+
+RULE 7.1: OFFLINE-FIRST CONSIDERATIONS
+---------------------------------------
+For ANY mobile feature:
+
+✓ REQUIRED:
+  - Store data locally in SQLite
+  - Queue operations when offline
+  - Sync when connection restored
+  - Handle sync conflicts
+  - Show offline indicator in UI
+
+✓ NEVER:
+  - Assume network is always available
+  - Block UI waiting for network
+  - Lose data if app crashes during sync
+
+RULE 7.2: API CHANGES IMPACT MOBILE
+------------------------------------
+For ANY API endpoint changes:
+
+✓ REQUIRED:
+  - Check if used by mobile app
+  - Maintain backward compatibility for at least 2 app versions
+  - Test with mobile app before deploying
+  - Update mobile app sync logic if needed
+  - Notify mobile team of changes
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 8: CHANGE WORKFLOW
+════════════════════════════════════════════════════════════════════════════════
+
+MANDATORY WORKFLOW FOR ALL CHANGES:
+------------------------------------
+
+STEP 1: PLANNING (Before writing code)
+□ Review requirements and acceptance criteria
+□ Search for existing implementations (RULE 1.1)
+□ Create impact assessment (RULE 2.1)
+□ Design solution (architecture, interfaces)
+□ Get approval for breaking changes
+
+STEP 2: IMPLEMENTATION
+□ Create feature branch: feature/ISSUE-123-description
+□ Write failing tests first (TDD preferred)
+□ Implement solution
+□ Ensure tests pass
+□ Add documentation (JSDoc, README updates)
+
+STEP 3: TESTING
+□ Unit tests written and passing (RULE 3.1)
+□ Integration tests if needed (RULE 3.2)
+□ Manual testing of affected features
+□ Test on all environments (dev, staging)
+□ Verify audit logs captured (RULE 5.1)
+
+STEP 4: CODE REVIEW PREP
+□ Run linters and fix issues
+□ Run type checker and fix errors
+□ Update CHANGELOG.md
+□ Create/update documentation
+□ Self-review the diff
+
+STEP 5: PRE-COMMIT CHECKS
+□ All tests pass locally
+□ No linting errors
+□ No TypeScript errors
+□ Test coverage meets requirements
+□ Audit logs working
+□ Security validation passed
+
+STEP 6: COMMIT & PUSH
+□ Write descriptive commit message (see Section 9)
+□ Push to feature branch
+□ Create pull request with template
+
+STEP 7: CODE REVIEW
+□ Address reviewer feedback
+□ Re-run tests after changes
+□ Get approval from at least 2 reviewers
+□ Ensure CI/CD pipeline passes
+
+STEP 8: DEPLOYMENT
+□ Merge to develop branch
+□ Verify on staging environment
+□ Run smoke tests
+□ Merge to main for production
+□ Monitor for errors after deployment
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 9: COMMIT MESSAGE FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+REQUIRED FORMAT:
+----------------
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+TYPES:
+- feat: New feature
+- fix: Bug fix
+- refactor: Code refactoring (no functional changes)
+- test: Adding or updating tests
+- docs: Documentation changes
+- style: Code style changes (formatting, no logic change)
+- perf: Performance improvements
+- chore: Build process, dependencies, etc.
+- security: Security fixes or improvements
+
+EXAMPLES:
+```
+feat(results): add offline result submission queue
+
+Implements offline queue for mobile result submissions.
+Results are stored locally and synced when online.
+
+- Added OfflineQueue service
+- Implemented retry logic with exponential backoff
+- Added unit tests with 85% coverage
+- Updated mobile sync documentation
+
+Closes #123
+```
+
+```
+fix(auth): prevent session token leakage in logs
+
+Security fix to ensure JWT tokens are not logged.
+Added sanitization middleware for all logs.
+
+BREAKING CHANGE: Log format changed to exclude tokens
+
+Resolves #456
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 10: IMPACT MAP TEMPLATE
+════════════════════════════════════════════════════════════════════════════════
+
+Create file: impact-maps/YYYY-MM-DD-change-description.md
+
+```markdown
+# Impact Assessment: [Change Description]
+
+**Date:** YYYY-MM-DD
+**Author:** Your Name
+**Change Type:** [Feature/Fix/Refactor/Breaking]
+
+## Summary
+Brief description of the change and why it's needed.
+
+## Files Changed
+List all files that will be modified:
+- [ ] backend/src/domains/elections/election.service.ts
+- [ ] backend/src/domains/elections/election.controller.ts
+- [ ] prisma/schema.prisma
+
+## Dependencies Analysis
+### Direct Dependencies
+Files that directly import/use the changed code:
+1. backend/src/domains/results/result.service.ts
+   - Uses: getElectionById()
+   - Impact: Need to update call signature
+
+2. frontend/src/views/ElectionView.vue
+   - Uses: Election API endpoint
+   - Impact: No change needed (backward compatible)
+
+### Indirect Dependencies
+Features that depend on this functionality:
+1. Mobile app result submission
+   - Impact: May need new app version
+   - Action: Test sync after changes
+
+2. Result verification workflow
+   - Impact: None (different code path)
+
+## Testing Plan
+- [ ] Unit tests: election.service.test.ts
+- [ ] Integration tests: election-api.integration.test.ts
+- [ ] Manual testing: Create election workflow
+- [ ] Mobile testing: Offline sync
+- [ ] Performance testing: Large result sets
+
+## Breaking Changes
+None / List breaking changes
+
+## Migration Plan
+If breaking changes or data migration needed:
+1. Step 1
+2. Step 2
+3. Rollback procedure
+
+## Risks
+- Risk 1: Description and mitigation
+- Risk 2: Description and mitigation
+
+## Rollback Plan
+How to revert if something goes wrong:
+1. Revert commit: git revert <commit-hash>
+2. Run rollback migration: npx prisma migrate rollback
+3. Clear Redis cache: redis-cli FLUSHALL
+```
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 11: EMERGENCY PROCEDURES
+════════════════════════════════════════════════════════════════════════════════
+
+PRODUCTION HOTFIX PROCEDURE:
+-----------------------------
+If critical bug in production:
+
+1. CREATE hotfix branch from main: hotfix/critical-issue-description
+2. FIX the issue with minimal changes
+3. WRITE tests to prevent regression
+4. TEST on staging environment
+5. GET emergency approval from tech lead
+6. MERGE directly to main (skip normal review if critical)
+7. DEPLOY immediately
+8. MONITOR for 1 hour after deployment
+9. DOCUMENT incident in post-mortem
+10. BACKPORT fix to develop branch
+
+ROLLBACK PROCEDURE:
+-------------------
+If deployment causes issues:
+
+1. ALERT team immediately
+2. ASSESS impact and severity
+3. DECIDE: Fix forward or rollback
+4. If rollback:
+   - Revert to previous version
+   - Run rollback migrations if needed
+   - Clear caches
+   - Verify system stability
+5. DOCUMENT what went wrong
+6. CREATE tickets to fix properly
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 12: VIOLATIONS & ENFORCEMENT
+════════════════════════════════════════════════════════════════════════════════
+
+CONSEQUENCES OF VIOLATING THESE RULES:
+---------------------------------------
+
+SEVERITY 1 - CRITICAL (Immediate action required):
+- Committing code without tests
+- Deploying breaking changes without migration
+- Exposing security vulnerabilities
+- Bypassing authentication/authorization
+- Deleting production data without backup
+
+ACTION: Pull request rejected, immediate rollback if deployed
+
+SEVERITY 2 - HIGH (Must fix before merge):
+- Missing impact assessment for major changes
+- Inadequate test coverage (<70%)
+- Creating duplicate functions
+- Ignoring TypeScript/linting errors
+- Missing audit logs for critical operations
+
+ACTION: Pull request rejected, must fix before re-review
+
+SEVERITY 3 - MEDIUM (Should fix, can merge with issue):
+- Poor naming conventions
+- Missing documentation
+- Code style violations
+- Incomplete commit messages
+
+ACTION: Warning, create follow-up ticket to fix
+
+AUTOMATED ENFORCEMENT:
+----------------------
+Pre-commit hooks will check:
+□ Linting passes
+□ Type checking passes
+□ Tests run and pass
+□ Test coverage meets minimum
+□ Commit message format
+
+CI/CD pipeline will check:
+□ All tests pass
+□ No security vulnerabilities
+□ Build succeeds
+□ Database migrations valid
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 13: CHECKLIST SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+BEFORE WRITING ANY CODE:
+-------------------------
+□ Did I search for existing implementations? (RULE 1.1)
+□ Did I create an impact assessment? (RULE 2.1)
+□ Do I understand all affected areas?
+□ Is this the right solution?
+
+WHILE WRITING CODE:
+-------------------
+□ Am I writing tests first? (TDD)
+□ Am I following naming conventions? (RULE 6.2)
+□ Am I adding proper error handling? (RULE 6.4)
+□ Am I including audit logging? (RULE 5.1)
+□ Am I validating all inputs? (RULE 5.3)
+□ Am I documenting complex logic? (RULE 6.3)
+
+BEFORE COMMITTING:
+------------------
+□ Do all tests pass?
+□ Is test coverage adequate? (>70%)
+□ Did I run linters?
+□ Did I fix TypeScript errors?
+□ Did I test manually?
+□ Did I update documentation?
+□ Did I verify audit logs work?
+□ Is commit message descriptive?
+
+BEFORE MERGING:
+---------------
+□ Did I get code review approval?
+□ Did CI/CD pipeline pass?
+□ Did I test on staging?
+□ Did I update CHANGELOG?
+□ Are migrations tested?
+□ Is rollback plan ready?
+
+════════════════════════════════════════════════════════════════════════════════
+
+REMEMBER: These rules exist to prevent production issues, maintain code quality,
+and ensure the election system is reliable and secure. When in doubt, ask!
+
+Questions? Contact: [Tech Lead Name] or post in #dev-questions Slack channel
+
+════════════════════════════════════════════════════════════════════════════════
+END OF DEVELOPMENT GUARD RAILS
+════════════════════════════════════════════════════════════════════════════════

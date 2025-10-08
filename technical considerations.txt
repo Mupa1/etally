@@ -1,0 +1,2208 @@
+KENYA ELECTION MANAGEMENT SYSTEM
+COMPREHENSIVE TECHNICAL DOCUMENTATION - REVISED
+================================================
+
+VERSION: 2.1
+LAST UPDATED: 2024-01-15
+STATUS: ARCHITECTURE APPROVED - CORRECTED
+
+1. EXECUTIVE SUMMARY
+-------------------
+A comprehensive election monitoring system for Kenyan elections implementing:
+- Hybrid database architecture (Prisma ORM + Raw PostgreSQL)
+- UUID-based security-first design
+- Row-Level Security (RLS) with comprehensive audit trails
+- Mobile-optimized offline-first architecture
+- Real-time results dashboard with PostgreSQL partitioning
+- On-premise deployment with Docker and MinIO storage
+
+2. ARCHITECTURAL DECISIONS
+-------------------------
+
+2.1 DATABASE STRATEGY: HYBRID APPROACH
+- Prisma ORM for CRUD operations and type safety
+- Raw PostgreSQL for advanced features (partitioning, RLS, materialized views)
+- UUID primary keys for all tables
+- PostgreSQL 15+ with PostGIS extension
+
+2.2 SECURITY STRATEGY
+- Row-Level Security (RLS) at database level
+- JWT with refresh tokens stored in database sessions
+- Comprehensive audit logging with GPS tracking
+- Field-level encryption for sensitive data
+
+2.3 STORAGE STRATEGY
+- MinIO for media file storage (S3-compatible)
+- PostgreSQL for structured data
+- Redis for caching and rate limiting
+
+2.4 SCOPE DEFINITION - VERSION 1.0
+IN SCOPE:
+- Election management and monitoring
+- Real-time results collection and reporting
+- Candidate management
+- Mobile field observer app with offline support
+- Audit trail and compliance
+- Geographic hierarchy (County > Constituency > Ward > Polling Station)
+- Incident reporting
+
+OUT OF SCOPE (V2.0+):
+- Party primary elections management
+- Voter registration system
+- Actual voting system
+- Biometric verification
+
+3. DATABASE ARCHITECTURE - CORRECTED PRISMA SCHEMA
+---------------------------------------------------
+
+3.1 COMPLETE PRISMA SCHEMA
+File: prisma/schema.prisma
+
+```prisma
+// ==========================================
+// DATASOURCE & GENERATOR CONFIGURATION
+// ==========================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// ENUM DEFINITIONS
+// ==========================================
+
+enum UserRole {
+  super_admin
+  election_manager
+  field_observer
+  public_viewer
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum ElectionType {
+  general_election
+  by_election
+  referendum
+}
+
+enum ElectionStatus {
+  draft
+  scheduled
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum ResultLevel {
+  polling_station
+  ward
+  constituency
+  county
+  national
+}
+
+enum ResultStatus {
+  preliminary
+  verified
+  confirmed
+  disputed
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  login
+  logout
+  export
+}
+
+enum SyncType {
+  full_sync
+  incremental_sync
+  media_sync
+}
+
+enum SyncStatus {
+  in_progress
+  completed
+  failed
+  cancelled
+}
+
+enum ActionStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum NotificationType {
+  system_alert
+  result_update
+  assignment
+  security
+}
+
+enum NotificationPriority {
+  low
+  medium
+  high
+  critical
+}
+
+enum UploadStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum IncidentSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum IncidentStatus {
+  reported
+  investigating
+  resolved
+  dismissed
+}
+
+// ==========================================
+// CORE USER & AUTHENTICATION MODELS
+// ==========================================
+
+model User {
+  id                  String    @id @default(uuid())
+  nationalId          String    @unique
+  email               String    @unique
+  phoneNumber         String?
+  firstName           String
+  lastName            String
+  role                UserRole  @default(field_observer)
+  isActive            Boolean   @default(true)
+  lastLogin           DateTime?
+  failedLoginAttempts Int       @default(0)
+  passwordHash        String
+  mfaSecret           String?
+  
+  // Audit fields
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+  deletedBy           String?
+  
+  // Relations
+  sessions            Session[]
+  mobileDevices       MobileDevice[]
+  auditLogs           AuditLog[]
+  createdElections    Election[]
+  submittedResults    ElectionResult[]
+  notifications       Notification[]
+  uploadedMedia       MediaAttachment[]
+  reportedIncidents   Incident[]
+  
+  @@index([email])
+  @@index([nationalId])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  deviceInfo   Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ==========================================
+// GEOGRAPHIC HIERARCHY MODELS
+// ==========================================
+
+model County {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  // Relations
+  constituencies Constituency[]
+  
+  @@index([code])
+  @@map("counties")
+}
+
+model Constituency {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  countyId  String
+  county    County   @relation(fields: [countyId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  // Relations
+  wards     ElectoralWard[]
+  
+  @@index([countyId])
+  @@index([code])
+  @@map("constituencies")
+}
+
+model ElectoralWard {
+  id             String       @id @default(uuid())
+  code           String       @unique
+  name           String
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  
+  // Relations
+  pollingStations PollingStation[]
+  
+  @@index([constituencyId])
+  @@index([code])
+  @@map("electoral_wards")
+}
+
+model PollingStation {
+  id               String        @id @default(uuid())
+  code             String        @unique
+  name             String
+  wardId           String
+  ward             ElectoralWard @relation(fields: [wardId], references: [id])
+  latitude         Float?
+  longitude        Float?
+  registeredVoters Int           @default(0)
+  isActive         Boolean       @default(true)
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  
+  // Relations
+  results          ElectionResult[]
+  incidents        Incident[]
+  
+  @@index([wardId])
+  @@index([code])
+  @@index([isActive])
+  @@map("polling_stations")
+}
+
+// ==========================================
+// ELECTION MANAGEMENT MODELS
+// ==========================================
+
+model Election {
+  id           String         @id @default(uuid())
+  electionCode String         @unique
+  title        String
+  electionType ElectionType
+  electionDate DateTime
+  status       ElectionStatus @default(draft)
+  description  String?
+  
+  // Audit fields
+  createdBy    String
+  creator      User           @relation(fields: [createdBy], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+  deletedBy    String?
+  
+  // Relations
+  contests     ElectionContest[]
+  results      ElectionResult[]
+  
+  @@index([status, electionDate])
+  @@index([electionType, electionDate])
+  @@index([electionCode])
+  @@map("elections")
+}
+
+model ElectionContest {
+  id           String     @id @default(uuid())
+  electionId   String
+  election     Election   @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  positionName String
+  description  String?
+  orderIndex   Int        @default(0)
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  
+  // Relations
+  candidates   Candidate[]
+  results      ElectionResult[]
+  
+  @@index([electionId])
+  @@map("election_contests")
+}
+
+model Candidate {
+  id          String          @id @default(uuid())
+  contestId   String
+  contest     ElectionContest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  fullName    String
+  partyId     String?
+  party       PoliticalParty? @relation(fields: [partyId], references: [id])
+  candidateNumber Int?
+  biography   String?
+  photoUrl    String?
+  isIndependent Boolean       @default(false)
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+  
+  // Relations
+  results     ElectionResult[]
+  
+  @@index([contestId])
+  @@index([partyId])
+  @@map("candidates")
+}
+
+model PoliticalParty {
+  id        String   @id @default(uuid())
+  partyCode String   @unique
+  partyName String
+  acronym   String?
+  logoUrl   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  // Relations
+  candidates Candidate[]
+  
+  @@index([partyCode])
+  @@map("political_parties")
+}
+
+// ==========================================
+// RESULTS MANAGEMENT
+// ==========================================
+
+model ElectionResult {
+  id               String          @id @default(uuid())
+  electionId       String
+  election         Election        @relation(fields: [electionId], references: [id])
+  contestId        String
+  contest          ElectionContest @relation(fields: [contestId], references: [id])
+  candidateId      String
+  candidate        Candidate       @relation(fields: [candidateId], references: [id])
+  pollingStationId String
+  pollingStation   PollingStation  @relation(fields: [pollingStationId], references: [id])
+  
+  // Results data
+  votes            Int             @default(0)
+  resultLevel      ResultLevel
+  resultStatus     ResultStatus    @default(preliminary)
+  
+  // Mobile submission metadata
+  submittedBy      String
+  submitter        User            @relation(fields: [submittedBy], references: [id])
+  deviceId         String?
+  latitude         Float?
+  longitude        Float?
+  accuracyMeters   Int?
+  
+  // Audit fields
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  auditSignature   String?
+  
+  @@unique([contestId, pollingStationId, candidateId, resultLevel])
+  @@index([electionId, contestId])
+  @@index([pollingStationId])
+  @@index([submittedBy])
+  @@index([createdAt])
+  @@index([resultStatus])
+  @@map("election_results")
+}
+
+// ==========================================
+// MOBILE OFFLINE-FIRST MODELS
+// ==========================================
+
+model MobileDevice {
+  id          String   @id @default(uuid())
+  deviceId    String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName  String?
+  deviceModel String?
+  osVersion   String?
+  appVersion  String?
+  lastSync    DateTime?
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  syncLogs       SyncLog[]
+  offlineActions OfflineAction[]
+  
+  @@index([userId])
+  @@index([deviceId])
+  @@index([isActive])
+  @@map("mobile_devices")
+}
+
+model SyncLog {
+  id              String       @id @default(uuid())
+  deviceId        String
+  device          MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  syncType        SyncType
+  recordsSynced   Int          @default(0)
+  syncStartedAt   DateTime     @default(now())
+  syncCompletedAt DateTime?
+  syncStatus      SyncStatus   @default(in_progress)
+  errorMessage    String?
+  
+  createdAt       DateTime     @default(now())
+  
+  @@index([deviceId, syncStatus])
+  @@index([syncStartedAt])
+  @@map("sync_logs")
+}
+
+model OfflineAction {
+  id             String       @id @default(uuid())
+  deviceId       String
+  device         MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  actionType     String
+  entityType     String
+  entityData     Json
+  actionStatus   ActionStatus @default(pending)
+  retryCount     Int          @default(0)
+  lastAttemptAt  DateTime?
+  errorMessage   String?
+  
+  createdAt      DateTime     @default(now())
+  processedAt    DateTime?
+  
+  @@index([deviceId, actionStatus])
+  @@index([actionStatus, createdAt])
+  @@map("offline_actions")
+}
+
+// ==========================================
+// AUDIT & COMPLIANCE
+// ==========================================
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  action        AuditAction
+  entityType    String
+  entityId      String
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  
+  // Change tracking
+  oldValues     Json?
+  newValues     Json?
+  
+  // Context metadata
+  ipAddress     String?
+  userAgent     String?
+  deviceId      String?
+  latitude      Float?
+  longitude     Float?
+  
+  // Technical metadata
+  requestId     String?
+  correlationId String?
+  
+  createdAt     DateTime    @default(now())
+  
+  @@index([userId, entityType, entityId])
+  @@index([action, createdAt])
+  @@index([correlationId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id          String               @id @default(uuid())
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        NotificationType
+  priority    NotificationPriority @default(medium)
+  
+  // Actionable notifications
+  actionUrl   String?
+  actionLabel String?
+  
+  // Delivery tracking
+  isRead      Boolean              @default(false)
+  sentAt      DateTime             @default(now())
+  readAt      DateTime?
+  
+  createdAt   DateTime             @default(now())
+  
+  @@index([userId, isRead, createdAt])
+  @@index([userId, type])
+  @@map("notifications")
+}
+
+// ==========================================
+// MEDIA & FILE MANAGEMENT
+// ==========================================
+
+model MediaAttachment {
+  id                 String       @id @default(uuid())
+  entityType         String
+  entityId           String
+  fileName           String
+  filePath           String
+  fileSize           BigInt
+  mimeType           String
+  thumbnailPath      String?
+  
+  // Mobile metadata
+  uploadedBy         String
+  uploader           User         @relation(fields: [uploadedBy], references: [id])
+  deviceId           String?
+  latitude           Float?
+  longitude          Float?
+  
+  // Processing status
+  uploadStatus       UploadStatus @default(pending)
+  processingMetadata Json?
+  
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  
+  @@index([entityType, entityId])
+  @@index([uploadStatus])
+  @@index([uploadedBy])
+  @@map("media_attachments")
+}
+
+// ==========================================
+// INCIDENT REPORTING
+// ==========================================
+
+model Incident {
+  id               String            @id @default(uuid())
+  title            String
+  description      String
+  severity         IncidentSeverity
+  status           IncidentStatus    @default(reported)
+  
+  // Location
+  pollingStationId String?
+  pollingStation   PollingStation?   @relation(fields: [pollingStationId], references: [id])
+  latitude         Float?
+  longitude        Float?
+  
+  // Reporting
+  reportedBy       String
+  reporter         User              @relation(fields: [reportedBy], references: [id])
+  deviceId         String?
+  
+  // Resolution
+  resolvedBy       String?
+  resolutionNotes  String?
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  resolvedAt       DateTime?
+  
+  @@index([pollingStationId])
+  @@index([reportedBy])
+  @@index([status, severity])
+  @@index([createdAt])
+  @@map("incidents")
+}
+
+// ==========================================
+// RATE LIMITING
+// ==========================================
+
+model RateLimit {
+  id           String   @id @default(uuid())
+  identifier   String
+  endpoint     String
+  requestCount Int      @default(0)
+  windowStart  DateTime @default(now())
+  blockedUntil DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([identifier, endpoint, windowStart])
+  @@index([identifier, windowStart])
+  @@index([blockedUntil])
+  @@map("rate_limits")
+}
+```
+
+3.2 ADVANCED POSTGRESQL FEATURES
+File: prisma/migrations/002_advanced_features.sql
+
+```sql
+-- ==========================================
+-- ADVANCED POSTGRESQL FEATURES
+-- ==========================================
+
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+
+-- ==========================================
+-- TABLE PARTITIONING
+-- ==========================================
+
+-- Election results partitioned by hash for performance
+ALTER TABLE election_results 
+PARTITION BY HASH ((MD5(election_id::text)::bit(32)::int));
+
+CREATE TABLE election_results_p0 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 0);
+
+CREATE TABLE election_results_p1 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 1);
+
+CREATE TABLE election_results_p2 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 2);
+
+CREATE TABLE election_results_p3 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 3);
+
+CREATE TABLE election_results_p4 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 4);
+
+CREATE TABLE election_results_p5 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 5);
+
+CREATE TABLE election_results_p6 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 6);
+
+CREATE TABLE election_results_p7 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 7);
+
+CREATE TABLE election_results_p8 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 8);
+
+CREATE TABLE election_results_p9 PARTITION OF election_results 
+FOR VALUES WITH (MODULUS 10, REMAINDER 9);
+
+-- Elections partitioned by date range
+ALTER TABLE elections 
+PARTITION BY RANGE (election_date);
+
+CREATE TABLE elections_2023 PARTITION OF elections 
+FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+
+CREATE TABLE elections_2024 PARTITION OF elections 
+FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
+CREATE TABLE elections_2025 PARTITION OF elections 
+FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
+
+-- Audit logs partitioned by month
+ALTER TABLE audit_logs 
+PARTITION BY RANGE (created_at);
+
+CREATE TABLE audit_logs_2024_01 PARTITION OF audit_logs 
+FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+CREATE TABLE audit_logs_2024_02 PARTITION OF audit_logs 
+FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
+
+-- Function to auto-create partitions
+CREATE OR REPLACE FUNCTION create_monthly_audit_partition()
+RETURNS void AS $$
+DECLARE
+  partition_date date := date_trunc('month', CURRENT_DATE + interval '1 month');
+  partition_name text := 'audit_logs_' || to_char(partition_date, 'YYYY_MM');
+  start_date text := partition_date::text;
+  end_date text := (partition_date + interval '1 month')::text;
+BEGIN
+  EXECUTE format(
+    'CREATE TABLE IF NOT EXISTS %I PARTITION OF audit_logs FOR VALUES FROM (%L) TO (%L)',
+    partition_name, start_date, end_date
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- ==========================================
+-- GEOGRAPHY COLUMNS FOR SPATIAL QUERIES
+-- ==========================================
+
+-- Add computed geography columns
+ALTER TABLE election_results 
+ADD COLUMN location_geography geography(Point, 4326) 
+GENERATED ALWAYS AS (
+  CASE 
+    WHEN latitude IS NOT NULL AND longitude IS NOT NULL
+    THEN ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
+    ELSE NULL 
+  END
+) STORED;
+
+ALTER TABLE polling_stations
+ADD COLUMN location_geography geography(Point, 4326)
+GENERATED ALWAYS AS (
+  CASE
+    WHEN latitude IS NOT NULL AND longitude IS NOT NULL
+    THEN ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
+    ELSE NULL
+  END
+) STORED;
+
+ALTER TABLE incidents
+ADD COLUMN location_geography geography(Point, 4326)
+GENERATED ALWAYS AS (
+  CASE
+    WHEN latitude IS NOT NULL AND longitude IS NOT NULL
+    THEN ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
+    ELSE NULL
+  END
+) STORED;
+
+-- Spatial indexes
+CREATE INDEX idx_results_location_spatial 
+ON election_results USING GIST (location_geography);
+
+CREATE INDEX idx_stations_location_spatial
+ON polling_stations USING GIST (location_geography);
+
+CREATE INDEX idx_incidents_location_spatial
+ON incidents USING GIST (location_geography);
+
+-- ==========================================
+-- CHECK CONSTRAINTS
+-- ==========================================
+
+ALTER TABLE election_results 
+ADD CONSTRAINT check_votes_positive CHECK (votes >= 0);
+
+ALTER TABLE election_results
+ADD CONSTRAINT check_accuracy_positive CHECK (accuracy_meters IS NULL OR accuracy_meters >= 0);
+
+ALTER TABLE users 
+ADD CONSTRAINT check_failed_attempts CHECK (failed_login_attempts >= 0 AND failed_login_attempts <= 10);
+
+ALTER TABLE polling_stations
+ADD CONSTRAINT check_registered_voters CHECK (registered_voters >= 0);
+
+ALTER TABLE offline_actions
+ADD CONSTRAINT check_retry_count CHECK (retry_count >= 0 AND retry_count <= 10);
+
+ALTER TABLE rate_limits
+ADD CONSTRAINT check_request_count CHECK (request_count >= 0);
+
+-- ==========================================
+-- ROW LEVEL SECURITY (RLS)
+-- ==========================================
+
+-- Create auth context function
+CREATE OR REPLACE FUNCTION auth.uid() 
+RETURNS uuid AS $$
+BEGIN
+  RETURN NULLIF(current_setting('app.current_user_id', true), '')::uuid;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enable RLS on all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE elections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE election_contests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE election_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE incidents ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for Users
+CREATE POLICY "users_view_own" ON users 
+FOR SELECT USING (id = auth.uid());
+
+CREATE POLICY "admins_view_all_users" ON users
+FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM users u 
+    WHERE u.id = auth.uid() 
+    AND u.role IN ('super_admin', 'election_manager')
+  )
+);
+
+-- RLS Policies for Elections
+CREATE POLICY "elections_public_read" ON elections
+FOR SELECT USING (status IN ('active', 'completed'));
+
+CREATE POLICY "election_managers_full_access" ON elections
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.role IN ('super_admin', 'election_manager')
+  )
+);
+
+-- RLS Policies for Results
+CREATE POLICY "results_public_read" ON election_results
+FOR SELECT USING (result_status IN ('verified', 'confirmed'));
+
+CREATE POLICY "field_observers_submit" ON election_results
+FOR INSERT WITH CHECK (submitter = auth.uid());
+
+CREATE POLICY "managers_full_access" ON election_results
+FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.role IN ('super_admin', 'election_manager')
+  )
+);
+
+-- RLS Policies for Notifications
+CREATE POLICY "users_view_own_notifications" ON notifications
+FOR SELECT USING (user_id = auth.uid());
+
+-- ==========================================
+-- MATERIALIZED VIEWS FOR REPORTING
+-- ==========================================
+
+CREATE MATERIALIZED VIEW election_summary_view AS
+SELECT 
+    e.id,
+    e.election_code,
+    e.title,
+    e.election_date,
+    e.status,
+    e.election_type,
+    COUNT(DISTINCT ec.id) as contest_count,
+    COUNT(DISTINCT c.id) as candidate_count,
+    COUNT(DISTINCT er.id) as result_count,
+    SUM(er.votes) as total_votes,
+    COUNT(DISTINCT er.polling_station_id) as stations_reporting
+FROM elections e
+LEFT JOIN election_contests ec ON e.id = ec.election_id
+LEFT JOIN candidates c ON ec.id = c.contest_id
+LEFT JOIN election_results er ON ec.id = er.contest_id
+GROUP BY e.id, e.election_code, e.title, e.election_date, e.status, e.election_type;
+
+CREATE UNIQUE INDEX idx_election_summary ON election_summary_view(id);
+CREATE INDEX idx_election_summary_status ON election_summary_view(status);
+
+-- Live results view
+CREATE OR REPLACE VIEW live_results_view AS
+SELECT 
+    e.id as election_id,
+    e.title as election_title,
+    ec.id as contest_id,
+    ec.position_name,
+    c.id as candidate_id,
+    c.full_name as candidate_name,
+    c.candidate_number,
+    p.party_name,
+    p.acronym as party_acronym,
+    SUM(er.votes) as total_votes,
+    COUNT(DISTINCT er.polling_station_id) as stations_reporting,
+    er.result_status,
+    MAX(er.updated_at) as last_updated
+FROM elections e
+JOIN election_contests ec ON e.id = ec.election_id
+JOIN candidates c ON ec.id = c.contest_id
+LEFT JOIN political_parties p ON c.party_id = p.id
+LEFT JOIN election_results er ON ec.id = er.contest_id AND c.id = er.candidate_id
+WHERE e.status IN ('active', 'completed')
+GROUP BY e.id, e.title, ec.id, ec.position_name, c.id, c.full_name, 
+         c.candidate_number, p.party_name, p.acronym, er.result_status;
+
+-- ==========================================
+-- FULL-TEXT SEARCH
+-- ==========================================
+
+-- Add full-text search indexes
+CREATE INDEX idx_candidates_name_search 
+ON candidates USING gin(to_tsvector('english', full_name));
+
+CREATE INDEX idx_parties_name_search
+ON political_parties USING gin(to_tsvector('english', party_name || ' ' || COALESCE(acronym, '')));
+
+CREATE INDEX idx_elections_title_search
+ON elections USING gin(to_tsvector('english', title));
+
+-- ==========================================
+-- MAINTENANCE FUNCTIONS
+-- ==========================================
+
+-- Refresh materialized views
+CREATE OR REPLACE FUNCTION refresh_materialized_views()
+RETURNS void AS $$
+BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY election_summary_view;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Database maintenance
+CREATE OR REPLACE FUNCTION perform_database_maintenance()
+RETURNS void AS $$
+BEGIN
+    -- Vacuum and analyze
+    VACUUM ANALYZE;
+    
+    -- Refresh materialized views
+    PERFORM refresh_materialized_views();
+    
+    -- Create next month's audit partition
+    PERFORM create_monthly_audit_partition();
+    
+    -- Clean up old rate limit records
+    DELETE FROM rate_limits WHERE window_start < NOW() - INTERVAL '1 hour';
+    
+    -- Clean up expired sessions
+    DELETE FROM sessions WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule maintenance (requires pg_cron extension)
+-- SELECT cron.schedule('database-maintenance', '0 2 * * *', 'SELECT perform_database_maintenance()');
+
+-- ==========================================
+-- TRIGGERS
+-- ==========================================
+
+-- Trigger to auto-update materialized views on result changes
+CREATE OR REPLACE FUNCTION trigger_refresh_election_summary()
+RETURNS trigger AS $$
+BEGIN
+    -- Async refresh to avoid blocking
+    PERFORM pg_notify('refresh_views', NEW.election_id::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_result_change
+AFTER INSERT OR UPDATE OR DELETE ON election_results
+FOR EACH ROW EXECUTE FUNCTION trigger_refresh_election_summary();
+```
+
+3.3 DATABASE SEED DATA
+File: prisma/migrations/003_seed_geographic_data.sql
+
+```sql
+-- ==========================================
+-- SEED GEOGRAPHIC DATA - KENYAN COUNTIES
+-- ==========================================
+
+-- Sample counties (insert all 47 counties)
+INSERT INTO counties (id, code, name, created_at) VALUES
+(gen_random_uuid(), '001', 'Mombasa', NOW()),
+(gen_random_uuid(), '002', 'Kwale', NOW()),
+(gen_random_uuid(), '003', 'Kilifi', NOW()),
+(gen_random_uuid(), '047', 'Nairobi', NOW())
+ON CONFLICT (code) DO NOTHING;
+
+-- Sample constituencies
+INSERT INTO constituencies (id, code, name, county_id, created_at)
+SELECT 
+  gen_random_uuid(),
+  '001-001',
+  'Changamwe',
+  (SELECT id FROM counties WHERE code = '001'),
+  NOW()
+WHERE NOT EXISTS (SELECT 1 FROM constituencies WHERE code = '001-001');
+
+-- Sample wards
+INSERT INTO electoral_wards (id, code, name, constituency_id, created_at)
+SELECT
+  gen_random_uuid(),
+  '001-001-001',
+  'Port Reitz',
+  (SELECT id FROM constituencies WHERE code = '001-001'),
+  NOW()
+WHERE NOT EXISTS (SELECT 1 FROM electoral_wards WHERE code = '001-001-001');
+
+-- Sample polling stations
+INSERT INTO polling_stations (id, code, name, ward_id, latitude, longitude, registered_voters, created_at)
+SELECT
+  gen_random_uuid(),
+  'PS-001-001-001-001',
+  'Port Reitz Primary School',
+  (SELECT id FROM electoral_wards WHERE code = '001-001-001'),
+  -4.0435,
+  39.6682,
+  1500,
+  NOW()
+WHERE NOT EXISTS (SELECT 1 FROM polling_stations WHERE code = 'PS-001-001-001-001');
+```
+
+4. BACKEND ARCHITECTURE
+-----------------------
+
+4.1 PROJECT STRUCTURE
+```
+backend/
+├── src/
+│   ├── domains/
+│   │   ├── auth/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.middleware.ts
+│   │   │   └── auth.validator.ts
+│   │   ├── elections/
+│   │   │   ├── election.service.ts
+│   │   │   ├── election.controller.ts
+│   │   │   ├── election.repository.ts
+│   │   │   └── election.validator.ts
+│   │   ├── results/
+│   │   │   ├── result.service.ts
+│   │   │   ├── result.controller.ts
+│   │   │   ├── result.repository.ts
+│   │   │   └── result.validator.ts
+│   │   ├── candidates/
+│   │   ├── audit/
+│   │   ├── notifications/
+│   │   └── mobile/
+│   ├── shared/
+│   │   ├── interfaces/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   └── constants/
+│   ├── infrastructure/
+│   │   ├── database/
+│   │   │   ├── prisma.service.ts
+│   │   │   └── rls.wrapper.ts
+│   │   ├── cache/
+│   │   │   └── redis.service.ts
+│   │   ├── storage/
+│   │   │   └── minio.service.ts
+│   │   └── middleware/
+│   │       ├── auth.middleware.ts
+│   │       ├── audit.middleware.ts
+│   │       └── rate-limit.middleware.ts
+│   └── server.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+├── tests/
+├── package.json
+└── tsconfig.json
+```
+
+4.2 HYBRID DATABASE ACCESS PATTERN
+
+```typescript
+// src/infrastructure/database/prisma.service.ts
+import { PrismaClient } from '@prisma/client';
+
+export class PrismaService extends PrismaClient {
+  constructor() {
+    super({
+      log: ['query', 'error', 'warn'],
+    });
+  }
+
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}
+
+// src/infrastructure/database/rls.wrapper.ts
+import { PrismaService } from './prisma.service';
+
+export class RLSWrapper {
+  constructor(private prisma: PrismaService) {}
+
+  async withUserContext<T>(
+    userId: string,
+    callback: (prisma: PrismaService) => Promise<T>
+  ): Promise<T> {
+    return await this.prisma.$transaction(async (tx) => {
+      // Set RLS context
+      await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
+      
+      // Execute callback with context
+      return await callback(tx as PrismaService);
+    });
+  }
+}
+
+// Usage example
+export class ElectionService {
+  constructor(
+    private prisma: PrismaService,
+    private rls: RLSWrapper
+  ) {}
+
+  async getActiveElections(userId: string) {
+    return await this.rls.withUserContext(userId, async (prisma) => {
+      return await prisma.election.findMany({
+        where: { status: 'active' },
+        include: { contests: true }
+      });
+    });
+  }
+
+  // Raw SQL for complex queries
+  async getElectionResultsSummary(electionId: string) {
+    return await this.prisma.$queryRaw`
+      SELECT * FROM live_results_view
+      WHERE election_id = ${electionId}
+      ORDER BY total_votes DESC
+    `;
+  }
+}
+```
+
+4.3 AUTHENTICATION & SESSION MANAGEMENT
+
+```typescript
+// src/domains/auth/auth.service.ts
+import { PrismaService } from '@/infrastructure/database/prisma.service';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
+
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export class AuthService {
+  constructor(private prisma: PrismaService) {}
+
+  async login(email: string, password: string, deviceInfo: any): Promise<AuthTokens> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    
+    if (!user || !user.isActive) {
+      throw new Error('Invalid credentials');
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    
+    if (!isValidPassword) {
+      // Increment failed attempts
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: { increment: 1 } }
+      });
+      throw new Error('Invalid credentials');
+    }
+
+    // Reset failed attempts and update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: 0,
+        lastLogin: new Date()
+      }
+    });
+
+    // Create session
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const session = await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        deviceInfo,
+        ipAddress: deviceInfo.ip,
+        userAgent: deviceInfo.userAgent
+      }
+    });
+
+    const accessToken = this.generateAccessToken(user.id, user.role, session.id);
+
+    return { accessToken, refreshToken };
+  }
+
+  private generateAccessToken(userId: string, role: string, sessionId: string): string {
+    return jwt.sign(
+      { userId, role, sessionId },
+      process.env.JWT_SECRET!,
+      { expiresIn: '15m' }
+    );
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<string> {
+    const session = await this.prisma.session.findUnique({
+      where: { refreshToken },
+      include: { user: true }
+    });
+
+    if (!session || session.expiresAt < new Date()) {
+      throw new Error('Invalid or expired refresh token');
+    }
+
+    return this.generateAccessToken(
+      session.user.id,
+      session.user.role,
+      session.id
+    );
+  }
+
+  async logout(refreshToken: string): Promise<void> {
+    await this.prisma.session.delete({
+      where: { refreshToken }
+    });
+  }
+}
+```
+
+4.4 AUDIT LOGGING MIDDLEWARE
+
+```typescript
+// src/infrastructure/middleware/audit.middleware.ts
+import { Request, Response, NextFunction } from 'express';
+import { PrismaService } from '@/infrastructure/database/prisma.service';
+
+export class AuditMiddleware {
+  constructor(private prisma: PrismaService) {}
+
+  async logAction(req: Request, res: Response, next: NextFunction) {
+    const startTime = Date.now();
+
+    // Capture original response
+    const originalSend = res.json;
+    let responseData: any;
+
+    res.json = function (data: any) {
+      responseData = data;
+      return originalSend.call(this, data);
+    };
+
+    // Continue request
+    res.on('finish', async () => {
+      try {
+        const action = this.getAuditAction(req.method);
+        const entityType = this.getEntityType(req.path);
+        const entityId = req.params.id || responseData?.id;
+
+        if (action && entityType && req.user) {
+          await this.prisma.auditLog.create({
+            data: {
+              action,
+              entityType,
+              entityId,
+              userId: req.user.id,
+              oldValues: req.method === 'PUT' ? req.body.oldValues : null,
+              newValues: req.method !== 'GET' ? req.body : null,
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent'),
+              deviceId: req.get('X-Device-ID'),
+              latitude: req.body.latitude,
+              longitude: req.body.longitude,
+              requestId: req.get('X-Request-ID'),
+              correlationId: req.get('X-Correlation-ID')
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Audit logging failed:', error);
+      }
+    });
+
+    next();
+  }
+
+  private getAuditAction(method: string): string | null {
+    const mapping: Record<string, string> = {
+      'POST': 'create',
+      'PUT': 'update',
+      'PATCH': 'update',
+      'DELETE': 'delete'
+    };
+    return mapping[method] || null;
+  }
+
+  private getEntityType(path: string): string | null {
+    // Extract entity type from path, e.g., /api/v1/elections/123 -> elections
+    const match = path.match(/\/api\/v\d+\/(\w+)/);
+    return match ? match[1] : null;
+  }
+}
+```
+
+5. MOBILE OFFLINE-FIRST IMPLEMENTATION
+--------------------------------------
+
+5.1 SYNC SERVICE
+
+```typescript
+// src/domains/mobile/sync.service.ts
+import { PrismaService } from '@/infrastructure/database/prisma.service';
+
+export class MobileSyncService {
+  constructor(private prisma: PrismaService) {}
+
+  async syncDeviceData(deviceId: string, lastSync: Date) {
+    const device = await this.prisma.mobileDevice.findUnique({
+      where: { deviceId },
+      include: { user: true }
+    });
+
+    if (!device || !device.isActive) {
+      throw new Error('Device not registered or inactive');
+    }
+
+    // Start sync log
+    const syncLog = await this.prisma.syncLog.create({
+      data: {
+        deviceId: device.id,
+        syncType: lastSync ? 'incremental_sync' : 'full_sync',
+        syncStatus: 'in_progress'
+      }
+    });
+
+    try {
+      // Get updates since last sync
+      const updates = {
+        elections: await this.getElectionUpdates(lastSync),
+        contests: await this.getContestUpdates(lastSync),
+        candidates: await this.getCandidateUpdates(lastSync),
+        parties: await this.getPartyUpdates(lastSync),
+        stations: await this.getUserAssignedStations(device.userId),
+        geographic: await this.getGeographicData()
+      };
+
+      // Process pending offline actions
+      await this.processOfflineActions(device.id);
+
+      // Update sync log
+      await this.prisma.syncLog.update({
+        where: { id: syncLog.id },
+        data: {
+          syncStatus: 'completed',
+          syncCompletedAt: new Date(),
+          recordsSynced: this.countRecords(updates)
+        }
+      });
+
+      // Update device last sync
+      await this.prisma.mobileDevice.update({
+        where: { id: device.id },
+        data: { lastSync: new Date() }
+      });
+
+      return updates;
+    } catch (error) {
+      // Log error
+      await this.prisma.syncLog.update({
+        where: { id: syncLog.id },
+        data: {
+          syncStatus: 'failed',
+          errorMessage: error.message
+        }
+      });
+      throw error;
+    }
+  }
+
+  private async processOfflineActions(deviceId: string) {
+    const pendingActions = await this.prisma.offlineAction.findMany({
+      where: {
+        deviceId,
+        actionStatus: 'pending'
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    for (const action of pendingActions) {
+      try {
+        await this.prisma.offlineAction.update({
+          where: { id: action.id },
+          data: { actionStatus: 'processing' }
+        });
+
+        // Process based on entity type
+        await this.processAction(action);
+
+        await this.prisma.offlineAction.update({
+          where: { id: action.id },
+          data: {
+            actionStatus: 'completed',
+            processedAt: new Date()
+          }
+        });
+      } catch (error) {
+        await this.prisma.offlineAction.update({
+          where: { id: action.id },
+          data: {
+            actionStatus: 'failed',
+            retryCount: { increment: 1 },
+            lastAttemptAt: new Date(),
+            errorMessage: error.message
+          }
+        });
+      }
+    }
+  }
+
+  private async processAction(action: any) {
+    const { entityType, actionType, entityData } = action;
+
+    switch (entityType) {
+      case 'result':
+        if (actionType === 'create') {
+          await this.prisma.electionResult.create({ data: entityData });
+        }
+        break;
+      case 'incident':
+        if (actionType === 'create') {
+          await this.prisma.incident.create({ data: entityData });
+        }
+        break;
+      // Add more cases
+    }
+  }
+
+  private countRecords(updates: any): number {
+    return Object.values(updates).reduce((sum: number, arr: any) => 
+      sum + (Array.isArray(arr) ? arr.length : 0), 0
+    );
+  }
+
+  private async getElectionUpdates(lastSync: Date) {
+    return await this.prisma.election.findMany({
+      where: {
+        updatedAt: { gt: lastSync },
+        status: { in: ['scheduled', 'active', 'completed'] }
+      }
+    });
+  }
+
+  private async getContestUpdates(lastSync: Date) {
+    return await this.prisma.electionContest.findMany({
+      where: { updatedAt: { gt: lastSync } }
+    });
+  }
+
+  private async getCandidateUpdates(lastSync: Date) {
+    return await this.prisma.candidate.findMany({
+      where: { updatedAt: { gt: lastSync } },
+      include: { party: true }
+    });
+  }
+
+  private async getPartyUpdates(lastSync: Date) {
+    return await this.prisma.politicalParty.findMany({
+      where: { updatedAt: { gt: lastSync } }
+    });
+  }
+
+  private async getUserAssignedStations(userId: string) {
+    // Get polling stations assigned to this user
+    // This logic depends on your assignment system
+    return await this.prisma.pollingStation.findMany({
+      where: { isActive: true },
+      include: { ward: { include: { constituency: { include: { county: true } } } } }
+    });
+  }
+
+  private async getGeographicData() {
+    return {
+      counties: await this.prisma.county.findMany(),
+      constituencies: await this.prisma.constituency.findMany(),
+      wards: await this.prisma.electoralWard.findMany()
+    };
+  }
+}
+```
+
+6. DEPLOYMENT ARCHITECTURE
+--------------------------
+
+6.1 COMPLETE DOCKER COMPOSE SETUP
+
+```yaml
+version: '3.8'
+
+services:
+  # PostgreSQL with PostGIS
+  database:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_DB: elections
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    secrets:
+      - db-password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d elections"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - election-network
+
+  # PgBouncer for connection pooling
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgresql://admin:${DB_PASSWORD}@database:5432/elections
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 25
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "6432:6432"
+    networks:
+      - election-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - election-network
+
+  # MinIO for S3-compatible file storage
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio-password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    secrets:
+      - minio-password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - election-network
+
+  # Application API
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:${DB_PASSWORD}@pgbouncer:6432/elections
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+    depends_on:
+      database:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - election-network
+
+  # Admin Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_URL: http://api:3000/api/v1
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - election-network
+
+  # Database Backup Service
+  backup:
+    image: prodrigestivill/postgres-backup-local:latest
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_DB: elections
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 30
+      BACKUP_KEEP_WEEKS: 8
+      BACKUP_KEEP_MONTHS: 6
+      HEALTHCHECK_PORT: 8080
+    volumes:
+      - ./backups:/backups
+    secrets:
+      - db-password
+    depends_on:
+      - database
+    networks:
+      - election-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - election-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD_FILE: /run/secrets/grafana-password
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    secrets:
+      - grafana-password
+    depends_on:
+      - prometheus
+    networks:
+      - election-network
+
+  # Node Exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    networks:
+      - election-network
+
+secrets:
+  db-password:
+    file: ./secrets/db_password.txt
+  minio-password:
+    file: ./secrets/minio_password.txt
+  grafana-password:
+    file: ./secrets/grafana_password.txt
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  election-network:
+    driver: bridge
+```
+
+6.2 PROMETHEUS CONFIGURATION
+
+File: prometheus.yml
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api'
+    static_configs:
+      - targets: ['api:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['database:5432']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+    metrics_path: '/minio/v2/metrics/cluster'
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+```
+
+7. PERFORMANCE OPTIMIZATIONS
+-----------------------------
+
+7.1 DATABASE CONFIGURATION
+
+File: postgresql.conf
+
+```conf
+# Connection Settings
+max_connections = 200
+superuser_reserved_connections = 3
+
+# Memory Settings
+shared_buffers = 1GB
+effective_cache_size = 3GB
+maintenance_work_mem = 256MB
+work_mem = 16MB
+
+# Checkpoint Settings
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+
+# Query Tuning
+random_page_cost = 1.1
+effective_io_concurrency = 200
+
+# Parallel Query Settings
+max_parallel_workers_per_gather = 4
+max_parallel_workers = 8
+
+# Logging
+log_destination = 'stderr'
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 100MB
+log_min_duration_statement = 1000
+log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+
+# Extensions
+shared_preload_libraries = 'pg_stat_statements'
+
+# Autovacuum
+autovacuum = on
+autovacuum_max_workers = 3
+autovacuum_naptime = 1min
+```
+
+7.2 REDIS CACHING LAYER
+
+```typescript
+// src/infrastructure/cache/redis.service.ts
+import Redis from 'ioredis';
+
+export class RedisService {
+  private client: Redis;
+
+  constructor() {
+    this.client = new Redis(process.env.REDIS_URL);
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    const cached = await this.client.get(key);
+    return cached ? JSON.parse(cached) : null;
+  }
+
+  async set(key: string, value: any, ttl: number = 300): Promise<void> {
+    await this.client.setex(key, ttl, JSON.stringify(value));
+  }
+
+  async del(key: string): Promise<void> {
+    await this.client.del(key);
+  }
+
+  async invalidatePattern(pattern: string): Promise<void> {
+    const keys = await this.client.keys(pattern);
+    if (keys.length > 0) {
+      await this.client.del(...keys);
+    }
+  }
+}
+
+// Usage in service
+export class ElectionResultService {
+  constructor(
+    private prisma: PrismaService,
+    private cache: RedisService
+  ) {}
+
+  async getElectionResults(electionId: string) {
+    const cacheKey = `election:${electionId}:results`;
+    
+    // Try cache first
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
+
+    // Fetch from database
+    const results = await this.prisma.$queryRaw`
+      SELECT * FROM live_results_view
+      WHERE election_id = ${electionId}
+    `;
+
+    // Cache for 5 minutes
+    await this.cache.set(cacheKey, results, 300);
+
+    return results;
+  }
+
+  async submitResult(resultData: any) {
+    const result = await this.prisma.electionResult.create({
+      data: resultData
+    });
+
+    // Invalidate relevant caches
+    await this.cache.invalidatePattern(`election:${resultData.electionId}:*`);
+
+    return result;
+  }
+}
+```
+
+8. MONITORING & OBSERVABILITY
+------------------------------
+
+8.1 APPLICATION METRICS
+
+```typescript
+// src/infrastructure/monitoring/metrics.ts
+import { Counter, Histogram, Gauge, register } from 'prom-client';
+
+export class MetricsService {
+  private httpRequestDuration: Histogram;
+  private httpRequestTotal: Counter;
+  private databaseQueryDuration: Histogram;
+  private activeUsers: Gauge;
+
+  constructor() {
+    this.httpRequestDuration = new Histogram({
+      name: 'http_request_duration_seconds',
+      help: 'Duration of HTTP requests in seconds',
+      labelNames: ['method', 'route', 'status_code'],
+      buckets: [0.1, 0.5, 1, 2, 5]
+    });
+
+    this.httpRequestTotal = new Counter({
+      name: 'http_requests_total',
+      help: 'Total number of HTTP requests',
+      labelNames: ['method', 'route', 'status_code']
+    });
+
+    this.databaseQueryDuration = new Histogram({
+      name: 'database_query_duration_seconds',
+      help: 'Duration of database queries in seconds',
+      labelNames: ['operation', 'table'],
+      buckets: [0.01, 0.05, 0.1, 0.5, 1]
+    });
+
+    this.activeUsers = new Gauge({
+      name: 'active_users_total',
+      help: 'Number of active users'
+    });
+  }
+
+  recordHttpRequest(method: string, route: string, statusCode: number, duration: number) {
+    this.httpRequestDuration.observe({ method, route, status_code: statusCode }, duration);
+    this.httpRequestTotal.inc({ method, route, status_code: statusCode });
+  }
+
+  recordDatabaseQuery(operation: string, table: string, duration: number) {
+    this.databaseQueryDuration.observe({ operation, table }, duration);
+  }
+
+  setActiveUsers(count: number) {
+    this.activeUsers.set(count);
+  }
+
+  getMetrics() {
+    return register.metrics();
+  }
+}
+```
+
+9. SECURITY HARDENING
+---------------------
+
+9.1 RATE LIMITING MIDDLEWARE
+
+```typescript
+// src/infrastructure/middleware/rate-limit.middleware.ts
+import { Request, Response, NextFunction } from 'express';
+import { PrismaService } from '@/infrastructure/database/prisma.service';
+
+export class RateLimitMiddleware {
+  constructor(private prisma: PrismaService) {}
+
+  limitByEndpoint(maxRequests: number = 100, windowMinutes: number = 1) {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      const identifier = req.user?.id || req.ip;
+      const endpoint = req.path;
+      const windowStart = new Date();
+      windowStart.setMinutes(windowStart.getMinutes() - windowMinutes);
+
+      // Check existing rate limit
+      const existingLimit = await this.prisma.rateLimit.findFirst({
+        where: {
+          identifier,
+          endpoint,
+          windowStart: { gte: windowStart }
+        }
+      });
+
+      if (existingLimit) {
+        if (existingLimit.blockedUntil && existingLimit.blockedUntil > new Date()) {
+          return res.status(429).json({
+            error: 'Too many requests',
+            retryAfter: existingLimit.blockedUntil
+          });
+        }
+
+        if (existingLimit.requestCount >= maxRequests) {
+          // Block for 15 minutes
+          await this.prisma.rateLimit.update({
+            where: { id: existingLimit.id },
+            data: {
+              blockedUntil: new Date(Date.now() + 15 * 60 * 1000)
+            }
+          });
+
+          return res.status(429).json({
+            error: 'Rate limit exceeded',
+            retryAfter: new Date(Date.now() + 15 * 60 * 1000)
+          });
+        }
+
+        // Increment counter
+        await this.prisma.rateLimit.update({
+          where: { id: existingLimit.id },
+          data: { requestCount: { increment: 1 } }
+        });
+      } else {
+        // Create new rate limit entry
+        await this.prisma.rateLimit.create({
+          data: {
+            identifier,
+            endpoint,
+            requestCount: 1,
+            windowStart: new Date()
+          }
+        });
+      }
+
+      next();
+    };
+  }
+}
+```
+
+10. TESTING STRATEGY
+--------------------
+
+10.1 INTEGRATION TESTS
+
+```typescript
+// tests/integration/election-results.test.ts
+import { PrismaService } from '@/infrastructure/database/prisma.service';
+import { ElectionResultService } from '@/domains/results/result.service';
+
+describe('Election Results', () => {
+  let prisma: PrismaService;
+  let resultService: ElectionResultService;
+
+  beforeAll(async () => {
+    prisma = new PrismaService();
+    await prisma.$connect();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  beforeEach(async () => {
+    // Clean up test data
+    await prisma.$executeRaw`TRUNCATE TABLE election_results CASCADE`;
+    await setupTestData();
+  });
+
+  it('should calculate results correctly', async () => {
+    const results = await resultService.getElectionResultsSummary(testElectionId);
+    expect(results).toBeDefined();
+    expect(results.totalVotes).toBe(1000);
+  });
+
+  it('should prevent duplicate result submission', async () => {
+    const resultData = {
+      electionId: testElectionId,
+      contestId: testContestId,
+      candidateId: testCandidateId,
+      pollingStationId: testStationId,
+      resultLevel: 'polling_station',
+      votes: 100
+    };
+
+    await resultService.submitResult(resultData);
+
+    // Try to submit again
+    await expect(resultService.submitResult(resultData)).rejects.toThrow();
+  });
+});
+```
+
+================================
+IMPLEMENTATION ROADMAP
+================================
+
+PHASE 1 (WEEK 1-2): FOUNDATION
+☐ Set up PostgreSQL 15 with PostGIS, uuid-ossp, pgcrypto extensions
+☐ Implement corrected Prisma schema with all models
+☐ Create hybrid migration system (Prisma + raw SQL)
+☐ Set up Docker Compose environment
+☐ Implement basic authentication with JWT and sessions
+☐ Implement comprehensive audit logging
+☐ Seed geographic data (Counties, Constituencies, Wards, Stations)
+
+PHASE 2 (WEEK 3-4): ADVANCED FEATURES
+☐ Implement table partitioning for elections, results, audit logs
+☐ Set up Row Level Security policies
+☐ Create materialized views for reporting
+☐ Implement mobile device registration and sync
+☐ Set up MinIO file storage and media upload
+☐ Implement incident reporting system
+☐ Create rate limiting system
+
+PHASE 3 (WEEK 5-6): PERFORMANCE & SCALING
+☐ Implement PgBouncer connection pooling
+☐ Set up Redis caching layer
+☐ Create performance monitoring with Prometheus
+☐ Set up Grafana dashboards
+☐ Implement automated database maintenance
+☐ Set up automated backup system
+☐ Load testing and optimization
+
+PHASE 4 (WEEK 7-8): SECURITY & COMPLIANCE
+☐ Security audit and penetration testing
+☐ Implement field-level encryption for sensitive data
+☐ Set up comprehensive logging and monitoring
+☐ Create compliance documentation
+☐ Disaster recovery testing
+☐ Production deployment preparation
+☐ User acceptance testing
+
+================================
+SUCCESS METRICS
+================================
+
+PERFORMANCE:
+✓ API response time < 200ms for 95% of requests
+✓ Database query time < 100ms for 95% of queries
+✓ Support 10,000 concurrent mobile users
+✓ Handle 1,000 result submissions per minute
+
+RELIABILITY:
+✓ 99.9% uptime during election periods
+✓ Zero data loss with point-in-time recovery
+✓ < 5 minutes failover time
+✓ Automated backups with 30-day retention
+
+SECURITY:
+✓ All sensitive data encrypted at rest
+✓ Comprehensive audit trail for all actions
+✓ Row-level security enforced at database level
+✓ Pass security penetration tests
+
+MAINTAINABILITY:
+✓ Automated database maintenance
+✓ Comprehensive monitoring and alerting
+✓ Documented disaster recovery procedures
+✓ < 1 hour mean time to recovery
+
+================================
+END OF CORRECTED TECHNICAL DOCUMENTATION
+================================

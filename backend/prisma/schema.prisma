@@ -1,0 +1,627 @@
+// ==========================================
+// KENYA ELECTION MANAGEMENT SYSTEM
+// Prisma Schema - Database Models
+// ==========================================
+
+// ==========================================
+// DATASOURCE & GENERATOR CONFIGURATION
+// ==========================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// ENUM DEFINITIONS
+// ==========================================
+
+enum UserRole {
+  super_admin
+  election_manager
+  field_observer
+  public_viewer
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum ElectionType {
+  general_election
+  by_election
+  referendum
+}
+
+enum ElectionStatus {
+  draft
+  scheduled
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum ResultLevel {
+  polling_station
+  ward
+  constituency
+  county
+  national
+}
+
+enum ResultStatus {
+  preliminary
+  verified
+  confirmed
+  disputed
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  login
+  logout
+  export
+}
+
+enum SyncType {
+  full_sync
+  incremental_sync
+  media_sync
+}
+
+enum SyncStatus {
+  in_progress
+  completed
+  failed
+  cancelled
+}
+
+enum ActionStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum NotificationType {
+  system_alert
+  result_update
+  assignment
+  security
+}
+
+enum NotificationPriority {
+  low
+  medium
+  high
+  critical
+}
+
+enum UploadStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum IncidentSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum IncidentStatus {
+  reported
+  investigating
+  resolved
+  dismissed
+}
+
+// ==========================================
+// CORE USER & AUTHENTICATION MODELS
+// ==========================================
+
+model User {
+  id                  String    @id @default(uuid())
+  nationalId          String    @unique
+  email               String    @unique
+  phoneNumber         String?
+  firstName           String
+  lastName            String
+  role                UserRole  @default(field_observer)
+  isActive            Boolean   @default(true)
+  lastLogin           DateTime?
+  failedLoginAttempts Int       @default(0)
+  passwordHash        String
+  mfaSecret           String?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  // Relations
+  sessions          Session[]
+  mobileDevices     MobileDevice[]
+  auditLogs         AuditLog[]
+  createdElections  Election[]
+  submittedResults  ElectionResult[]
+  notifications     Notification[]
+  uploadedMedia     MediaAttachment[]
+  reportedIncidents Incident[]
+
+  @@index([email])
+  @@index([nationalId])
+  @@index([role, isActive])
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  deviceInfo   Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ==========================================
+// GEOGRAPHIC HIERARCHY MODELS
+// ==========================================
+
+model County {
+  id   String @id @default(uuid())
+  code String @unique
+  name String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  constituencies Constituency[]
+
+  @@index([code])
+  @@map("counties")
+}
+
+model Constituency {
+  id       String @id @default(uuid())
+  code     String @unique
+  name     String
+  countyId String
+  county   County @relation(fields: [countyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  wards ElectoralWard[]
+
+  @@index([countyId])
+  @@index([code])
+  @@map("constituencies")
+}
+
+model ElectoralWard {
+  id             String       @id @default(uuid())
+  code           String       @unique
+  name           String
+  constituencyId String
+  constituency   Constituency @relation(fields: [constituencyId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  pollingStations PollingStation[]
+
+  @@index([constituencyId])
+  @@index([code])
+  @@map("electoral_wards")
+}
+
+model PollingStation {
+  id               String        @id @default(uuid())
+  code             String        @unique
+  name             String
+  wardId           String
+  ward             ElectoralWard @relation(fields: [wardId], references: [id])
+  latitude         Float?
+  longitude        Float?
+  registeredVoters Int           @default(0)
+  isActive         Boolean       @default(true)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  results   ElectionResult[]
+  incidents Incident[]
+
+  @@index([wardId])
+  @@index([code])
+  @@index([isActive])
+  @@map("polling_stations")
+}
+
+// ==========================================
+// ELECTION MANAGEMENT MODELS
+// ==========================================
+
+model Election {
+  id           String         @id @default(uuid())
+  electionCode String         @unique
+  title        String
+  electionType ElectionType
+  electionDate DateTime
+  status       ElectionStatus @default(draft)
+  description  String?
+
+  // Audit fields
+  createdBy String
+  creator   User      @relation(fields: [createdBy], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+
+  // Relations
+  contests ElectionContest[]
+  results  ElectionResult[]
+
+  @@index([status, electionDate])
+  @@index([electionType, electionDate])
+  @@index([electionCode])
+  @@map("elections")
+}
+
+model ElectionContest {
+  id           String   @id @default(uuid())
+  electionId   String
+  election     Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  positionName String
+  description  String?
+  orderIndex   Int      @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  candidates Candidate[]
+  results    ElectionResult[]
+
+  @@index([electionId])
+  @@map("election_contests")
+}
+
+model Candidate {
+  id              String          @id @default(uuid())
+  contestId       String
+  contest         ElectionContest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  fullName        String
+  partyId         String?
+  party           PoliticalParty? @relation(fields: [partyId], references: [id])
+  candidateNumber Int?
+  biography       String?
+  photoUrl        String?
+  isIndependent   Boolean         @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  results ElectionResult[]
+
+  @@index([contestId])
+  @@index([partyId])
+  @@map("candidates")
+}
+
+model PoliticalParty {
+  id        String  @id @default(uuid())
+  partyCode String  @unique
+  partyName String
+  acronym   String?
+  logoUrl   String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  candidates Candidate[]
+
+  @@index([partyCode])
+  @@map("political_parties")
+}
+
+// ==========================================
+// RESULTS MANAGEMENT
+// ==========================================
+
+model ElectionResult {
+  id               String          @id @default(uuid())
+  electionId       String
+  election         Election        @relation(fields: [electionId], references: [id])
+  contestId        String
+  contest          ElectionContest @relation(fields: [contestId], references: [id])
+  candidateId      String
+  candidate        Candidate       @relation(fields: [candidateId], references: [id])
+  pollingStationId String
+  pollingStation   PollingStation  @relation(fields: [pollingStationId], references: [id])
+
+  // Results data
+  votes        Int          @default(0)
+  resultLevel  ResultLevel
+  resultStatus ResultStatus @default(preliminary)
+
+  // Mobile submission metadata
+  submittedBy    String
+  submitter      User    @relation(fields: [submittedBy], references: [id])
+  deviceId       String?
+  latitude       Float?
+  longitude      Float?
+  accuracyMeters Int?
+
+  // Audit fields
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  auditSignature String?
+
+  @@unique([contestId, pollingStationId, candidateId, resultLevel])
+  @@index([electionId, contestId])
+  @@index([pollingStationId])
+  @@index([submittedBy])
+  @@index([createdAt])
+  @@index([resultStatus])
+  @@map("election_results")
+}
+
+// ==========================================
+// MOBILE OFFLINE-FIRST MODELS
+// ==========================================
+
+model MobileDevice {
+  id          String    @id @default(uuid())
+  deviceId    String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName  String?
+  deviceModel String?
+  osVersion   String?
+  appVersion  String?
+  lastSync    DateTime?
+  isActive    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  syncLogs       SyncLog[]
+  offlineActions OfflineAction[]
+
+  @@index([userId])
+  @@index([deviceId])
+  @@index([isActive])
+  @@map("mobile_devices")
+}
+
+model SyncLog {
+  id              String       @id @default(uuid())
+  deviceId        String
+  device          MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  syncType        SyncType
+  recordsSynced   Int          @default(0)
+  syncStartedAt   DateTime     @default(now())
+  syncCompletedAt DateTime?
+  syncStatus      SyncStatus   @default(in_progress)
+  errorMessage    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([deviceId, syncStatus])
+  @@index([syncStartedAt])
+  @@map("sync_logs")
+}
+
+model OfflineAction {
+  id            String       @id @default(uuid())
+  deviceId      String
+  device        MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  actionType    String
+  entityType    String
+  entityData    Json
+  actionStatus  ActionStatus @default(pending)
+  retryCount    Int          @default(0)
+  lastAttemptAt DateTime?
+  errorMessage  String?
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([deviceId, actionStatus])
+  @@index([actionStatus, createdAt])
+  @@map("offline_actions")
+}
+
+// ==========================================
+// AUDIT & COMPLIANCE
+// ==========================================
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  action     AuditAction
+  entityType String
+  entityId   String
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+
+  // Change tracking
+  oldValues Json?
+  newValues Json?
+
+  // Context metadata
+  ipAddress String?
+  userAgent String?
+  deviceId  String?
+  latitude  Float?
+  longitude Float?
+
+  // Technical metadata
+  requestId     String?
+  correlationId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, entityType, entityId])
+  @@index([action, createdAt])
+  @@index([correlationId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id       String               @id @default(uuid())
+  userId   String
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title    String
+  message  String
+  type     NotificationType
+  priority NotificationPriority @default(medium)
+
+  // Actionable notifications
+  actionUrl   String?
+  actionLabel String?
+
+  // Delivery tracking
+  isRead Boolean   @default(false)
+  sentAt DateTime  @default(now())
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
+  @@index([userId, type])
+  @@map("notifications")
+}
+
+// ==========================================
+// MEDIA & FILE MANAGEMENT
+// ==========================================
+
+model MediaAttachment {
+  id            String  @id @default(uuid())
+  entityType    String
+  entityId      String
+  fileName      String
+  filePath      String
+  fileSize      BigInt
+  mimeType      String
+  thumbnailPath String?
+
+  // Mobile metadata
+  uploadedBy String
+  uploader   User    @relation(fields: [uploadedBy], references: [id])
+  deviceId   String?
+  latitude   Float?
+  longitude  Float?
+
+  // Processing status
+  uploadStatus       UploadStatus @default(pending)
+  processingMetadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([uploadStatus])
+  @@index([uploadedBy])
+  @@map("media_attachments")
+}
+
+// ==========================================
+// INCIDENT REPORTING
+// ==========================================
+
+model Incident {
+  id          String           @id @default(uuid())
+  title       String
+  description String
+  severity    IncidentSeverity
+  status      IncidentStatus   @default(reported)
+
+  // Location
+  pollingStationId String?
+  pollingStation   PollingStation? @relation(fields: [pollingStationId], references: [id])
+  latitude         Float?
+  longitude        Float?
+
+  // Reporting
+  reportedBy String
+  reporter   User    @relation(fields: [reportedBy], references: [id])
+  deviceId   String?
+
+  // Resolution
+  resolvedBy      String?
+  resolutionNotes String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+
+  @@index([pollingStationId])
+  @@index([reportedBy])
+  @@index([status, severity])
+  @@index([createdAt])
+  @@map("incidents")
+}
+
+// ==========================================
+// RATE LIMITING
+// ==========================================
+
+model RateLimit {
+  id           String    @id @default(uuid())
+  identifier   String
+  endpoint     String
+  requestCount Int       @default(0)
+  windowStart  DateTime  @default(now())
+  blockedUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([identifier, endpoint, windowStart])
+  @@index([identifier, windowStart])
+  @@index([blockedUntil])
+  @@map("rate_limits")
+}
