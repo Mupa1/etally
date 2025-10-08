@@ -44,13 +44,7 @@
                   </p>
                   <p class="text-xs text-gray-500">{{ roleLabel }}</p>
                 </div>
-                <div
-                  class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center"
-                >
-                  <span class="text-primary-700 font-semibold text-sm">
-                    {{ userInitials }}
-                  </span>
-                </div>
+                <Avatar :user="authStore.user" size="md" color="primary" />
               </div>
             </div>
           </div>
@@ -84,8 +78,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue';
+import { provide, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useUserUtils } from '@/composables/useUserUtils';
+import Avatar from '@/components/common/Avatar.vue';
 import { BellIcon } from '@/components/icons';
 import Sidebar from './Sidebar.vue';
 
@@ -103,23 +99,9 @@ const props = withDefaults(defineProps<Props>(), {
 const authStore = useAuthStore();
 const isSidebarCollapsed = ref(false);
 
+// Use shared user utilities
+const { userInitials, roleLabel } = useUserUtils();
+
 // Provide sidebar state for child components
 provide('isSidebarCollapsed', isSidebarCollapsed);
-
-const userInitials = computed(() => {
-  if (!authStore.user) return '?';
-  const first = authStore.user.firstName?.[0] || '';
-  const last = authStore.user.lastName?.[0] || '';
-  return `${first}${last}`.toUpperCase();
-});
-
-const roleLabel = computed(() => {
-  const role = authStore.userRole;
-  if (!role) return 'User';
-
-  return role
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-});
 </script>

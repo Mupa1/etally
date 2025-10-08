@@ -39,19 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useUserUtils } from '@/composables/useUserUtils';
 import MainLayout from '@/components/layout/MainLayout.vue';
 
 const authStore = useAuthStore();
 
-const roleLabel = computed(() => {
-  const role = authStore.userRole;
-  if (!role) return 'User';
-
-  return role
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-});
+// Use shared user utilities
+const { roleLabel } = useUserUtils();
 </script>

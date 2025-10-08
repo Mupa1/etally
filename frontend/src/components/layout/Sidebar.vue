@@ -126,13 +126,12 @@
           isCollapsed ? 'justify-center' : 'space-x-3',
         ]"
       >
-        <div
-          class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0"
-        >
-          <span class="text-primary-700 font-semibold text-sm">
-            {{ userInitials }}
-          </span>
-        </div>
+        <Avatar
+          :user="authStore.user"
+          size="md"
+          color="primary"
+          status="online"
+        />
         <div v-if="!isCollapsed" class="flex-1 min-w-0">
           <p class="text-sm font-medium text-gray-900 truncate">
             {{ authStore.userFullName }}
@@ -142,7 +141,7 @@
         <button
           v-if="!isCollapsed"
           @click="handleLogout"
-          class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          class="p-2 rounded-lg hover:bg-gray-100 transition-colors touch-manipulation"
           title="Logout"
         >
           <LogoutIcon class="w-5 h-5 text-gray-600" />
@@ -156,6 +155,8 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useUserUtils } from '@/composables/useUserUtils';
+import Avatar from '@/components/common/Avatar.vue';
 import {
   DashboardIcon,
   ElectionsIcon,
@@ -222,22 +223,8 @@ const adminItems = computed(() => [
   },
 ]);
 
-const userInitials = computed(() => {
-  if (!authStore.user) return '?';
-  const first = authStore.user.firstName?.[0] || '';
-  const last = authStore.user.lastName?.[0] || '';
-  return `${first}${last}`.toUpperCase();
-});
-
-const roleLabel = computed(() => {
-  const role = authStore.userRole;
-  if (!role) return 'User';
-
-  return role
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-});
+// Use shared user utilities
+const { userInitials, roleLabel } = useUserUtils();
 
 function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value;
