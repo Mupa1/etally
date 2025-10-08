@@ -17,3 +17,5 @@ export { default as PlusIcon } from './PlusIcon.vue';
 export { default as UserAddIcon } from './UserAddIcon.vue';
 export { default as ChartIcon } from './ChartIcon.vue';
 export { default as LocationIcon } from './LocationIcon.vue';
+export { default as CloseIcon } from './CloseIcon.vue';
+export { default as MenuIcon } from './MenuIcon.vue';
