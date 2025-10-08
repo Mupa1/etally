@@ -6,7 +6,7 @@
     <!-- Main Content Area -->
     <div
       :class="[
-        'transition-all duration-300',
+        'flex flex-col min-h-screen transition-all duration-300',
         // Mobile: No margin (sidebar is overlay)
         // Desktop: Margin based on collapsed state
         'ml-0 sm:ml-20 lg:ml-64',
@@ -72,13 +72,15 @@
         </div>
       </header>
 
-      <!-- Page Content -->
-      <main class="p-4 sm:p-6">
+      <!-- Page Content - Grows to fill available space -->
+      <main class="flex-1 p-4 sm:p-6">
         <slot />
       </main>
 
-      <!-- Footer -->
-      <footer class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-white">
+      <!-- Footer - Pinned to bottom -->
+      <footer
+        class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-white mt-auto"
+      >
         <div
           class="flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-600 space-y-2 sm:space-y-0"
         >
