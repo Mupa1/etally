@@ -21,6 +21,7 @@ import {
 
 // Routes
 import authRouter from '@/domains/auth/auth.routes';
+import electionRouter from '@/domains/elections/election.routes';
 
 // Server configuration
 const app: Application = express();
@@ -77,9 +78,10 @@ app.get('/api', (_req, res) => {
 
 // API Routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/elections', electionRouter);
 // TODO: Add more routes
-// app.use('/api/v1/elections', electionRouter);
 // app.use('/api/v1/results', resultRouter);
+// app.use('/api/v1/candidates', candidateRouter);
 // etc...
 
 // ==========================================

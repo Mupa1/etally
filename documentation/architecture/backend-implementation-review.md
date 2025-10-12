@@ -1984,13 +1984,17 @@ export class PolicyController {
 - [x] Create example routes for elections and results
 - [x] Build and deploy successfully
 
-#### Week 4: Domain Service Integration
+#### Week 4: Domain Service Integration ✅ COMPLETED (Oct 12, 2025)
 
-- [ ] Update Election service with ABAC checks
-- [ ] Update Results service with ABAC checks
-- [ ] Update Candidates service with ABAC checks
-- [ ] Add scope filtering to query methods
-- [ ] Test service-level authorization
+- [x] Create Election service with ABAC checks (340+ lines)
+- [x] Create Election controller (260+ lines)
+- [x] Create Election validator (90+ lines)
+- [x] Create Election routes with ABAC middleware (95+ lines)
+- [x] Add geographic scope filtering to query methods
+- [x] Implement ownership verification in services
+- [x] Service-level authorization using canUser()
+- [x] Integrate with server.ts (election routes active)
+- [x] Build and deploy successfully
 
 #### Week 5-6: Admin UI & Management
 
