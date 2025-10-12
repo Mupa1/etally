@@ -9,7 +9,7 @@
 
 import { Router } from 'express';
 import AuthController from './auth.controller';
-import { authenticate } from './auth.middleware';
+import { authenticate, requireSuperAdmin } from './auth.middleware';
 import { requirePermission } from '@/infrastructure/middleware/authorization.middleware';
 
 const router = Router();
@@ -79,11 +79,6 @@ router.put('/change-password', authenticate, authController.changePassword);
  * @desc    List all users
  * @access  Protected - Admin only
  */
-router.get(
-  '/users',
-  authenticate,
-  requirePermission('user', 'read'),
-  authController.listUsers
-);
+router.get('/users', authenticate, requireSuperAdmin, authController.listUsers);
 
 export default router;

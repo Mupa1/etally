@@ -301,7 +301,9 @@ class AuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log('Listing users...');
       const users = await this.authService.listUsers();
+      console.log('Users retrieved:', users.length);
 
       res.status(200).json({
         success: true,
@@ -309,6 +311,7 @@ class AuthController {
         data: users,
       });
     } catch (error) {
+      console.error('Error in listUsers controller:', error);
       next(error);
     }
   };

@@ -699,8 +699,8 @@ class ABACService {
           reason: granted ? undefined : reason,
           ipAddress: context.ipAddress,
           deviceId: context.deviceId,
-          latitude: context.latitude,
-          longitude: context.longitude,
+          latitude: context.latitude !== undefined ? context.latitude : null,
+          longitude: context.longitude !== undefined ? context.longitude : null,
         },
       })
       .catch((err) =>

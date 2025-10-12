@@ -558,17 +558,10 @@ class AuthService {
     const users = await this.prisma.user.findMany({
       select: {
         id: true,
-        nationalId: true,
         email: true,
         firstName: true,
         lastName: true,
-        phoneNumber: true,
         role: true,
-        isActive: true,
-        registrationStatus: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true,
       },
       orderBy: {
         createdAt: 'desc',
