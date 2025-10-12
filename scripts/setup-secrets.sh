@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# Kenya Election Management System
+# Election Management System
 # Secret Files Setup Script
 # ==========================================
 
@@ -9,7 +9,7 @@ set -e
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                                                           ║"
-echo "║   Kenya Election Management System - Secret Setup        ║"
+echo "║   Election Management System - Secret Setup        ║"
 echo "║                                                           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""

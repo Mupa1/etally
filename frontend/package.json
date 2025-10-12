@@ -1,7 +1,7 @@
 {
   "name": "etally-frontend",
   "version": "1.0.0",
-  "description": "Kenya Election Management System - Admin Portal",
+  "description": "Election Management System - Admin Portal",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,6 +1,6 @@
 /**
  * Database Seed Script
- * Creates initial admin user for Kenya Election Management System
+ * Creates initial admin user for Election Management System
  */
 
 const { PrismaClient } = require('@prisma/client');

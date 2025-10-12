@@ -1,7 +1,7 @@
 {
   "name": "etally-backend",
   "version": "1.0.0",
-  "description": "Kenya Election Management System - Backend API",
+  "description": "Election Management System - Backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -26,7 +26,6 @@
   "keywords": [
     "election",
     "monitoring",
-    "kenya",
     "api",
     "typescript"
   ],

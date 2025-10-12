@@ -6,7 +6,7 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-white mb-2">eTally</h1>
-        <p class="text-primary-100">Kenya Election Management System</p>
+        <p class="text-primary-100">Election Management System</p>
       </div>
 
       <!-- Login Card -->
@@ -82,7 +82,7 @@
       <!-- Footer -->
       <div class="mt-8 text-center">
         <p class="text-sm text-primary-100">
-          © 2025 Kenya Election Management System
+          © 2025 Election Management System
         </p>
       </div>
     </div>
@@ -113,7 +113,9 @@ const form = reactive({
 });
 
 const showPasswordChangeModal = ref(false);
-const passwordChangeModalRef = ref<InstanceType<typeof FirstLoginPasswordChangeModal> | null>(null);
+const passwordChangeModalRef = ref<InstanceType<
+  typeof FirstLoginPasswordChangeModal
+> | null>(null);
 
 async function handleLogin() {
   try {
@@ -145,16 +147,18 @@ async function handleLogin() {
 async function handlePasswordChange(newPassword: string) {
   try {
     await authStore.firstLoginPasswordChange(newPassword);
-    
-    // Password changed successfully, show success message and redirect to login
+
+    // Password changed successfully, close modal and redirect to login
     showPasswordChangeModal.value = false;
-    
-    // Show success message
-    alert('Password changed successfully! Please login again with your new password.');
-    
-    // Clear form
+
+    // Clear form so user can login with new password
     form.email = '';
     form.password = '';
+
+    // Reset modal state
+    if (passwordChangeModalRef.value) {
+      passwordChangeModalRef.value.resetForm();
+    }
   } catch (error: any) {
     // Set error in modal
     if (passwordChangeModalRef.value) {

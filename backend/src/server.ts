@@ -1,5 +1,5 @@
 /**
- * Kenya Election Management System - Backend Server
+ * Election Management System - Backend Server
  * Main entry point for the API server
  */
 
@@ -69,7 +69,7 @@ app.get('/health', (_req, res) => {
 // API version endpoint
 app.get('/api', (_req, res) => {
   res.status(200).json({
-    name: 'Kenya Election Management System API',
+    name: 'Election Management System API',
     version: '1.0.0',
     documentation: '/api-docs',
   });
@@ -113,7 +113,7 @@ const startServer = async () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   Kenya Election Management System - API Server          ║
+║   Election Management System - API Server          ║
 ║                                                           ║
 ║   Environment: ${NODE_ENV.padEnd(43)}║
 ║   Port:        ${PORT.toString().padEnd(43)}║

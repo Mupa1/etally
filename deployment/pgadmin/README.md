@@ -34,7 +34,7 @@ http://localhost:5050
 
 The database connection is pre-configured! You should see:
 
-**Server: "Kenya Elections Database"**
+**Server: "Elections Database"**
 
 - Host: `database`
 - Port: `5432`
@@ -47,7 +47,7 @@ When you expand the server, it will ask for the database password. Use the same 
 
 ### View Tables
 
-1. Expand: `Servers` → `Kenya Elections Database` → `Databases` → `elections` → `Schemas` → `public` → `Tables`
+1. Expand: `Servers` → `Elections Database` → `Databases` → `elections` → `Schemas` → `public` → `Tables`
 2. Right-click any table → `View/Edit Data` → `All Rows`
 
 ### Run SQL Queries
@@ -115,7 +115,7 @@ This file pre-configures the database connection so you don't have to manually a
 {
   "Servers": {
     "1": {
-      "Name": "Kenya Elections Database",
+      "Name": "Elections Database",
       "Group": "eTally Servers",
       "Host": "database",
       "Port": 5432,

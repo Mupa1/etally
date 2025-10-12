@@ -1,5 +1,6 @@
 # 🎨 Frontend Setup Guide
-## Kenya Election Management System - Admin Portal
+
+## Election Management System - Admin Portal
 
 **Framework:** Vue.js 3 + Composition API  
 **Build Tool:** Vite 4+  
@@ -12,6 +13,7 @@
 ## ✅ What's Already Set Up
 
 ### 1. **Project Configuration** ✅
+
 - `package.json` - All dependencies defined
 - `vite.config.ts` - Vite build configuration with code splitting
 - `tsconfig.json` - TypeScript configuration
@@ -19,17 +21,20 @@
 - `postcss.config.js` - PostCSS for Tailwind
 
 ### 2. **Core Application** ✅
+
 - `src/main.ts` - App entry point with Pinia & Router
 - `src/App.vue` - Root component
 - `index.html` - HTML template with fonts
 
 ### 3. **Routing (Vue Router)** ✅
+
 - `src/router/index.ts` - Complete routing setup
 - Authentication guards
 - Role-based access control
 - Redirect handling
 
 **Configured Routes:**
+
 ```
 / → /dashboard (redirect)
 /login → Login page
@@ -47,6 +52,7 @@
 ```
 
 ### 4. **State Management (Pinia)** ✅
+
 - `src/stores/auth.ts` - Authentication store with:
   - Login/Register/Logout
   - Token management
@@ -55,6 +61,7 @@
   - User profile management
 
 ### 5. **API Client** ✅
+
 - `src/utils/api.ts` - Axios client with:
   - Auto token injection
   - Token refresh on 401
@@ -62,21 +69,26 @@
   - Request/response interceptors
 
 ### 6. **Styles** ✅
+
 - `src/assets/styles/main.css` - Tailwind setup with:
   - Custom color scheme (primary, secondary, success, danger, warning)
   - Utility classes (btn, card, form-input, badge)
   - Responsive design utilities
 
 ### 7. **TypeScript Types** ✅
+
 - `src/types/auth.ts` - Authentication types
 - `src/vite-env.d.ts` - Vite environment types
 
 ### 8. **Docker Deployment** ✅
+
 - `Dockerfile` - Multi-stage build (Node → Build → Nginx)
 - `deployment/nginx.conf` - Nginx configuration for SPA
 
 ### 9. **Views Structure** ✅
+
 All placeholder view files created:
+
 ```
 src/views/
 ├── auth/
@@ -106,29 +118,34 @@ src/views/
 According to `technical considerations.txt`, you need these components:
 
 #### 1. **Elections Components** (`src/components/elections/`)
+
 - `ElectionWizard.vue` - Multi-step election creation
 - `ContestManager.vue` - Manage election contests
 - `RealTimeResults.vue` - Live results dashboard
 - `ElectionAnalytics.vue` - Election insights
 
 #### 2. **Candidates Components** (`src/components/candidates/`)
+
 - `CandidateImport.vue` - Bulk candidate upload
 - `NominationReview.vue` - Review applications
 - `PartyPrimaries.vue` - Primary election management
 - `CandidateProfile.vue` - Candidate details
 
 #### 3. **Reporting Components** (`src/components/reporting/`)
+
 - `ResultsDashboard.vue` - Comprehensive results
 - `AuditTrail.vue` - System activity logs
 - `Analytics.vue` - Election analytics
 - `ExportReports.vue` - Data export
 
 #### 4. **System Components** (`src/components/system/`)
+
 - `UserManagement.vue` - User administration
 - `RolePermissions.vue` - Access control
 - `SystemHealth.vue` - Monitoring dashboard
 
 #### 5. **Common/Shared Components** (`src/components/common/`)
+
 - `LoadingSpinner.vue` - Loading indicator
 - `Modal.vue` - Modal dialog
 - `DataTable.vue` - Reusable data table
@@ -375,23 +392,40 @@ Chart.js is already installed. Here's how to use it:
 
 <script setup lang="ts">
 import { Bar } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from 'chart.js';
 
 // Register Chart.js components
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+);
 
 const chartData = {
   labels: ['Candidate A', 'Candidate B', 'Candidate C'],
-  datasets: [{
-    label: 'Votes',
-    data: [12000, 19000, 3000],
-    backgroundColor: '#0ea5e9'
-  }]
+  datasets: [
+    {
+      label: 'Votes',
+      data: [12000, 19000, 3000],
+      backgroundColor: '#0ea5e9',
+    },
+  ],
 };
 
 const chartOptions = {
   responsive: true,
-  maintainAspectRatio: false
+  maintainAspectRatio: false,
 };
 </script>
 ```
@@ -409,7 +443,7 @@ Leaflet is already installed. Here's how to use it:
     <LMap style="height: 400px" :zoom="zoom" :center="center">
       <LTileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap contributors'
+        attribution="&copy; OpenStreetMap contributors"
       />
       <LMarker
         v-for="station in stations"
@@ -570,6 +604,7 @@ The frontend is configured for mobile-first responsive design:
 ```
 
 Use Tailwind responsive prefixes:
+
 ```vue
 <!-- Mobile: stack, Desktop: side-by-side -->
 <div class="flex flex-col md:flex-row">
@@ -607,6 +642,7 @@ Warning (Yellow): #f59e0b to #78350f
 ### Spacing
 
 Use Tailwind spacing scale:
+
 ```
 p-4  = padding: 1rem (16px)
 m-6  = margin: 1.5rem (24px)
@@ -656,18 +692,23 @@ import { format, parseISO } from 'date-fns';
 ## 🔧 Development Tips
 
 ### 1. Hot Module Replacement (HMR)
+
 Vite provides instant HMR. Changes appear immediately!
 
 ### 2. TypeScript Support
+
 Full TypeScript support. Get autocomplete and type checking.
 
 ### 3. Auto-imports (Optional)
+
 You can add unplugin-auto-import if you want auto-importing of Vue APIs.
 
 ### 4. Component Dev Tools
+
 Use Vue DevTools browser extension for debugging.
 
 ### 5. API Testing
+
 Backend is running at http://localhost:3000. Test login first!
 
 ---
@@ -691,17 +732,20 @@ When adding a component:
 ## 🐛 Troubleshooting
 
 ### Port Already in Use
+
 ```bash
 # Change port in vite.config.ts or:
 npm run dev -- --port 5174
 ```
 
 ### TypeScript Errors
+
 ```bash
 npm run type-check
 ```
 
 ### Build Errors
+
 ```bash
 # Clear cache and rebuild
 rm -rf node_modules dist
@@ -710,6 +754,7 @@ npm run build
 ```
 
 ### API Connection Issues
+
 ```bash
 # Check backend is running
 curl http://localhost:3000/health
@@ -734,6 +779,7 @@ When you're ready to add components, just tell me:
    - Error handling
 
 Example:
+
 > "Add ElectionWizard component with 3 steps: Basic Info, Contests, Review"
 
 Or provide your Vue component code and I'll integrate it!

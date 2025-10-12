@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Kenya Election Management System",
+    "name": "Election Management System",
     "description": "Complete API collection for eTally backend",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "etally-v1"

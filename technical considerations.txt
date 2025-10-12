@@ -1,4 +1,4 @@
-KENYA ELECTION MANAGEMENT SYSTEM
+Election Management System
 COMPREHENSIVE TECHNICAL DOCUMENTATION - REVISED
 ================================================
 

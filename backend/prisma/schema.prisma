@@ -1,5 +1,5 @@
 // ==========================================
-// KENYA ELECTION MANAGEMENT SYSTEM
+// Election Management System
 // Prisma Schema - Database Models
 // ==========================================
 
@@ -139,25 +139,25 @@ enum UserRegistrationStatus {
 // ==========================================
 
 model User {
-  id                  String                   @id @default(uuid())
-  nationalId          String                   @unique
-  email               String                   @unique
-  phoneNumber         String?
-  firstName           String
-  lastName            String
-  role                UserRole                 @default(field_observer)
-  isActive            Boolean                  @default(true)
-  lastLogin           DateTime?
-  failedLoginAttempts Int                      @default(0)
-  passwordHash        String
-  mfaSecret           String?
-  registrationStatus  UserRegistrationStatus   @default(pending_approval)
-  registrationSubmittedAt DateTime?            @default(now())
+  id                      String                 @id @default(uuid())
+  nationalId              String                 @unique
+  email                   String                 @unique
+  phoneNumber             String?
+  firstName               String
+  lastName                String
+  role                    UserRole               @default(field_observer)
+  isActive                Boolean                @default(true)
+  lastLogin               DateTime?
+  failedLoginAttempts     Int                    @default(0)
+  passwordHash            String
+  mfaSecret               String?
+  registrationStatus      UserRegistrationStatus @default(pending_approval)
+  registrationSubmittedAt DateTime?              @default(now())
 
   // Audit fields
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  createdBy String?   // ID of user who created this account
+  createdBy String? // ID of user who created this account
   deletedAt DateTime?
   deletedBy String?
 

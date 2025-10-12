@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# Kenya Election Management System
+# Election Management System
 # API Testing Script
 # ==========================================
 
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                                                           ║"
-echo "║   Kenya Election Management System - API Tests           ║"
+echo "║   Election Management System - API Tests           ║"
 echo "║                                                           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""

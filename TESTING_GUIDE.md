@@ -1,6 +1,6 @@
 # API Testing Guide
 
-## Quick Reference for Testing Kenya Election Management System
+## Quick Reference for Testing Election Management System
 
 ---
 
@@ -75,7 +75,7 @@ File: `scripts/test-api.sh`
 
 **Step 3: Test!**
 
-1. Open "Kenya Election Management System" collection
+1. Open "Election Management System" collection
 2. Click "Authentication" → "Login"
 3. Click "Send"
 4. ✅ Access token auto-saved!

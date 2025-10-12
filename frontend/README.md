@@ -1,4 +1,4 @@
-# Kenya Election Management System - Frontend
+# Election Management System - Frontend
 
 > Vue.js 3 Admin Portal with Composition API, Tailwind CSS, and Real-time Updates
 
@@ -35,6 +35,7 @@ http://localhost:5173
 ```
 
 **Default Credentials:**
+
 - Email: `admin@elections.ke`
 - Password: `Admin123!@#`
 
@@ -83,6 +84,7 @@ frontend/
 ## ✅ What's Implemented
 
 ### Core Features
+
 - ✅ Vue 3 with Composition API
 - ✅ TypeScript setup
 - ✅ Tailwind CSS with custom design system
@@ -100,6 +102,7 @@ frontend/
 - ✅ Dashboard page (basic)
 
 ### Authentication Flow
+
 - ✅ Login/Logout
 - ✅ Token storage (localStorage)
 - ✅ Auto token refresh on 401
@@ -107,6 +110,7 @@ frontend/
 - ✅ Role-based access
 
 ### UI Components
+
 - ✅ Pre-configured Tailwind utilities
 - ✅ Button styles (primary, secondary, success, danger)
 - ✅ Card components
@@ -121,16 +125,19 @@ frontend/
 The frontend is 90% complete! You just need to provide components for:
 
 ### High Priority
+
 1. **Election Management** - Create, edit, view elections
 2. **Live Results** - Real-time results dashboard
 3. **Candidate Management** - CRUD for candidates
 
 ### Medium Priority
+
 4. **Results Dashboard** - Comprehensive reporting
 5. **User Management** - Admin user CRUD
 6. **System Health** - Monitoring dashboard
 
 ### Components Structure (from technical spec):
+
 ```
 components/
 ├── elections/
@@ -155,12 +162,15 @@ components/
 ## 📝 How to Add Components
 
 ### Option 1: Provide Component Code
+
 Just give me your Vue component code and I'll integrate it!
 
 ### Option 2: Describe Requirements
+
 Tell me what you need and I'll create it following the design system.
 
 ### Example:
+
 > "Create ElectionWizard component with 3 steps: Basic Info (title, date, type), Contests (add positions), and Review (summary)"
 
 ---
@@ -168,6 +178,7 @@ Tell me what you need and I'll create it following the design system.
 ## 🎨 Design System
 
 ### Colors
+
 - **Primary:** Blue (#0ea5e9) - Main actions
 - **Success:** Green (#22c55e) - Success states
 - **Danger:** Red (#ef4444) - Errors, delete
@@ -175,6 +186,7 @@ Tell me what you need and I'll create it following the design system.
 - **Secondary:** Purple (#d946ef) - Secondary actions
 
 ### Components
+
 ```vue
 <!-- Buttons -->
 <button class="btn-primary">Primary</button>
@@ -225,15 +237,15 @@ import { useAuthStore } from '@/stores/auth';
 const authStore = useAuthStore();
 
 // Check authentication
-authStore.isAuthenticated
+authStore.isAuthenticated;
 
 // Check roles
-authStore.isSuperAdmin
-authStore.isElectionManager
+authStore.isSuperAdmin;
+authStore.isElectionManager;
 
 // User info
-authStore.user
-authStore.userFullName
+authStore.user;
+authStore.userFullName;
 ```
 
 ## 🧪 Testing

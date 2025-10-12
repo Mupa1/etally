@@ -1,6 +1,6 @@
 # Database Implementation Status Report
 
-## Kenya Election Management System
+## Election Management System
 
 **Generated:** October 8, 2025  
 **Database:** PostgreSQL 15 with PostGIS  
@@ -195,7 +195,7 @@ All features tested and verified:
 
 2. **Connect to Database:**
 
-   - Server: "Kenya Elections Database"
+   - Server: "Elections Database"
    - Enter database password from: `secrets/db_password.txt`
    - Password: `rPikWsN28QK8lBHcLAr6IYxj1JAQikj5`
 

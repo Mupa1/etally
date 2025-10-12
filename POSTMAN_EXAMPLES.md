@@ -1,6 +1,6 @@
 # Postman Testing Examples
 
-## Kenya Election Management System - API Endpoints
+## Election Management System - API Endpoints
 
 **Base URL:** `http://localhost:3000`
 
@@ -49,7 +49,7 @@ curl --location 'http://localhost:3000/api'
 
 ```json
 {
-  "name": "Kenya Election Management System API",
+  "name": "Election Management System API",
   "version": "1.0.0",
   "documentation": "/api-docs"
 }
@@ -475,7 +475,7 @@ You can import these as a Postman Collection. Here's the JSON format:
 ```json
 {
   "info": {
-    "name": "Kenya Election Management System",
+    "name": "Election Management System",
     "description": "API endpoints for eTally system",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -689,7 +689,7 @@ You can import these as a Postman Collection. Here's the JSON format:
 1. **Save the JSON above** to a file named `etally-collection.json`
 2. **Open Postman** → Click "Import" button
 3. **Select the file** or drag and drop
-4. **Collection imported!** You'll see "Kenya Election Management System" in your collections
+4. **Collection imported!** You'll see "Election Management System" in your collections
 
 ### Method 2: Manual Setup
 
@@ -968,7 +968,7 @@ if (pm.response.json().data && pm.response.json().data.tokens) {
 ```bash
 #!/bin/bash
 
-echo "=== Testing Kenya Election Management System API ==="
+echo "=== Testing Election Management System API ==="
 echo ""
 
 # 1. Health Check

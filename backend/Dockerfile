@@ -1,5 +1,5 @@
 # ==========================================
-# Kenya Election Management System - Backend
+# Election Management System - Backend
 # Multi-stage Docker Build
 # ==========================================
 
