@@ -24,7 +24,7 @@ const policyController = new PolicyController();
  * @access  Protected - Super Admin only
  */
 router.post(
-  '/',
+  '/policies',
   authenticate,
   requireSuperAdmin,
   policyController.createPolicy
@@ -36,14 +36,24 @@ router.post(
  * @access  Protected - Super Admin only
  * @query   ?isActive=true&resourceType=election&role=field_observer
  */
-router.get('/', authenticate, requireSuperAdmin, policyController.listPolicies);
+router.get(
+  '/policies',
+  authenticate,
+  requireSuperAdmin,
+  policyController.listPolicies
+);
 
 /**
  * @route   GET /api/v1/policies/:id
  * @desc    Get policy by ID
  * @access  Protected - Super Admin only
  */
-router.get('/:id', authenticate, requireSuperAdmin, policyController.getPolicy);
+router.get(
+  '/policies/:id',
+  authenticate,
+  requireSuperAdmin,
+  policyController.getPolicy
+);
 
 /**
  * @route   PUT /api/v1/policies/:id
@@ -51,7 +61,7 @@ router.get('/:id', authenticate, requireSuperAdmin, policyController.getPolicy);
  * @access  Protected - Super Admin only
  */
 router.put(
-  '/:id',
+  '/policies/:id',
   authenticate,
   requireSuperAdmin,
   policyController.updatePolicy
@@ -63,7 +73,7 @@ router.put(
  * @access  Protected - Super Admin only
  */
 router.delete(
-  '/:id',
+  '/policies/:id',
   authenticate,
   requireSuperAdmin,
   policyController.deletePolicy
@@ -75,7 +85,7 @@ router.delete(
  * @access  Protected - Super Admin only
  */
 router.patch(
-  '/:id/toggle',
+  '/policies/:id/toggle',
   authenticate,
   requireSuperAdmin,
   policyController.togglePolicy

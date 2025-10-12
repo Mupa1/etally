@@ -116,27 +116,98 @@
           Administration
         </p>
         <template v-for="item in adminItems" :key="item.name">
-          <router-link :to="item.path" v-slot="{ isActive }" custom>
-            <a
-              :href="item.path"
-              @click.prevent="handleNavClick(item.path)"
-              :class="[
-                'flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 touch-manipulation min-h-[44px]',
-                isActive
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
-                isCollapsed ? 'justify-center' : 'space-x-3',
-              ]"
-              :title="isCollapsed ? item.label : undefined"
-            >
-              <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
-              <span
-                v-if="!isCollapsed || isMobileMenuOpen"
-                class="font-medium"
-                >{{ item.label }}</span
+          <!-- Parent menu item (with or without children) -->
+          <div>
+            <!-- Menu item with submenu -->
+            <div v-if="item.children">
+              <button
+                @click="toggleMenu(item.name)"
+                :class="[
+                  'flex items-center w-full px-3 py-2.5 rounded-lg transition-all duration-200 touch-manipulation min-h-[44px]',
+                  'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+                  isCollapsed ? 'justify-center' : 'space-x-3',
+                ]"
+                :title="isCollapsed ? item.label : undefined"
               >
-            </a>
-          </router-link>
+                <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
+                <span
+                  v-if="!isCollapsed || isMobileMenuOpen"
+                  class="font-medium flex-1 text-left"
+                  >{{ item.label }}</span
+                >
+                <svg
+                  v-if="(!isCollapsed || isMobileMenuOpen) && item.children"
+                  class="w-4 h-4 transition-transform"
+                  :class="{ 'rotate-180': isMenuExpanded(item.name) }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              <!-- Submenu items -->
+              <Transition name="expand">
+                <div
+                  v-if="
+                    isMenuExpanded(item.name) &&
+                    (!isCollapsed || isMobileMenuOpen)
+                  "
+                  class="ml-8 mt-1 space-y-1"
+                >
+                  <router-link
+                    v-for="child in item.children"
+                    :key="child.name"
+                    :to="child.path!"
+                    v-slot="{ isActive }"
+                    custom
+                  >
+                    <a
+                      :href="child.path"
+                      @click.prevent="handleNavClick(child.path!)"
+                      :class="[
+                        'flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm',
+                        isActive
+                          ? 'bg-primary-50 text-primary-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                      ]"
+                    >
+                      <span>{{ child.label }}</span>
+                    </a>
+                  </router-link>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Menu item without submenu -->
+            <router-link v-else :to="item.path!" v-slot="{ isActive }" custom>
+              <a
+                :href="item.path"
+                @click.prevent="handleNavClick(item.path!)"
+                :class="[
+                  'flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 touch-manipulation min-h-[44px]',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+                  isCollapsed ? 'justify-center' : 'space-x-3',
+                ]"
+                :title="isCollapsed ? item.label : undefined"
+              >
+                <component :is="item.icon" class="w-5 h-5 flex-shrink-0" />
+                <span
+                  v-if="!isCollapsed || isMobileMenuOpen"
+                  class="font-medium"
+                  >{{ item.label }}</span
+                >
+              </a>
+            </router-link>
+          </div>
         </template>
       </div>
     </nav>
@@ -203,15 +274,20 @@ import {
   ChevronIcon,
   LogoutIcon,
   CloseIcon,
+  ShieldIcon,
+  AnalyticsIcon,
+  AuditIcon,
+  LocationIcon,
 } from '@/components/icons';
 
 // Navigation item type
 interface NavigationItem {
   name: string;
   label: string;
-  path: string;
+  path?: string;
   icon: Component;
   badge?: string;
+  children?: NavigationItem[];
 }
 
 const router = useRouter();
@@ -220,6 +296,7 @@ const { userInitials, roleLabel } = useUserUtils();
 
 const isCollapsed = ref(false);
 const isMobile = ref(false);
+const expandedMenus = ref<string[]>([]);
 
 // Inject mobile menu state from MainLayout (with proper types)
 const isMobileMenuOpen = inject('isMobileMenuOpen', ref(false)) as Ref<boolean>;
@@ -273,26 +350,92 @@ const navigationItems = computed<NavigationItem[]>(() => [
   },
 ]);
 
-const adminItems = computed<NavigationItem[]>(() => [
-  {
-    name: 'users',
-    label: 'Users',
-    path: '/settings',
-    icon: UsersIcon,
-  },
-  {
-    name: 'settings',
+const adminItems = computed<NavigationItem[]>(() => {
+  const items: NavigationItem[] = [];
+
+  // Super Admin only items
+  if (authStore.userRole === 'super_admin') {
+    items.push({
+      name: 'users-menu',
+      label: 'Users',
+      icon: UsersIcon,
+      children: [
+        {
+          name: 'users-overview',
+          label: 'Users Overview',
+          path: '/admin/users',
+          icon: UsersIcon,
+        },
+        {
+          name: 'policies',
+          label: 'Policies',
+          path: '/admin/policies',
+          icon: ShieldIcon,
+        },
+        {
+          name: 'scopes',
+          label: 'Geo Scopes',
+          path: '/admin/scopes',
+          icon: LocationIcon,
+        },
+        {
+          name: 'analytics',
+          label: 'Permission Analytics',
+          path: '/admin/analytics',
+          icon: AnalyticsIcon,
+        },
+        {
+          name: 'audit',
+          label: 'Access Audit',
+          path: '/admin/audit',
+          icon: AuditIcon,
+        },
+      ],
+    });
+  }
+
+  // Settings menu with submenu
+  items.push({
+    name: 'settings-menu',
     label: 'Settings',
-    path: '/settings',
     icon: SettingsIcon,
-  },
-]);
+    children: [
+      {
+        name: 'db-settings',
+        label: 'DB Settings',
+        path: '/settings/database',
+        icon: SettingsIcon,
+      },
+      {
+        name: 'rate-limiting',
+        label: 'Rate Limiting',
+        path: '/settings/rate-limiting',
+        icon: SettingsIcon,
+      },
+    ],
+  });
+
+  return items;
+});
 
 function toggleSidebar() {
   // Desktop only: toggle collapse
   if (!isMobile.value) {
     isCollapsed.value = !isCollapsed.value;
   }
+}
+
+function toggleMenu(menuName: string) {
+  const index = expandedMenus.value.indexOf(menuName);
+  if (index > -1) {
+    expandedMenus.value.splice(index, 1);
+  } else {
+    expandedMenus.value.push(menuName);
+  }
+}
+
+function isMenuExpanded(menuName: string): boolean {
+  return expandedMenus.value.includes(menuName);
 }
 
 function handleNavClick(path: string) {
@@ -320,5 +463,24 @@ async function handleLogout() {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Expand transition for submenus */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
 }
 </style>

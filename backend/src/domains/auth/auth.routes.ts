@@ -74,4 +74,16 @@ router.put(
  */
 router.put('/change-password', authenticate, authController.changePassword);
 
+/**
+ * @route   GET /api/v1/auth/users
+ * @desc    List all users
+ * @access  Protected - Admin only
+ */
+router.get(
+  '/users',
+  authenticate,
+  requirePermission('user', 'read'),
+  authController.listUsers
+);
+
 export default router;

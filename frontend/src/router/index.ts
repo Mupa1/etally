@@ -81,6 +81,52 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true },
   },
+  // Admin Routes
+  {
+    path: '/admin/policies',
+    name: 'admin-policies',
+    component: () => import('@/views/admin/PolicyManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/scopes',
+    name: 'admin-scopes',
+    component: () => import('@/views/admin/ScopeManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/permissions',
+    name: 'admin-permissions',
+    component: () => import('@/views/admin/PermissionManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/audit',
+    name: 'admin-audit',
+    component: () => import('@/views/admin/AuditTrailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/analytics',
+    name: 'admin-analytics',
+    component: () => import('@/views/admin/PermissionAnalyticsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
