@@ -28,7 +28,7 @@ export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -111,9 +111,7 @@ export const errorHandler = (
     const response: ErrorResponse = {
       success: false,
       error: 'ValidationError',
-      message: isDevelopment
-        ? error.message
-        : 'Invalid data provided',
+      message: isDevelopment ? error.message : 'Invalid data provided',
       statusCode: 400,
       timestamp: new Date().toISOString(),
       path: req.path,

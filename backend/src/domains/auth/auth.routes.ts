@@ -5,17 +5,17 @@
 
 import { Router } from 'express';
 import AuthController from './auth.controller';
-import { authenticate } from './auth.middleware';
+import { authenticate, requireAdmin } from './auth.middleware';
 
 const router = Router();
 const authController = new AuthController();
 
 /**
  * @route   POST /api/v1/auth/register
- * @desc    Register a new user
- * @access  Public
+ * @desc    Register a new user (Admin only)
+ * @access  Protected - Admin/Election Manager only
  */
-router.post('/register', authController.register);
+router.post('/register', authenticate, requireAdmin, authController.register);
 
 /**
  * @route   POST /api/v1/auth/login
@@ -44,6 +44,13 @@ router.post('/refresh', authController.refreshToken);
  * @access  Protected
  */
 router.get('/profile', authenticate, authController.getProfile);
+
+/**
+ * @route   PUT /api/v1/auth/first-login-password-change
+ * @desc    Change password on first login for initial super admin
+ * @access  Protected
+ */
+router.put('/first-login-password-change', authenticate, authController.firstLoginPasswordChange);
 
 /**
  * @route   PUT /api/v1/auth/change-password

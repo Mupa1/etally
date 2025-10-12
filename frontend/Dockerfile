@@ -23,6 +23,10 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Build argument for API URL
+ARG VITE_API_URL=http://localhost:3000/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy dependencies
 COPY --from=dependencies /app/node_modules ./node_modules
 
@@ -43,10 +47,8 @@ COPY deployment/nginx.conf /etc/nginx/nginx.conf
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Create non-root user
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
+# Set permissions for existing nginx user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \

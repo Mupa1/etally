@@ -14,7 +14,10 @@ import morgan from 'morgan';
 // Infrastructure
 import PrismaService from '@/infrastructure/database/prisma.service';
 import RedisService from '@/infrastructure/cache/redis.service';
-import { errorHandler, notFoundHandler } from '@/infrastructure/middleware/error.middleware';
+import {
+  errorHandler,
+  notFoundHandler,
+} from '@/infrastructure/middleware/error.middleware';
 
 // Routes
 import authRouter from '@/domains/auth/auth.routes';
@@ -32,10 +35,12 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 app.use(helmet());
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:80'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:80'],
+    credentials: true,
+  })
+);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -52,21 +57,21 @@ app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
 // ==========================================
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: NODE_ENV
+    environment: NODE_ENV,
   });
 });
 
 // API version endpoint
-app.get('/api', (req, res) => {
+app.get('/api', (_req, res) => {
   res.status(200).json({
     name: 'Kenya Election Management System API',
     version: '1.0.0',
-    documentation: '/api-docs'
+    documentation: '/api-docs',
   });
 });
 
@@ -96,14 +101,14 @@ const startServer = async () => {
     // Connect to database
     const prisma = PrismaService.getInstance();
     await prisma.connect();
-    
+
     // Connect to Redis
     const redis = RedisService.getInstance();
     const redisHealthy = await redis.healthCheck();
     if (!redisHealthy) {
       console.warn('⚠️  Redis connection failed, continuing without cache');
     }
-    
+
     app.listen(PORT, () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
@@ -143,16 +148,16 @@ process.on('uncaughtException', (error) => {
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n${signal} signal received: closing HTTP server gracefully`);
-  
+
   try {
     // Close database connection
     const prisma = PrismaService.getInstance();
     await prisma.disconnect();
-    
+
     // Close Redis connection
     const redis = RedisService.getInstance();
     await redis.disconnect();
-    
+
     console.log('All connections closed successfully');
     process.exit(0);
   } catch (error) {

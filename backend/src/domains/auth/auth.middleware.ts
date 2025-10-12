@@ -33,7 +33,11 @@ class AuthMiddleware {
    * Verify JWT token and attach user to request
    * Use this middleware on protected routes
    */
-  authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  authenticate = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // Extract token from Authorization header
       const authHeader = req.headers.authorization;
@@ -43,7 +47,9 @@ class AuthMiddleware {
       }
 
       if (!authHeader.startsWith('Bearer ')) {
-        throw new AuthenticationError('Invalid authorization format. Use: Bearer <token>');
+        throw new AuthenticationError(
+          'Invalid authorization format. Use: Bearer <token>'
+        );
       }
 
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
@@ -73,7 +79,7 @@ class AuthMiddleware {
    * router.get('/admin', authenticate, requireRoles(['super_admin']), handler);
    */
   requireRoles = (allowedRoles: UserRole[]) => {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return (req: Request, _res: Response, next: NextFunction): void => {
       try {
         if (!req.user) {
           throw new AuthenticationError('User not authenticated');
@@ -121,7 +127,7 @@ class AuthMiddleware {
    */
   optionalAuthenticate = async (
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
@@ -149,7 +155,7 @@ class AuthMiddleware {
    * router.put('/users/:userId', authenticate, requireOwnershipOrAdmin(), handler);
    */
   requireOwnershipOrAdmin = (userIdParam: string = 'userId') => {
-    return (req: Request, res: Response, next: NextFunction): void => {
+    return (req: Request, _res: Response, next: NextFunction): void => {
       try {
         if (!req.user) {
           throw new AuthenticationError('User not authenticated');
@@ -159,10 +165,14 @@ class AuthMiddleware {
 
         // Allow if user owns the resource or is admin
         const isOwner = req.user.userId === resourceUserId;
-        const isAdmin = ['super_admin', 'election_manager'].includes(req.user.role);
+        const isAdmin = ['super_admin', 'election_manager'].includes(
+          req.user.role
+        );
 
         if (!isOwner && !isAdmin) {
-          throw new AuthorizationError('You can only access your own resources');
+          throw new AuthorizationError(
+            'You can only access your own resources'
+          );
         }
 
         next();

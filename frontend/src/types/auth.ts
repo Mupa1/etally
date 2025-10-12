@@ -47,9 +47,14 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: User;
   tokens: AuthTokens;
+  requiresPasswordChange?: boolean;
 }
 
 export interface ChangePasswordRequest {
   currentPassword: string;
+  newPassword: string;
+}
+
+export interface FirstLoginPasswordChangeRequest {
   newPassword: string;
 }

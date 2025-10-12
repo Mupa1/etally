@@ -54,14 +54,31 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Install runtime dependencies
-RUN apk add --no-cache dumb-init curl
+# Install runtime dependencies and build tools for native modules
+# openssl-dev provides libssl.so.3, openssl1.1-compat provides libssl.so.1.1 needed for Prisma
+RUN apk add --no-cache dumb-init curl python3 make g++ openssl-dev
+
+# Copy package files first
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+
+# Install production dependencies (this will rebuild native modules for the correct arch)
+# Use --ignore-scripts to skip prepare/husky hooks, then rebuild native modules
+RUN npm ci --only=production --ignore-scripts && \
+    npm rebuild bcrypt --build-from-source && \
+    npm rebuild sharp --build-from-source && \
+    npm cache clean --force
+
+# Copy prisma and generate client
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+# Generate Prisma client for linux-musl-arm64-openssl-3.0.x (Alpine Linux with OpenSSL 3)
+ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-arm64-openssl-3.0.x
+RUN npx prisma generate
 
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+
+# Remove build tools to reduce image size (keep openssl-dev for Prisma runtime)
+RUN apk del python3 make g++
 
 # Create logs directory
 RUN mkdir -p logs && chown nodejs:nodejs logs
