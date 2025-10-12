@@ -1002,12 +1002,76 @@ FOR ALL USING (
 
 ---
 
-### Phase 2: ABAC Core Engine (Week 2)
+### Phase 2: ABAC Core Engine (Week 2) ✅ COMPLETED
 
-#### 2.1 Create ABAC Service
+**Status:** ✅ Completed on October 12, 2025
+
+**Files Created:**
+
+- `src/infrastructure/authorization/abac.service.ts` (500+ lines)
+- `src/infrastructure/middleware/authorization.middleware.ts` (220+ lines)
+- `src/shared/interfaces/abac.interface.ts` (180+ lines)
+- `src/infrastructure/authorization/abac.service.test.ts` (420+ lines)
+
+**Total Lines Added:** ~1,320 lines of production code and tests
+
+#### 2.1 ABACService Class Implementation ✅
+
+Full implementation created in `src/infrastructure/authorization/abac.service.ts`:
+
+**Core Methods Implemented:**
+
+- ✅ `checkAccess()` - Main authorization entry point with 6-layer evaluation
+- ✅ `checkUserPermission()` - Explicit permission overrides (with Redis caching)
+- ✅ `checkRBAC()` - Role-based permission matrix
+- ✅ `checkGeographicScope()` - Geographic scope restrictions
+- ✅ `checkOwnership()` - Resource ownership verification
+- ✅ `evaluatePolicies()` - Dynamic policy evaluation
+- ✅ `checkTimeRestrictions()` - Business logic time checks
+- ✅ `evaluateConditions()` - Policy condition evaluation
+- ✅ `checkGeofence()` - Geofencing with circle and polygon support
+- ✅ `calculateDistance()` - Haversine distance formula
+- ✅ `isPointInPolygon()` - Ray-casting algorithm for polygon geofences
+- ✅ `logAndReturn()` - Async permission check logging
+- ✅ `checkBulkAccess()` - Bulk permission checking
+- ✅ `invalidateUserCache()` - Cache invalidation for users
+- ✅ `invalidatePolicyCache()` - Cache invalidation for policies
+- ✅ `getUserPermissionStats()` - Permission analytics
+
+**Features Implemented:**
+
+- ✅ 6-layer permission evaluation system
+- ✅ Redis caching for performance (5-minute TTL)
+- ✅ Complete RBAC permission matrix for all 4 roles × 8 resource types
+- ✅ Geographic scope checking (national/county/constituency/ward)
+- ✅ Resource ownership verification
+- ✅ Dynamic policy evaluation with complex conditions
+- ✅ Geofencing support (circle & polygon)
+- ✅ Time-based restrictions
+- ✅ IP whitelisting/blacklisting
+- ✅ Device restrictions
+- ✅ Election status conditions
+- ✅ Result status filtering
+- ✅ Async audit logging (non-blocking)
+- ✅ Permission statistics and analytics
+
+#### 2.2 Authorization Middleware ✅
+
+Full implementation created in `src/infrastructure/middleware/authorization.middleware.ts`:
+
+**Methods Implemented:**
+
+- ✅ `requirePermission()` - Middleware factory for protected routes
+- ✅ `optionalPermission()` - Non-blocking permission check
+- ✅ `canUser()` - Programmatic permission check for services
+- ✅ `extractResourceAttributes()` - Context extraction from Express request
+- ✅ `invalidateUserCache()` - Cache management
+- ✅ `invalidatePolicyCache()` - Cache management
+
+**Usage Example:**
 
 ```typescript
-// src/infrastructure/authorization/abac.service.ts
+// src/domains/elections/election.routes.ts
 
 import { PrismaService } from '@/infrastructure/database/prisma.service';
 import {
@@ -1868,16 +1932,19 @@ export class PolicyController {
 - [x] Test schema changes
 - [ ] Add RLS policies for ABAC tables (deferred to Phase 2)
 
-#### Week 2: Core ABAC Engine
+#### Week 2: Core ABAC Engine ✅ COMPLETED (Oct 12, 2025)
 
-- [ ] Implement ABACService class
-- [ ] Implement RBAC check logic
-- [ ] Implement geographic scope checks
-- [ ] Implement ownership checks
-- [ ] Implement policy evaluation engine
-- [ ] Add time-based restrictions
-- [ ] Add geofencing support
-- [ ] Write unit tests for ABAC engine
+- [x] Implement ABACService class (500+ lines)
+- [x] Implement RBAC check logic (complete permission matrix)
+- [x] Implement geographic scope checks (4 levels)
+- [x] Implement ownership checks (with manager override)
+- [x] Implement policy evaluation engine (condition-based)
+- [x] Add time-based restrictions (election status, time windows)
+- [x] Add geofencing support (circle & polygon algorithms)
+- [x] Write unit tests for ABAC engine (420+ lines, 9 test suites)
+- [x] Add Redis caching for performance
+- [x] Add permission statistics and analytics
+- [x] Build and deploy successfully
 
 #### Week 3: Middleware & Integration
 
