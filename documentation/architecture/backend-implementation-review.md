@@ -1594,9 +1594,36 @@ export class ABACService {
 
 ---
 
-### Phase 3: Authorization Middleware (Week 3)
+### Phase 3: Middleware Integration (Week 3) ✅ COMPLETED
 
-#### 3.1 Create Authorization Middleware
+**Status:** ✅ Completed on October 12, 2025
+
+**Summary:**
+Phase 3 integrated the ABAC engine with existing routes and created example patterns for domain implementation.
+
+**Files Modified:**
+
+- `src/domains/auth/auth.routes.ts` - Integrated ABAC middleware
+- `src/shared/types/errors.ts` - Enhanced AuthorizationError with ABAC metadata
+- `src/infrastructure/middleware/error.middleware.ts` - Added ABAC details to error responses
+
+**Files Created:**
+
+- `src/domains/elections/election.routes.example.ts` - Complete election routes example
+- `src/domains/results/result.routes.example.ts` - Complete results routes example
+- `tests/integration/abac.integration.test.ts` - Integration test suite
+
+**What Was Integrated:**
+
+1. ✅ Auth routes now use `requirePermission('user', 'create')` for registration
+2. ✅ Error responses include `appliedPolicies` and `evaluationTimeMs`
+3. ✅ Example routes show ABAC patterns for elections and results
+4. ✅ Integration tests verify end-to-end flow
+5. ✅ Backend built and deployed successfully
+
+#### 3.1 Authorization Middleware Integration ✅
+
+Middleware already created in Phase 2, now integrated:
 
 ```typescript
 // src/infrastructure/middleware/authorization.middleware.ts
@@ -1946,13 +1973,16 @@ export class PolicyController {
 - [x] Add permission statistics and analytics
 - [x] Build and deploy successfully
 
-#### Week 3: Middleware & Integration
+#### Week 3: Middleware & Integration ✅ COMPLETED (Oct 12, 2025)
 
-- [ ] Create AuthorizationMiddleware
-- [ ] Integrate with existing auth middleware
-- [ ] Add requirePermission middleware factory
-- [ ] Update route definitions to use new middleware
-- [ ] Test middleware integration
+- [x] Create AuthorizationMiddleware (completed in Phase 2)
+- [x] Integrate with existing auth middleware
+- [x] Add requirePermission middleware factory (completed in Phase 2)
+- [x] Update route definitions to use new middleware (auth routes updated)
+- [x] Test middleware integration (integration tests created)
+- [x] Update error handling for ABAC metadata
+- [x] Create example routes for elections and results
+- [x] Build and deploy successfully
 
 #### Week 4: Domain Service Integration
 

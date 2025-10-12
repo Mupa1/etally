@@ -7,7 +7,11 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
 
-  constructor(message: string, statusCode: number = 500, isOperational: boolean = true) {
+  constructor(
+    message: string,
+    statusCode: number = 500,
+    isOperational: boolean = true
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
@@ -34,9 +38,23 @@ export class AuthenticationError extends AppError {
 }
 
 export class AuthorizationError extends AppError {
-  constructor(message: string = 'Insufficient permissions') {
+  public readonly appliedPolicies?: string[];
+  public readonly evaluationTimeMs?: number;
+  public readonly context?: any;
+
+  constructor(
+    message: string = 'Insufficient permissions',
+    metadata?: {
+      appliedPolicies?: string[];
+      evaluationTimeMs?: number;
+      context?: any;
+    }
+  ) {
     super(message, 403);
     this.name = 'AuthorizationError';
+    this.appliedPolicies = metadata?.appliedPolicies;
+    this.evaluationTimeMs = metadata?.evaluationTimeMs;
+    this.context = metadata?.context;
   }
 }
 

@@ -33,6 +33,7 @@ System architecture and design documentation.
 - [Backend Implementation Review](architecture/backend-implementation-review.md) - Comprehensive backend analysis and status
 - [ABAC Phase 1 Completion Report](architecture/abac-phase1-completion.md) - Database schema for RBAC + ABAC
 - [ABAC Phase 2 Completion Report](architecture/abac-phase2-completion.md) - Core ABAC engine implementation
+- [ABAC Phase 3 Completion Report](architecture/abac-phase3-completion.md) - Middleware integration and route protection
 - [Component Refactoring Summary](architecture/component-refactoring-summary.md) - Frontend component reusability improvements
 
 ### 🚢 Deployment

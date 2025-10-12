@@ -68,12 +68,10 @@ class AuthorizationMiddleware {
         const result = await this.abac.checkAccess(context);
 
         if (!result.granted) {
-          const error = new AuthorizationError(
-            result.reason || 'Access denied'
-          );
-          (error as any).appliedPolicies = result.appliedPolicies;
-          (error as any).evaluationTimeMs = result.evaluationTimeMs;
-          throw error;
+          throw new AuthorizationError(result.reason || 'Access denied', {
+            appliedPolicies: result.appliedPolicies,
+            evaluationTimeMs: result.evaluationTimeMs,
+          });
         }
 
         // Attach permission check result to request for auditing

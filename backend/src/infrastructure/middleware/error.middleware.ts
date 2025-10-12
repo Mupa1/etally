@@ -51,6 +51,17 @@ export const errorHandler = (
       path: req.path,
     };
 
+    // Include ABAC metadata for authorization errors
+    if (error.name === 'AuthorizationError') {
+      const authError = error as any;
+      if (authError.appliedPolicies) {
+        response.details = {
+          appliedPolicies: authError.appliedPolicies,
+          evaluationTimeMs: authError.evaluationTimeMs,
+        };
+      }
+    }
+
     if (isDevelopment) {
       response.stack = error.stack;
     }
