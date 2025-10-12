@@ -135,6 +135,37 @@ enum UserRegistrationStatus {
 }
 
 // ==========================================
+// ABAC (Attribute-Based Access Control) ENUMS
+// ==========================================
+
+enum PermissionAction {
+  create
+  read
+  update
+  delete
+  approve
+  verify
+  export
+  submit
+}
+
+enum ResourceType {
+  election
+  election_contest
+  candidate
+  election_result
+  incident
+  user
+  audit_log
+  polling_station
+}
+
+enum PolicyEffect {
+  allow
+  deny
+}
+
+// ==========================================
 // CORE USER & AUTHENTICATION MODELS
 // ==========================================
 
@@ -162,14 +193,16 @@ model User {
   deletedBy String?
 
   // Relations
-  sessions          Session[]
-  mobileDevices     MobileDevice[]
-  auditLogs         AuditLog[]
-  createdElections  Election[]
-  submittedResults  ElectionResult[]
-  notifications     Notification[]
-  uploadedMedia     MediaAttachment[]
-  reportedIncidents Incident[]
+  sessions              Session[]
+  mobileDevices         MobileDevice[]
+  auditLogs             AuditLog[]
+  createdElections      Election[]
+  submittedResults      ElectionResult[]
+  notifications         Notification[]
+  uploadedMedia         MediaAttachment[]
+  reportedIncidents     Incident[]
+  geographicScopes      UserGeographicScope[]
+  userPermissions       UserPermission[]
 
   @@index([email])
   @@index([nationalId])
@@ -209,7 +242,8 @@ model County {
   deletedAt DateTime?
 
   // Relations
-  constituencies Constituency[]
+  constituencies    Constituency[]
+  geographicScopes  UserGeographicScope[]
 
   @@index([code])
   @@map("counties")
@@ -227,7 +261,8 @@ model Constituency {
   deletedAt DateTime?
 
   // Relations
-  wards ElectoralWard[]
+  wards             ElectoralWard[]
+  geographicScopes  UserGeographicScope[]
 
   @@index([countyId])
   @@index([code])
@@ -246,7 +281,8 @@ model ElectoralWard {
   deletedAt DateTime?
 
   // Relations
-  pollingStations PollingStation[]
+  pollingStations   PollingStation[]
+  geographicScopes  UserGeographicScope[]
 
   @@index([constituencyId])
   @@index([code])
@@ -635,4 +671,108 @@ model RateLimit {
   @@index([identifier, windowStart])
   @@index([blockedUntil])
   @@map("rate_limits")
+}
+
+// ==========================================
+// ABAC (Attribute-Based Access Control) MODELS
+// ==========================================
+
+// User geographic scope assignments
+model UserGeographicScope {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Geographic scope (null = national level access)
+  countyId       String?
+  county         County?        @relation(fields: [countyId], references: [id])
+  constituencyId String?
+  constituency   Constituency?  @relation(fields: [constituencyId], references: [id])
+  wardId         String?
+  ward           ElectoralWard? @relation(fields: [wardId], references: [id])
+
+  // Scope level
+  scopeLevel String // 'national', 'county', 'constituency', 'ward'
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, countyId, constituencyId, wardId])
+  @@index([userId])
+  @@map("user_geographic_scopes")
+}
+
+// ABAC Policies
+model AccessPolicy {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  effect      PolicyEffect   @default(allow)
+  priority    Int            @default(0) // Higher priority = evaluated first
+
+  // Role restrictions
+  roles UserRole[]
+
+  // Resource restrictions
+  resourceType ResourceType
+  actions      PermissionAction[]
+
+  // Conditions (stored as JSON)
+  conditions Json? // { "timeRange": {...}, "ipRange": [...], "deviceType": [...] }
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String
+
+  @@index([resourceType, isActive])
+  @@index([priority])
+  @@map("access_policies")
+}
+
+// User-specific permissions (overrides)
+model UserPermission {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  resourceType ResourceType
+  resourceId   String?          // Specific resource or null for all
+  action       PermissionAction
+  effect       PolicyEffect     @default(allow)
+
+  // Expiry for temporary permissions
+  expiresAt DateTime?
+
+  reason    String? // Why this permission was granted
+  grantedBy String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, resourceType, resourceId, action])
+  @@index([userId, resourceType])
+  @@index([expiresAt])
+  @@map("user_permissions")
+}
+
+// Audit trail for permission checks
+model PermissionCheck {
+  id           String           @id @default(uuid())
+  userId       String
+  resourceType ResourceType
+  resourceId   String?
+  action       PermissionAction
+  granted      Boolean
+  reason       String? // Why denied
+
+  // Context
+  ipAddress String?
+  deviceId  String?
+  latitude  Float?
+  longitude Float?
+
+  checkedAt DateTime @default(now())
+
+  @@index([userId, checkedAt])
+  @@index([resourceType, action])
+  @@map("permission_checks")
 }

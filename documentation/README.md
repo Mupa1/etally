@@ -5,6 +5,7 @@ Welcome to the eTally2 documentation hub. All project documentation is organized
 ## 📚 Table of Contents
 
 ### 🚀 Setup & Installation
+
 Getting started with eTally2 development environment.
 
 - [Backend Quickstart](setup/backend-quickstart.md) - Backend setup and configuration
@@ -14,41 +15,52 @@ Getting started with eTally2 development environment.
 - [Credentials](setup/credentials.md) - System credentials and access information
 
 ### 🧪 Testing
+
 Testing strategies and guides.
 
 - [Testing Guide](testing/testing-guide.md) - Comprehensive testing documentation
 
 ### 🔌 API Documentation
+
 API usage and integration guides.
 
 - [Postman Examples](api/postman-examples.md) - API testing with Postman
 
 ### 🏗️ Architecture
+
 System architecture and design documentation.
 
+- [Backend Implementation Review](architecture/backend-implementation-review.md) - Comprehensive backend analysis and status
+- [ABAC Phase 1 Completion Report](architecture/abac-phase1-completion.md) - RBAC + ABAC implementation Phase 1 results
 - [Component Refactoring Summary](architecture/component-refactoring-summary.md) - Frontend component reusability improvements
 
 ### 🚢 Deployment
+
 Deployment guides and configurations.
 
 - [PgAdmin Setup](deployment/pgadmin-setup.md) - PostgreSQL administration setup
 
 ### 🎯 Domain Documentation
+
 Domain-specific implementation details.
 
 #### Authentication
+
 - [Auth Domain](domains/auth/auth-domain.md) - Authentication domain implementation
 
 #### Observer Registration
+
 - [Implementation](domains/observer-registration/implementation.md) - Observer registration implementation details
 - [Requirements](domains/observer-registration/requirements.md) - Observer registration functional requirements
 
 ### 💾 Database
+
 Database schemas, migrations, and status.
 
 - [Database Status](database/database-status.md) - Current database state and migration history
 
 ### 📋 Project Management
+
 Project planning, status, and technical considerations.
 
 - [Project Status](project/status.md) - Current project status and milestones
@@ -85,5 +97,4 @@ When updating existing documentation or adding new docs, please:
 
 ---
 
-*Last updated: October 12, 2025*
-
+_Last updated: October 12, 2025_
