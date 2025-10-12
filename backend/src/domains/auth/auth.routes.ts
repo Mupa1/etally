@@ -81,4 +81,16 @@ router.put('/change-password', authenticate, authController.changePassword);
  */
 router.get('/users', authenticate, requireSuperAdmin, authController.listUsers);
 
+/**
+ * @route   PATCH /api/v1/auth/users/:userId/status
+ * @desc    Update user active status
+ * @access  Protected - Super Admin only
+ */
+router.patch(
+  '/users/:userId/status',
+  authenticate,
+  requireSuperAdmin,
+  authController.updateUserStatus
+);
+
 export default router;

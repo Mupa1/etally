@@ -558,10 +558,16 @@ class AuthService {
     const users = await this.prisma.user.findMany({
       select: {
         id: true,
+        nationalId: true,
         email: true,
+        phoneNumber: true,
         firstName: true,
         lastName: true,
         role: true,
+        isActive: true,
+        registrationStatus: true,
+        lastLogin: true,
+        createdAt: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -569,6 +575,29 @@ class AuthService {
     });
 
     return users;
+  }
+
+  /**
+   * Update user status (activate/deactivate)
+   */
+  async updateUserStatus(userId: string, isActive: boolean) {
+    // Don't allow deactivating super admin
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User', userId);
+    }
+
+    if (user.role === 'super_admin' && !isActive) {
+      throw new ValidationError('Cannot deactivate super admin');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+    });
   }
 }
 

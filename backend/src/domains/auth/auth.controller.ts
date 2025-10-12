@@ -315,6 +315,30 @@ class AuthController {
       next(error);
     }
   };
+
+  /**
+   * Update user status (Admin only)
+   * PATCH /api/v1/auth/users/:userId/status
+   */
+  updateUserStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { userId } = req.params;
+      const { isActive } = req.body;
+
+      await this.authService.updateUserStatus(userId, isActive);
+
+      res.status(200).json({
+        success: true,
+        message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default AuthController;
