@@ -39,30 +39,26 @@
 
           <!-- Password Field -->
           <div class="mb-6">
-            <label for="password" class="form-label">Password</label>
-            <input
-              id="password"
+            <PasswordInput
               v-model="form.password"
-              type="password"
-              class="form-input"
+              label="Password"
               placeholder="••••••••"
               required
               autocomplete="current-password"
+              :disabled="authStore.loading"
             />
           </div>
 
           <!-- Submit Button -->
-          <button
+          <Button
             type="submit"
-            class="w-full btn-primary"
+            variant="primary"
+            full-width
+            :loading="authStore.loading"
             :disabled="authStore.loading"
           >
-            <span v-if="!authStore.loading">Sign In</span>
-            <span v-else class="flex items-center justify-center">
-              <LoadingSpinner size="md" class="mr-2" />
-              Signing In...
-            </span>
-          </button>
+            Sign In
+          </Button>
         </form>
 
         <!-- Register Link -->
@@ -101,7 +97,8 @@ import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Alert from '@/components/common/Alert.vue';
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import Button from '@/components/common/Button.vue';
+import PasswordInput from '@/components/common/PasswordInput.vue';
 import FirstLoginPasswordChangeModal from '@/components/common/FirstLoginPasswordChangeModal.vue';
 
 const router = useRouter();
