@@ -31,12 +31,13 @@ API usage and integration guides.
 System architecture and design documentation.
 
 - [Backend Implementation Review](architecture/backend-implementation-review.md) - Comprehensive backend analysis and status
-- **ABAC Implementation (Phases 1-4):**
+- **ABAC Implementation (85% Complete - Phases 1-5):**
   - [ABAC Implementation Summary](architecture/abac-implementation-summary.md) - ⭐ Complete overview of ABAC system
   - [Phase 1: Database Schema](architecture/abac-phase1-completion.md) - Foundation for RBAC + ABAC
   - [Phase 2: Core Engine](architecture/abac-phase2-completion.md) - Authorization engine (500+ lines)
   - [Phase 3: Middleware Integration](architecture/abac-phase3-completion.md) - Route protection
   - [Phase 4: Domain Services](architecture/abac-phase4-completion.md) - Election domain with ABAC
+  - [Phase 5: Admin APIs](architecture/abac-phase5-completion.md) - Policy & permission management (17 endpoints)
 - [Component Refactoring Summary](architecture/component-refactoring-summary.md) - Frontend component reusability improvements
 
 ### 🚢 Deployment
