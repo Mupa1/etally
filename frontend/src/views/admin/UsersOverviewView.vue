@@ -3,92 +3,94 @@
     page-title="Users Overview"
     page-description="Manage and monitor all system users"
   >
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <StatCard
+        title="Approved Users"
+        :value="stats.total"
+        icon="check"
+        color="primary"
+      />
+      <StatCard
+        title="Active (24h)"
+        :value="stats.active"
+        :percentage="stats.total > 0 ? (stats.active / stats.total) * 100 : 0"
+        icon="check-circle"
+        color="success"
+      />
+      <StatCard
+        title="Pending Approval"
+        :value="stats.pending"
+        icon="clock"
+        color="warning"
+      />
+      <StatCard
+        title="Field Observers"
+        :value="stats.observers"
+        :percentage="
+          stats.total > 0 ? (stats.observers / stats.total) * 100 : 0
+        "
+        icon="check-circle"
+        color="primary"
+      />
+    </div>
+
     <!-- Search and Filters -->
     <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Search -->
-        <div class="md:col-span-2">
+      <!-- Mobile: Stack all filters vertically -->
+      <div class="space-y-4 md:space-y-0">
+        <!-- Search - Full width on mobile, half on desktop -->
+        <div class="w-full">
           <SearchBar
             v-model="searchQuery"
             placeholder="Search by name, email, phone, or ID..."
           />
         </div>
 
-        <!-- Role Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Role
-          </label>
-          <select v-model="filters.role" class="form-input">
-            <option value="">All Roles</option>
+        <!-- Filters Grid - Stack on mobile, grid on desktop -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <!-- Role Filter -->
+          <Select v-model="filters.role" label="Role" placeholder="All Roles">
             <option value="super_admin">Super Admin</option>
             <option value="election_manager">Election Manager</option>
             <option value="field_observer">Field Observer</option>
             <option value="public_viewer">Public Viewer</option>
-          </select>
-        </div>
+          </Select>
 
-        <!-- Status Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Status
-          </label>
-          <select v-model="filters.isActive" class="form-input">
-            <option value="">All Status</option>
+          <!-- Status Filter -->
+          <Select
+            v-model="filters.isActive"
+            label="Status"
+            placeholder="All Status"
+          >
             <option value="true">Active</option>
             <option value="false">Inactive</option>
-          </select>
-        </div>
-      </div>
+          </Select>
 
-      <!-- Registration Status Filter -->
-      <div class="mt-4 flex gap-4">
-        <div class="flex-1">
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Registration Status
-          </label>
-          <select v-model="filters.registrationStatus" class="form-input">
-            <option value="">All Registration Status</option>
+          <!-- Registration Status Filter -->
+          <Select
+            v-model="filters.registrationStatus"
+            label="Registration Status"
+            placeholder="All Registration Status"
+          >
             <option value="pending_approval">Pending Approval</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-          </select>
+          </Select>
         </div>
 
-        <!-- Actions -->
-        <div class="flex items-end gap-2">
-          <Button variant="secondary" @click="resetFilters">
+        <!-- Actions - Full width on mobile, right-aligned on desktop -->
+        <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <Button
+            variant="secondary"
+            @click="resetFilters"
+            class="w-full sm:w-auto"
+          >
             Reset Filters
           </Button>
-          <Button variant="primary" @click="loadUsers"> Apply Filters </Button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white shadow-sm rounded-lg p-4">
-        <div class="text-sm text-gray-600">Total Users</div>
-        <div class="text-2xl font-bold text-gray-900 mt-1">
-          {{ stats.total }}
-        </div>
-      </div>
-      <div class="bg-white shadow-sm rounded-lg p-4">
-        <div class="text-sm text-gray-600">Active</div>
-        <div class="text-2xl font-bold text-green-600 mt-1">
-          {{ stats.active }}
-        </div>
-      </div>
-      <div class="bg-white shadow-sm rounded-lg p-4">
-        <div class="text-sm text-gray-600">Pending Approval</div>
-        <div class="text-2xl font-bold text-yellow-600 mt-1">
-          {{ stats.pending }}
-        </div>
-      </div>
-      <div class="bg-white shadow-sm rounded-lg p-4">
-        <div class="text-sm text-gray-600">Observers</div>
-        <div class="text-2xl font-bold text-primary-600 mt-1">
-          {{ stats.observers }}
+          <Button variant="primary" @click="loadUsers" class="w-full sm:w-auto">
+            Apply Filters
+          </Button>
         </div>
       </div>
     </div>
@@ -109,190 +111,129 @@
     />
 
     <!-- Users Table -->
-    <div v-else class="bg-white shadow-sm rounded-lg overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              User
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              Contact
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              Role
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              Status
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              Geographic Scope
-            </th>
-            <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-            >
-              Last Login
-            </th>
-            <th
-              class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr
-            v-for="user in filteredUsers"
-            :key="user.id"
-            class="hover:bg-gray-50"
-          >
-            <td class="px-6 py-4">
-              <div class="flex items-center">
-                <Avatar :user="user" size="md" color="primary" />
-                <div class="ml-3">
-                  <div class="text-sm font-medium text-gray-900">
-                    {{ user.firstName }} {{ user.lastName }}
-                  </div>
-                  <div class="text-sm text-gray-500">
-                    ID: {{ user.nationalId }}
-                  </div>
-                </div>
+    <Table
+      v-else
+      :columns="tableColumns"
+      :data="filteredUsers"
+      :current-page="currentPage"
+      :per-page="perPage"
+      @page-change="currentPage = $event"
+      @per-page-change="handlePerPageChange"
+    >
+      <!-- User Column -->
+      <template #cell-user="{ item }">
+        <div class="flex items-start sm:items-center py-2">
+          <Avatar
+            :user="item"
+            size="md"
+            color="primary"
+            class="flex-shrink-0"
+          />
+          <div class="ml-3 min-w-0 flex-1">
+            <div class="text-sm font-medium text-gray-900">
+              {{ item.firstName }} {{ item.lastName }}
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500">
+              ID: {{ item.nationalId }}
+            </div>
+            <!-- Mobile: Show email and phone -->
+            <div class="lg:hidden mt-1 space-y-0.5">
+              <div class="text-xs text-gray-600">{{ item.email }}</div>
+              <div v-if="item.phoneNumber" class="text-xs text-gray-500">
+                {{ item.phoneNumber }}
               </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-gray-900">{{ user.email }}</div>
-              <div class="text-sm text-gray-500">
-                {{ user.phoneNumber || 'N/A' }}
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <Badge :variant="getRoleBadgeVariant(user.role)">
-                {{ formatRole(user.role) }}
-              </Badge>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <Badge :variant="user.isActive ? 'success' : 'secondary'">
-                {{ user.isActive ? 'Active' : 'Inactive' }}
+            </div>
+            <!-- Mobile: Show status badges -->
+            <div class="sm:hidden mt-2 flex flex-wrap gap-1">
+              <Badge :variant="getRoleBadgeVariant(item.role)" size="sm">
+                {{ formatRole(item.role) }}
               </Badge>
               <Badge
-                v-if="user.registrationStatus !== 'approved'"
-                :variant="getRegistrationBadgeVariant(user.registrationStatus)"
-                class="ml-1"
+                :variant="item.isActive ? 'success' : 'secondary'"
+                size="sm"
               >
-                {{ formatRegistrationStatus(user.registrationStatus) }}
+                {{ item.isActive ? 'Active' : 'Inactive' }}
               </Badge>
-            </td>
-            <td class="px-6 py-4">
-              <div
-                v-if="user.scopes && user.scopes.length > 0"
-                class="space-y-1"
-              >
-                <Badge
-                  v-for="scope in user.scopes.slice(0, 2)"
-                  :key="scope.id"
-                  variant="secondary"
-                  size="sm"
-                >
-                  {{ getScopeLabel(scope) }}
-                </Badge>
-                <div
-                  v-if="user.scopes.length > 2"
-                  class="text-xs text-gray-500"
-                >
-                  +{{ user.scopes.length - 2 }} more
-                </div>
-              </div>
-              <span v-else class="text-sm text-gray-400">No restrictions</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ user.lastLogin ? formatDate(user.lastLogin) : 'Never' }}
-            </td>
-            <td
-              class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
-            >
-              <div class="flex justify-end gap-2">
-                <button
-                  @click="viewUserDetails(user)"
-                  class="text-primary-600 hover:text-primary-900"
-                  title="View Details"
-                >
-                  <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  v-if="user.role !== 'super_admin'"
-                  @click="toggleUserStatus(user)"
-                  :class="
-                    user.isActive
-                      ? 'text-gray-600 hover:text-gray-900'
-                      : 'text-green-600 hover:text-green-900'
-                  "
-                  :title="user.isActive ? 'Deactivate' : 'Activate'"
-                >
-                  <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      v-if="user.isActive"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                    />
-                    <path
-                      v-else
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination -->
-      <div
-        class="px-6 py-4 border-t border-gray-200 flex justify-between items-center"
-      >
-        <div class="text-sm text-gray-500">
-          Showing {{ filteredUsers.length }} of {{ users.length }} users
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <!-- Contact Column -->
+      <template #cell-contact="{ item }">
+        <div class="text-sm text-gray-900">{{ item.email }}</div>
+        <div class="text-sm text-gray-500">{{ item.phoneNumber || 'N/A' }}</div>
+      </template>
+
+      <!-- Role Column -->
+      <template #cell-role="{ item }">
+        <Badge :variant="getRoleBadgeVariant(item.role)">
+          {{ formatRole(item.role) }}
+        </Badge>
+      </template>
+
+      <!-- Status Column -->
+      <template #cell-status="{ item }">
+        <Badge :variant="item.isActive ? 'success' : 'secondary'">
+          {{ item.isActive ? 'Active' : 'Inactive' }}
+        </Badge>
+        <Badge
+          v-if="item.registrationStatus !== 'approved'"
+          :variant="getRegistrationBadgeVariant(item.registrationStatus)"
+          class="ml-1"
+        >
+          {{ formatRegistrationStatus(item.registrationStatus) }}
+        </Badge>
+      </template>
+
+      <!-- Geographic Scope Column -->
+      <template #cell-scope="{ item }">
+        <div v-if="item.scopes && item.scopes.length > 0" class="space-y-1">
+          <Badge
+            v-for="scope in item.scopes.slice(0, 2)"
+            :key="scope.id"
+            variant="secondary"
+            size="sm"
+          >
+            {{ getScopeLabel(scope) }}
+          </Badge>
+          <div v-if="item.scopes.length > 2" class="text-xs text-gray-500">
+            +{{ item.scopes.length - 2 }} more
+          </div>
+        </div>
+        <span v-else class="text-sm text-gray-400">No restrictions</span>
+      </template>
+
+      <!-- Last Login Column -->
+      <template #cell-lastLogin="{ item }">
+        {{ item.lastLogin ? formatDate(item.lastLogin) : 'Never' }}
+      </template>
+
+      <!-- Actions Column -->
+      <template #cell-actions="{ item }">
+        <Dropdown
+          button-label="Actions"
+          button-class="px-3 py-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+        >
+          <DropdownItem @click="viewUserDetails(item)">
+            View Details
+          </DropdownItem>
+          <DropdownItem @click="() => navigateToScopes(item.id)">
+            Manage Scopes
+          </DropdownItem>
+          <DropdownItem @click="() => navigateToPermissions(item.id)">
+            Manage Permissions
+          </DropdownItem>
+          <DropdownItem
+            v-if="item.role !== 'super_admin'"
+            @click="toggleUserStatus(item)"
+            :variant="item.isActive ? 'danger' : 'default'"
+          >
+            {{ item.isActive ? 'Deactivate' : 'Activate' }}
+          </DropdownItem>
+        </Dropdown>
+      </template>
+    </Table>
 
     <!-- User Details Modal -->
     <UserDetailsModal v-model="showDetailsModal" :user="selectedUser" />
@@ -302,15 +243,55 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/utils/api';
+import { useRouter } from 'vue-router';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import SearchBar from '@/components/common/SearchBar.vue';
+import Select from '@/components/common/Select.vue';
+import Table from '@/components/common/Table.vue';
+import type { TableColumn } from '@/components/common/Table.vue';
+import Dropdown from '@/components/common/Dropdown.vue';
+import DropdownItem from '@/components/common/DropdownItem.vue';
 import Button from '@/components/common/Button.vue';
 import Badge from '@/components/common/Badge.vue';
 import Avatar from '@/components/common/Avatar.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import Alert from '@/components/common/Alert.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
+import StatCard from '@/components/admin/StatCard.vue';
 import UserDetailsModal from '@/components/admin/UserDetailsModal.vue';
+
+const router = useRouter();
+
+// Table columns configuration
+const tableColumns: TableColumn[] = [
+  { key: 'user', label: 'User' },
+  {
+    key: 'contact',
+    label: 'Contact',
+    className: 'hidden lg:table-cell',
+    cellClassName: 'hidden lg:table-cell',
+  },
+  { key: 'role', label: 'Role' },
+  {
+    key: 'status',
+    label: 'Status',
+    className: 'hidden sm:table-cell',
+    cellClassName: 'hidden sm:table-cell',
+  },
+  {
+    key: 'scope',
+    label: 'Geographic Scope',
+    className: 'hidden xl:table-cell',
+    cellClassName: 'hidden xl:table-cell',
+  },
+  {
+    key: 'lastLogin',
+    label: 'Last Login',
+    className: 'hidden md:table-cell',
+    cellClassName: 'hidden md:table-cell',
+  },
+  { key: 'actions', label: 'Actions', align: 'right' },
+];
 
 interface User {
   id: string;
@@ -323,6 +304,8 @@ interface User {
   isActive: boolean;
   registrationStatus: string;
   lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
   scopes?: Array<{
     id: string;
     scopeLevel: string;
@@ -342,17 +325,39 @@ const filters = ref({
   registrationStatus: '',
 });
 
+// Pagination state
+const currentPage = ref(1);
+const perPage = ref(10);
+
 const showDetailsModal = ref(false);
 const selectedUser = ref<User | null>(null);
 
-const stats = computed(() => ({
-  total: users.value.length,
-  active: users.value.filter((u) => u.isActive).length,
-  pending: users.value.filter(
-    (u) => u.registrationStatus === 'pending_approval'
-  ).length,
-  observers: users.value.filter((u) => u.role === 'field_observer').length,
-}));
+const stats = computed(() => {
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  return {
+    // Total approved users
+    total: users.value.filter((u) => u.registrationStatus === 'approved')
+      .length,
+
+    // Approved users who logged in within the last 1 day
+    active: users.value.filter(
+      (u) =>
+        u.registrationStatus === 'approved' &&
+        u.lastLogin &&
+        new Date(u.lastLogin) >= oneDayAgo
+    ).length,
+
+    // Users with pending approval status
+    pending: users.value.filter(
+      (u) => u.registrationStatus === 'pending_approval'
+    ).length,
+
+    // Users with field_observer role
+    observers: users.value.filter((u) => u.role === 'field_observer').length,
+  };
+});
 
 const filteredUsers = computed(() => {
   let result = users.value;
@@ -394,6 +399,7 @@ const filteredUsers = computed(() => {
 async function loadUsers() {
   loading.value = true;
   error.value = null;
+  currentPage.value = 1; // Reset to first page when reloading
 
   try {
     const response = await api.get('/auth/users');
@@ -448,6 +454,21 @@ function viewUserDetails(user: User) {
   showDetailsModal.value = true;
 }
 
+function navigateToScopes(userId: string) {
+  router.push('/admin/scopes');
+  // Could pre-select this user if we enhance the scope management page
+}
+
+function navigateToPermissions(userId: string) {
+  router.push('/admin/permissions');
+  // Could pre-select this user if we enhance the permission management page
+}
+
+function handlePerPageChange(newPerPage: number) {
+  perPage.value = newPerPage;
+  currentPage.value = 1; // Reset to first page when changing per page
+}
+
 function resetFilters() {
   searchQuery.value = '';
   filters.value = {
@@ -455,10 +476,16 @@ function resetFilters() {
     isActive: '',
     registrationStatus: '',
   };
+  currentPage.value = 1; // Reset to first page when resetting filters
 }
 
-function getRoleBadgeVariant(role: string): string {
-  const variants: Record<string, string> = {
+function getRoleBadgeVariant(
+  role: string
+): 'primary' | 'secondary' | 'success' | 'warning' | 'danger' {
+  const variants: Record<
+    string,
+    'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+  > = {
     super_admin: 'danger',
     election_manager: 'primary',
     field_observer: 'success',
@@ -477,8 +504,13 @@ function formatRole(role: string): string {
   return roles[role] || role;
 }
 
-function getRegistrationBadgeVariant(status: string): string {
-  const variants: Record<string, string> = {
+function getRegistrationBadgeVariant(
+  status: string
+): 'primary' | 'secondary' | 'success' | 'warning' | 'danger' {
+  const variants: Record<
+    string,
+    'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+  > = {
     pending_approval: 'warning',
     approved: 'success',
     rejected: 'danger',
@@ -486,7 +518,8 @@ function getRegistrationBadgeVariant(status: string): string {
   return variants[status] || 'secondary';
 }
 
-function formatRegistrationStatus(status: string): string {
+function formatRegistrationStatus(status?: string): string {
+  if (!status) return 'N/A';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
@@ -498,7 +531,8 @@ function getScopeLabel(scope: any): string {
   return scope.scopeLevel;
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString?: string): string {
+  if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString();
 }
 

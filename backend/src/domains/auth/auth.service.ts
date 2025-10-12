@@ -568,6 +568,7 @@ class AuthService {
         registrationStatus: true,
         lastLogin: true,
         createdAt: true,
+        updatedAt: true,
       },
       orderBy: {
         createdAt: 'desc',

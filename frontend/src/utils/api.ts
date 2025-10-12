@@ -69,6 +69,14 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest) {
       const authStore = useAuthStore();
 
+      // If the refresh endpoint itself failed, immediately logout (prevent infinite loop)
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        console.log('Refresh token invalid, logging out...');
+        authStore.clearAuth();
+        router.push({ name: 'login', query: { expired: 'true' } });
+        return Promise.reject(error);
+      }
+
       // Try to refresh token
       if (authStore.refreshToken && !(originalRequest as any)._retry) {
         (originalRequest as any)._retry = true;
@@ -83,15 +91,17 @@ api.interceptors.response.use(
 
           return api(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, logout user
-          authStore.logout();
-          router.push({ name: 'login' });
+          // Refresh failed, logout user gracefully
+          console.log('Token refresh failed, logging out...');
+          authStore.clearAuth();
+          router.push({ name: 'login', query: { expired: 'true' } });
           return Promise.reject(refreshError);
         }
       } else {
         // No refresh token or already retried, logout
-        authStore.logout();
-        router.push({ name: 'login' });
+        console.log('No valid refresh token, logging out...');
+        authStore.clearAuth();
+        router.push({ name: 'login', query: { expired: 'true' } });
       }
     }
 
