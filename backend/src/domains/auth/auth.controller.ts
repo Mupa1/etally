@@ -10,10 +10,12 @@ import {
   registerSchema,
   refreshTokenSchema,
   changePasswordSchema,
+  firstLoginPasswordChangeSchema,
   LoginInput,
   RegisterInput,
   RefreshTokenInput,
   ChangePasswordInput,
+  FirstLoginPasswordChangeInput,
 } from './auth.validator';
 import { ValidationError } from '@/shared/types/errors';
 
@@ -25,10 +27,14 @@ class AuthController {
   }
 
   /**
-   * Register new user
+   * Register new user (Admin only)
    * POST /api/v1/auth/register
    */
-  register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  register = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // Validate request body
       const validationResult = registerSchema.safeParse(req.body);
@@ -62,7 +68,11 @@ class AuthController {
    * Login user
    * POST /api/v1/auth/login
    */
-  login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // Validate request body
       const validationResult = loginSchema.safeParse(req.body);
@@ -103,7 +113,11 @@ class AuthController {
    * Logout user
    * POST /api/v1/auth/logout
    */
-  logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  logout = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { refreshToken } = req.body;
 
@@ -126,7 +140,11 @@ class AuthController {
    * Refresh access token
    * POST /api/v1/auth/refresh
    */
-  refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  refreshToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // Validate request body
       const validationResult = refreshTokenSchema.safeParse(req.body);
@@ -155,7 +173,11 @@ class AuthController {
    * GET /api/v1/auth/profile
    * Requires authentication
    */
-  getProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       if (!req.user) {
         throw new ValidationError('User not authenticated');
@@ -167,6 +189,53 @@ class AuthController {
         success: true,
         message: 'Profile retrieved successfully',
         data: profile,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * First-login password change
+   * PUT /api/v1/auth/first-login-password-change
+   * Requires authentication
+   * Only for initial super admin with pending approval
+   */
+  firstLoginPasswordChange = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new ValidationError('User not authenticated');
+      }
+
+      // Validate request body
+      const validationResult = firstLoginPasswordChangeSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const { newPassword }: FirstLoginPasswordChangeInput =
+        validationResult.data;
+
+      await this.authService.firstLoginPasswordChange(
+        req.user.userId,
+        newPassword
+      );
+
+      res.status(200).json({
+        success: true,
+        message:
+          'Password changed successfully and account approved. Please login again with your new password.',
       });
     } catch (error) {
       next(error);
@@ -201,13 +270,19 @@ class AuthController {
         );
       }
 
-      const { currentPassword, newPassword }: ChangePasswordInput = validationResult.data;
+      const { currentPassword, newPassword }: ChangePasswordInput =
+        validationResult.data;
 
-      await this.authService.changePassword(req.user.userId, currentPassword, newPassword);
+      await this.authService.changePassword(
+        req.user.userId,
+        currentPassword,
+        newPassword
+      );
 
       res.status(200).json({
         success: true,
-        message: 'Password changed successfully. Please login again with your new password.',
+        message:
+          'Password changed successfully. Please login again with your new password.',
       });
     } catch (error) {
       next(error);

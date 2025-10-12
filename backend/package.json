@@ -1,12 +1,12 @@
 {
   "name": "etally-backend",
   "version": "1.0.0",
-  "description": "Kenya Election Management System - Backend API",
+  "description": "Election Management System - Backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "tsc && tsc-alias",
+    "start": "node -r tsconfig-paths/register dist/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:integration": "jest --config jest.integration.config.js",
@@ -18,7 +18,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "node prisma/seed.js",
     "db:reset": "prisma migrate reset --force",
     "db:push": "prisma db push",
     "prepare": "husky install"
@@ -26,7 +26,6 @@
   "keywords": [
     "election",
     "monitoring",
-    "kenya",
     "api",
     "typescript"
   ],
@@ -48,6 +47,7 @@
     "morgan": "^1.10.0",
     "prom-client": "^15.1.0",
     "sharp": "^0.33.1",
+    "tsconfig-paths": "^4.2.0",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },
@@ -72,6 +72,7 @@
     "prisma": "^5.7.0",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
+    "tsc-alias": "^1.8.8",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   },

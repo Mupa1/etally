@@ -1,6 +1,6 @@
 # Backend Quick Start Guide
 
-Quick guide to get the Kenya Election Management System backend running.
+Quick guide to get the Election Management System backend running.
 
 ## Prerequisites
 

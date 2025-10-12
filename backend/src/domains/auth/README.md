@@ -1,10 +1,11 @@
 # Authentication Module
 
-Complete authentication implementation for the Kenya Election Management System.
+Complete authentication implementation for the Election Management System.
 
 ## Overview
 
 This module provides secure authentication and authorization using JWT tokens, with support for:
+
 - User registration and login
 - Session management with refresh tokens
 - Role-based access control (RBAC)
@@ -29,6 +30,7 @@ auth/
 ### Public Endpoints
 
 #### Register User
+
 ```http
 POST /api/v1/auth/register
 Content-Type: application/json
@@ -44,6 +46,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -66,6 +69,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /api/v1/auth/login
 Content-Type: application/json
@@ -83,6 +87,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -98,6 +103,7 @@ Content-Type: application/json
 ```
 
 #### Refresh Token
+
 ```http
 POST /api/v1/auth/refresh
 Content-Type: application/json
@@ -108,6 +114,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -119,6 +126,7 @@ Content-Type: application/json
 ```
 
 #### Logout
+
 ```http
 POST /api/v1/auth/logout
 Content-Type: application/json
@@ -131,12 +139,14 @@ Content-Type: application/json
 ### Protected Endpoints
 
 #### Get Profile
+
 ```http
 GET /api/v1/auth/profile
 Authorization: Bearer eyJhbGc...
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -156,6 +166,7 @@ Authorization: Bearer eyJhbGc...
 ```
 
 #### Change Password
+
 ```http
 PUT /api/v1/auth/change-password
 Authorization: Bearer eyJhbGc...
@@ -170,6 +181,7 @@ Content-Type: application/json
 ## Middleware Usage
 
 ### Protect Routes
+
 ```typescript
 import { authenticate } from '@/domains/auth/auth.middleware';
 
@@ -177,6 +189,7 @@ router.get('/protected', authenticate, handler);
 ```
 
 ### Role-Based Access
+
 ```typescript
 import { authenticate, requireRoles } from '@/domains/auth/auth.middleware';
 
@@ -194,38 +207,41 @@ router.get('/admin', authenticate, requireAdmin, handler);
 ```
 
 ### Resource Ownership
+
 ```typescript
-import { authenticate, requireOwnershipOrAdmin } from '@/domains/auth/auth.middleware';
+import {
+  authenticate,
+  requireOwnershipOrAdmin,
+} from '@/domains/auth/auth.middleware';
 
 // User can only access their own data, unless they're admin
-router.put(
-  '/users/:userId',
-  authenticate,
-  requireOwnershipOrAdmin(),
-  handler
-);
+router.put('/users/:userId', authenticate, requireOwnershipOrAdmin(), handler);
 ```
 
 ## Security Features
 
 ### Password Requirements
+
 - Minimum 8 characters
 - At least one uppercase letter
 - At least one lowercase letter
 - At least one number
-- At least one special character (!@#$%^&*(),.?":{}|<>)
+- At least one special character (!@#$%^&\*(),.?":{}|<>)
 
 ### Account Lockout
+
 - Account locked after 5 failed login attempts
 - User must contact support to unlock
 
 ### Token Management
+
 - Access tokens expire in 15 minutes (configurable)
 - Refresh tokens expire in 7 days (configurable)
 - Tokens stored in database sessions
 - Can be revoked by logging out
 
 ### Password Security
+
 - Passwords hashed using bcrypt with 12 rounds
 - Never stored in plain text
 - Old password required to change
@@ -240,18 +256,22 @@ router.put(
 ## Validation Rules
 
 ### National ID
+
 - Must be 7 or 8 digits
 - Unique per user
 
 ### Email
+
 - Must be valid email format
 - Unique per user
 
 ### Phone Number
+
 - Must be valid Kenyan number format: +254XXXXXXXXX
 - Optional field
 
 ### Names
+
 - Minimum 2 characters
 - Maximum 100 characters
 - Only letters, spaces, hyphens, and apostrophes allowed
@@ -259,6 +279,7 @@ router.put(
 ## Error Handling
 
 ### Authentication Errors (401)
+
 - Invalid credentials
 - Token expired
 - Token invalid
@@ -266,11 +287,13 @@ router.put(
 - Account locked
 
 ### Validation Errors (400)
+
 - Invalid input format
 - Missing required fields
 - Password doesn't meet requirements
 
 ### Conflict Errors (409)
+
 - Email already registered
 - National ID already registered
 
@@ -285,11 +308,13 @@ router.put(
 ## Testing
 
 Run tests:
+
 ```bash
 npm test src/domains/auth/
 ```
 
 Run integration tests:
+
 ```bash
 npm run test:integration
 ```
@@ -297,12 +322,14 @@ npm run test:integration
 ## Environment Variables
 
 Required:
+
 ```env
 JWT_SECRET=your_secret_key_min_32_chars
 JWT_REFRESH_SECRET=your_refresh_secret_min_32_chars
 ```
 
 Optional:
+
 ```env
 JWT_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d

@@ -5,7 +5,7 @@
     <div class="max-w-md w-full">
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-white mb-2">eTally</h1>
-        <p class="text-primary-100">Kenya Election Management System</p>
+        <p class="text-primary-100">Election Management System</p>
       </div>
 
       <div class="card">

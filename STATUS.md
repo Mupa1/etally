@@ -1,4 +1,4 @@
-# 🎉 Kenya Election Management System - Backend Status
+# 🎉 Election Management System - Backend Status
 
 ## ✅ BACKEND IS RUNNING SUCCESSFULLY!
 
@@ -320,7 +320,7 @@ docker-compose logs -f database redis
 
 ## ✨ Summary
 
-The **Kenya Election Management System backend** is now fully operational with:
+The **Election Management System backend** is now fully operational with:
 
 - ✅ Complete authentication system (registration, login, JWT, sessions)
 - ✅ PostgreSQL database with Prisma ORM

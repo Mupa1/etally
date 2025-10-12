@@ -85,7 +85,7 @@
           class="flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-600 space-y-2 sm:space-y-0"
         >
           <p class="text-center sm:text-left">
-            © 2025 Kenya Election Management System
+            © 2025 Election Management System
           </p>
           <div class="flex items-center space-x-3 sm:space-x-4">
             <a href="#" class="hover:text-primary-600 transition-colors"

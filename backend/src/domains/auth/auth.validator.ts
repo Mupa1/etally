@@ -74,6 +74,11 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
+// First-login password change schema (for initial super admin)
+export const firstLoginPasswordChangeSchema = z.object({
+  newPassword: passwordSchema,
+});
+
 // Password reset request schema
 export const passwordResetRequestSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -90,5 +95,6 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type FirstLoginPasswordChangeInput = z.infer<typeof firstLoginPasswordChangeSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof passwordResetConfirmSchema>;

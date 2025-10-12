@@ -1,6 +1,6 @@
 -- ==========================================
 -- ADVANCED POSTGRESQL FEATURES
--- Kenya Election Management System
+-- Election Management System
 -- ==========================================
 
 -- Enable required extensions

@@ -1,6 +1,6 @@
-# Kenya Election Management System (eTally)
+# Election Management System (eTally)
 
-> A comprehensive, secure, and scalable election monitoring system for Kenyan elections with real-time results tracking, mobile field observer support, and comprehensive audit trails.
+> A comprehensive, secure, and scalable election monitoring system for elections with real-time results tracking, mobile field observer support, and comprehensive audit trails.
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/etally)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -414,17 +414,10 @@ We welcome contributions! Please follow these steps:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Team
-
-- **Project Lead:** [Name]
-- **Tech Lead:** [Name]
-- **Backend Team:** [Names]
-- **Frontend Team:** [Names]
-- **Mobile Team:** [Names]
 
 ## 🙏 Acknowledgments
 
-- Independent Electoral and Boundaries Commission (IEBC) of Kenya
+- Independent Electoral and Boundaries Commission (IEBC)
 - All contributors and testers
 - Open source community
 
@@ -437,4 +430,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Built with ❤️ for transparent and secure elections in Kenya**
+**Built with ❤️ for transparent and secure elections**

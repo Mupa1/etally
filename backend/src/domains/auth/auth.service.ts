@@ -30,22 +30,23 @@ class AuthService {
   private readonly JWT_SECRET: string;
   private readonly JWT_REFRESH_SECRET: string;
   private readonly JWT_EXPIRY: string;
-  private readonly JWT_REFRESH_EXPIRY: string;
   private readonly SALT_ROUNDS = 12;
 
   constructor() {
     this.prisma = PrismaService.getInstance();
     this.redis = RedisService.getInstance();
     this.JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
+    this.JWT_REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
     this.JWT_EXPIRY = process.env.JWT_EXPIRY || '15m';
-    this.JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
 
     if (
       this.JWT_SECRET === 'your-secret-key' ||
       this.JWT_REFRESH_SECRET === 'your-refresh-secret-key'
     ) {
-      console.warn('⚠️  WARNING: Using default JWT secrets. Set JWT_SECRET and JWT_REFRESH_SECRET in production!');
+      console.warn(
+        '⚠️  WARNING: Using default JWT secrets. Set JWT_SECRET and JWT_REFRESH_SECRET in production!'
+      );
     }
   }
 
@@ -56,7 +57,9 @@ class AuthService {
    * @returns Created user (without password) and auth tokens
    * @throws ConflictError if email or national ID already exists
    */
-  async register(registerData: IRegisterRequest): Promise<IAuthResponse> {
+  async register(
+    registerData: IRegisterRequest
+  ): Promise<IAuthResponse> {
     // Check if email already exists
     const existingEmail = await this.prisma.user.findUnique({
       where: { email: registerData.email },
@@ -76,7 +79,10 @@ class AuthService {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(registerData.password, this.SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash(
+      registerData.password,
+      this.SALT_ROUNDS
+    );
 
     // Create user
     const user = await this.prisma.user.create({
@@ -100,7 +106,19 @@ class AuthService {
     const tokens = await this.generateTokens(user.id, user.role, deviceInfo);
 
     // Return user without sensitive data
-    const { passwordHash: _, mfaSecret: __, failedLoginAttempts: ___, ...safeUser } = user;
+    const {
+      passwordHash: _,
+      mfaSecret: __,
+      failedLoginAttempts: ___,
+      ...userData
+    } = user;
+    const safeUser = {
+      ...userData,
+      phoneNumber: userData.phoneNumber ?? undefined,
+      lastLogin: userData.lastLogin ?? undefined,
+      deletedAt: userData.deletedAt ?? undefined,
+      deletedBy: userData.deletedBy ?? undefined,
+    };
 
     return {
       user: safeUser,
@@ -138,7 +156,10 @@ class AuthService {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(loginData.password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(
+      loginData.password,
+      user.passwordHash
+    );
 
     if (!isValidPassword) {
       // Increment failed login attempts
@@ -162,17 +183,55 @@ class AuthService {
     });
 
     // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.role, loginData.deviceInfo);
+    const tokens = await this.generateTokens(
+      user.id,
+      user.role,
+      loginData.deviceInfo
+    );
 
     // Cache user data for quick access
     await this.redis.set(`user:${user.id}`, user, 3600); // 1 hour
 
+    // Check if this is first super admin login requiring password change
+    let requiresPasswordChange = false;
+    if (
+      user.role === 'super_admin' &&
+      (user as any).registrationStatus === 'pending_approval'
+    ) {
+      // Check if there are any other approved super admins
+      const approvedSuperAdmins = await this.prisma.user.count({
+        where: {
+          role: 'super_admin',
+          registrationStatus: 'approved' as any,
+          isActive: true,
+        },
+      });
+
+      // If no approved super admins exist, this is the first login
+      if (approvedSuperAdmins === 0) {
+        requiresPasswordChange = true;
+      }
+    }
+
     // Return user without sensitive data
-    const { passwordHash: _, mfaSecret: __, failedLoginAttempts: ___, ...safeUser } = user;
+    const {
+      passwordHash: _,
+      mfaSecret: __,
+      failedLoginAttempts: ___,
+      ...userData
+    } = user;
+    const safeUser = {
+      ...userData,
+      phoneNumber: userData.phoneNumber ?? undefined,
+      lastLogin: userData.lastLogin ?? undefined,
+      deletedAt: userData.deletedAt ?? undefined,
+      deletedBy: userData.deletedBy ?? undefined,
+    };
 
     return {
       user: safeUser,
       tokens,
+      requiresPasswordChange,
     };
   }
 
@@ -204,11 +263,12 @@ class AuthService {
    * @returns New access token
    * @throws AuthenticationError if refresh token is invalid or expired
    */
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string }> {
     // Verify refresh token
-    let payload: IRefreshTokenPayload;
     try {
-      payload = jwt.verify(refreshToken, this.JWT_REFRESH_SECRET) as IRefreshTokenPayload;
+      jwt.verify(refreshToken, this.JWT_REFRESH_SECRET) as IRefreshTokenPayload;
     } catch (error) {
       throw new AuthenticationError('Invalid refresh token');
     }
@@ -238,6 +298,81 @@ class AuthService {
   }
 
   /**
+   * First-login password change for initial super admin
+   * Changes password and approves the account
+   *
+   * @param userId - User ID
+   * @param newPassword - New password
+   * @throws AuthenticationError if user is not eligible for first-login password change
+   */
+  async firstLoginPasswordChange(
+    userId: string,
+    newPassword: string
+  ): Promise<void> {
+    // Find user
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User', userId);
+    }
+
+    // Verify user is super admin with pending approval
+    if (
+      user.role !== 'super_admin' ||
+      (user as any).registrationStatus !== 'pending_approval'
+    ) {
+      throw new AuthenticationError(
+        'User is not eligible for first-login password change'
+      );
+    }
+
+    // Verify no other approved super admins exist
+    const approvedSuperAdmins = await this.prisma.user.count({
+      where: {
+        role: 'super_admin',
+        registrationStatus: 'approved' as any,
+        isActive: true,
+      },
+    });
+
+    if (approvedSuperAdmins > 0) {
+      throw new AuthenticationError(
+        'First-login password change is no longer available'
+      );
+    }
+
+    // Check if new password is same as current
+    const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
+    if (isSamePassword) {
+      throw new ValidationError(
+        'New password must be different from current password'
+      );
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
+
+    // Update password and approve registration
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        registrationStatus: 'approved' as any,
+      },
+    });
+
+    // Invalidate all sessions for security
+    await this.prisma.session.deleteMany({
+      where: { userId },
+    });
+
+    // Invalidate cached user data
+    await this.redis.del(`user:${userId}`);
+  }
+
+  /**
    * Change user password
    *
    * @param userId - User ID
@@ -260,7 +395,10 @@ class AuthService {
     }
 
     // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
 
     if (!isValidPassword) {
       throw new AuthenticationError('Current password is incorrect');
@@ -269,7 +407,9 @@ class AuthService {
     // Check if new password is same as current
     const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
     if (isSamePassword) {
-      throw new ValidationError('New password must be different from current password');
+      throw new ValidationError(
+        'New password must be different from current password'
+      );
     }
 
     // Hash new password
@@ -301,7 +441,12 @@ class AuthService {
     // Try cache first
     const cachedUser = await this.redis.get(`user:${userId}`);
     if (cachedUser) {
-      const { passwordHash: _, mfaSecret: __, failedLoginAttempts: ___, ...safeUser } = cachedUser as any;
+      const {
+        passwordHash: _,
+        mfaSecret: __,
+        failedLoginAttempts: ___,
+        ...safeUser
+      } = cachedUser as any;
       return safeUser;
     }
 
@@ -318,7 +463,12 @@ class AuthService {
     await this.redis.set(`user:${userId}`, user, 3600);
 
     // Return without sensitive data
-    const { passwordHash: _, mfaSecret: __, failedLoginAttempts: ___, ...safeUser } = user;
+    const {
+      passwordHash: _,
+      mfaSecret: __,
+      failedLoginAttempts: ___,
+      ...safeUser
+    } = user;
     return safeUser;
   }
 
@@ -371,7 +521,11 @@ class AuthService {
    * @param sessionId - Session ID
    * @returns JWT access token
    */
-  private generateAccessToken(userId: string, role: string, sessionId: string): string {
+  private generateAccessToken(
+    userId: string,
+    role: string,
+    sessionId: string
+  ): string {
     const payload: IAccessTokenPayload = {
       userId,
       role: role as any,
@@ -379,8 +533,8 @@ class AuthService {
     };
 
     return jwt.sign(payload, this.JWT_SECRET, {
-      expiresIn: this.JWT_EXPIRY,
-    });
+      expiresIn: this.JWT_EXPIRY as string,
+    } as jwt.SignOptions);
   }
 
   /**

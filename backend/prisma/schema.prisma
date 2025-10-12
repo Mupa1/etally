@@ -1,5 +1,5 @@
 // ==========================================
-// KENYA ELECTION MANAGEMENT SYSTEM
+// Election Management System
 // Prisma Schema - Database Models
 // ==========================================
 
@@ -13,7 +13,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 // ==========================================
@@ -127,27 +128,36 @@ enum IncidentStatus {
   dismissed
 }
 
+enum UserRegistrationStatus {
+  pending_approval
+  approved
+  rejected
+}
+
 // ==========================================
 // CORE USER & AUTHENTICATION MODELS
 // ==========================================
 
 model User {
-  id                  String    @id @default(uuid())
-  nationalId          String    @unique
-  email               String    @unique
-  phoneNumber         String?
-  firstName           String
-  lastName            String
-  role                UserRole  @default(field_observer)
-  isActive            Boolean   @default(true)
-  lastLogin           DateTime?
-  failedLoginAttempts Int       @default(0)
-  passwordHash        String
-  mfaSecret           String?
+  id                      String                 @id @default(uuid())
+  nationalId              String                 @unique
+  email                   String                 @unique
+  phoneNumber             String?
+  firstName               String
+  lastName                String
+  role                    UserRole               @default(field_observer)
+  isActive                Boolean                @default(true)
+  lastLogin               DateTime?
+  failedLoginAttempts     Int                    @default(0)
+  passwordHash            String
+  mfaSecret               String?
+  registrationStatus      UserRegistrationStatus @default(pending_approval)
+  registrationSubmittedAt DateTime?              @default(now())
 
   // Audit fields
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  createdBy String? // ID of user who created this account
   deletedAt DateTime?
   deletedBy String?
 
@@ -164,6 +174,7 @@ model User {
   @@index([email])
   @@index([nationalId])
   @@index([role, isActive])
+  @@index([registrationStatus])
   @@map("users")
 }
 

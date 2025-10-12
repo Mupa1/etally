@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # PostgreSQL with PostGIS
   database:
@@ -120,7 +118,8 @@ services:
     container_name: etally-api
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://admin:${DB_PASSWORD}@pgbouncer:6432/elections
+      # Temporarily bypass PgBouncer to test direct database connection
+      DATABASE_URL: postgresql://admin:${DB_PASSWORD}@database:5432/elections
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
@@ -130,7 +129,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       PORT: 3000
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:80}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://localhost:80,http://localhost:5173}
+      # Force Prisma to use OpenSSL 3.0.x binary on Alpine Linux
+      PRISMA_QUERY_ENGINE_LIBRARY: /app/node_modules/.prisma/client/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
     depends_on:
       database:
         condition: service_healthy
@@ -159,9 +160,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${API_URL:-http://localhost:3000/api/v1}
     container_name: etally-frontend
-    environment:
-      VITE_API_URL: ${API_URL:-http://localhost:3000/api/v1}
     ports:
       - "80:80"
       - "443:443"
@@ -241,6 +242,7 @@ services:
     restart: unless-stopped
 
   # Node Exporter for system metrics
+  # Note: Limited functionality on macOS - root filesystem mount not fully supported
   node-exporter:
     image: prom/node-exporter:latest
     container_name: etally-node-exporter
@@ -248,10 +250,11 @@ services:
       - "--path.rootfs=/host"
     pid: host
     volumes:
-      - "/:/host:ro,rslave"
+      - "/:/host:ro"
     networks:
       - election-network
     restart: unless-stopped
+    platform: linux/arm64
 
   # Postgres Exporter for database metrics
   postgres-exporter:

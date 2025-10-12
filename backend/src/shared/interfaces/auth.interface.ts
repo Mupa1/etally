@@ -75,10 +75,15 @@ export interface ISession {
 export interface IAuthResponse {
   user: Omit<IUser, 'passwordHash' | 'mfaSecret' | 'failedLoginAttempts'>;
   tokens: IAuthTokens;
+  requiresPasswordChange?: boolean;
 }
 
 export interface IPasswordChangeRequest {
   currentPassword: string;
+  newPassword: string;
+}
+
+export interface IFirstLoginPasswordChangeRequest {
   newPassword: string;
 }
 

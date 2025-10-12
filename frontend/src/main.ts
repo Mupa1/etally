@@ -1,5 +1,5 @@
 /**
- * Kenya Election Management System - Frontend Entry Point
+ * Election Management System - Frontend Entry Point
  * Vue 3 + Composition API + TypeScript
  */
 

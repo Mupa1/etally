@@ -1,4 +1,4 @@
-KENYA ELECTION MANAGEMENT SYSTEM
+# Election Management System
 DEVELOPMENT GUARD RAILS & CHANGE CONTROL RULES
 ================================================
 

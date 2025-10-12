@@ -54,13 +54,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(credentials: LoginRequest): Promise<void> {
+  async function login(credentials: LoginRequest): Promise<{ requiresPasswordChange?: boolean }> {
     loading.value = true;
     error.value = null;
 
     try {
       const response = await api.post<{ data: AuthResponse }>('/auth/login', credentials);
-      const { user: userData, tokens } = response.data.data;
+      const { user: userData, tokens, requiresPasswordChange } = response.data.data;
 
       // Save to state
       user.value = userData;
@@ -71,6 +71,8 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(TOKEN_KEY, tokens.accessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
       localStorage.setItem(USER_KEY, JSON.stringify(userData));
+
+      return { requiresPasswordChange };
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Login failed';
       throw err;
@@ -145,6 +147,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function firstLoginPasswordChange(newPassword: string): Promise<void> {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      await api.put('/auth/first-login-password-change', { newPassword });
+      // Password changed successfully and account approved, user needs to login again
+      clearAuth();
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Password change failed';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function changePassword(data: ChangePasswordRequest): Promise<void> {
     loading.value = true;
     error.value = null;
@@ -193,6 +211,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     fetchProfile,
     refreshAccessToken,
+    firstLoginPasswordChange,
     changePassword,
     clearAuth,
   };

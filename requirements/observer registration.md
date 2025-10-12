@@ -1,5 +1,7 @@
-# KENYA ELECTION MANAGEMENT SYSTEM
+# Election Management System
+
 ## OBSERVER REGISTRATION & AUTHENTICATION JOURNEY
+
 ### Technical Specification Document
 
 **Version:** 1.1  
@@ -14,6 +16,7 @@
 This document defines the complete user journey for election observer registration, authentication, and onboarding. The system implements a multi-layer verification process ensuring only authorized observers can submit election results through the mobile application.
 
 ### Key Features:
+
 - **One User, One Device Policy**: Strict IMEI binding during registration
 - **Multi-step Registration**: OTP verification + admin approval + IMEI binding
 - **Role-Based Access**: Observers can only view/submit results for assigned polling stations
@@ -41,7 +44,7 @@ graph TD
     J --> L[Admin Assigns Polling Stations]
     L --> M[Active: Can Login & Submit Results]
     M --> N[Dashboard: View Assigned Stations]
-    
+
     style A fill:#e1f5fe
     style M fill:#c8e6c9
     style I fill:#fff3e0
@@ -61,7 +64,7 @@ One User → Multiple Stations: A single observer can be assigned to multiple po
 
 Stations Within One Center: Typically, all assigned stations are within one polling center
 
-Geographic Consistency: Stations assigned to a user are geographically co-located   
+Geographic Consistency: Stations assigned to a user are geographically co-located
 
 3. DATABASE SCHEMA ENHANCEMENTS
 3.1 Extended User Model with IMEI Integration
@@ -83,29 +86,29 @@ enum OTPPurpose {
 // EXTEND User model with IMEI at registration
 model User {
   // ... existing fields ...
-  
+
   // Registration-specific fields
   mobileNumber          String                 @unique
   nationalId            String                 @unique
   registrationStatus    UserRegistrationStatus @default(pending)
   rejectionReason       String?
-  
+
   // IMEI CAPTURED DURING REGISTRATION
   imeiNumber           String?                @unique
   deviceModel          String?
   osVersion            String?
   appVersion           String?
   deviceRegisteredAt   DateTime?
-  
+
   // Timestamps for registration lifecycle
   registrationSubmittedAt DateTime             @default(now())
   approvedAt            DateTime?
   rejectedAt            DateTime?
-  
+
   // Relations
   assignedStations      UserPollingStationAssignment[]
   otpVerifications      OTPVerification[]
-  
+
   @@index([mobileNumber])
   @@index([nationalId])
   @@index([registrationStatus])
@@ -124,10 +127,10 @@ model OTPVerification {
   attempts     Int       @default(0)
   maxAttempts  Int       @default(3)
   isUsed       Boolean   @default(false)
-  
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  
+
   @@index([mobileNumber, purpose])
   @@index([expiresAt])
   @@map("otp_verifications")
@@ -142,7 +145,7 @@ model UserPollingStationAssignment {
   assignedBy       String         // Admin user ID
   assignedAt       DateTime       @default(now())
   isActive         Boolean        @default(true)
-  
+
   @@unique([userId, pollingStationId])
   @@index([userId, isActive])
   @@map("user_polling_station_assignments")
@@ -155,24 +158,24 @@ model PollingStation {
   name             String
   wardId           String
   ward             ElectoralWard @relation(fields: [wardId], references: [id])
-  
+
   // Polling center information
   pollingCenterCode String       // Code for the physical building/center
   pollingCenterName String       // Name of the physical building/center
-  
+
   latitude         Float?
   longitude        Float?
   registeredVoters Int           @default(0)
   isActive         Boolean       @default(true)
-  
+
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
-  
+
   // Relations
   results          ElectionResult[]
   incidents        Incident[]
   assignments      UserPollingStationAssignment[]
-  
+
   @@index([wardId])
   @@index([code])
   @@index([pollingCenterCode])  // For grouping stations by center
@@ -185,17 +188,17 @@ model PollingStation {
 interface DeviceAssignmentRules {
   // ONE USER → ONE DEVICE
   maxDevicesPerUser: 1;
-  
-  // ONE DEVICE → ONE USER  
+
+  // ONE DEVICE → ONE USER
   allowMultipleUsersPerDevice: false;
-  
+
   // IMEI CAPTURED AT REGISTRATION
   imeiCollectionPhase: 'registration';
-  
+
   // DEVICE CHANGE POLICY
   allowDeviceChanges: false; // Initially false, require admin process
   lostDeviceProcess: 'admin_approval_required';
-  
+
   // VALIDATION RULES
   validation: {
     imeiFormat: '15_digits_luhn_verified';
@@ -212,11 +215,11 @@ class IMEIValidationService {
       this.validateLuhn(imei),
       this.checkDuplicateIMEI(imei, userId)
     ];
-    
+
     const results = await Promise.all(checks);
     return this.compileResults(results);
   }
-  
+
   private async checkDuplicateIMEI(imei: string, excludeUserId?: string): Promise<ValidationCheck> {
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -224,7 +227,7 @@ class IMEIValidationService {
         NOT: { id: excludeUserId }
       }
     });
-    
+
     return {
       valid: !existingUser,
       message: existingUser ? 'IMEI already registered to another user' : 'IMEI available'
@@ -240,7 +243,7 @@ interface StationAssignmentLogic {
     samePollingCenter: true, // Stations must be in same center
     geographicProximity: true, // Stations should be physically close
   },
-  
+
   // ASSIGNMENT VALIDATION
   validation: {
     checkStationAvailability: (stationId: string) => Promise<boolean>;
@@ -256,33 +259,33 @@ class StationAssignmentService {
     const stations = await prisma.pollingStation.findMany({
       where: { id: { in: stationIds } }
     });
-    
+
     const centers = new Set(stations.map(s => s.pollingCenterCode));
     if (centers.size > 1) {
       throw new ValidationError('All stations must be in the same polling center');
     }
-    
+
     // Check if user exists and is approved
     const user = await prisma.user.findUnique({
       where: { id: userId, registrationStatus: 'approved' }
     });
-    
+
     if (!user) {
       throw new ValidationError('User not found or not approved');
     }
-    
+
     // Check if user has IMEI registered
     if (!user.imeiNumber) {
       throw new ValidationError('User must have IMEI registered before station assignment');
     }
-    
+
     // Create assignments
     const assignments = stationIds.map(stationId => ({
       userId,
       pollingStationId: stationId,
       assignedBy: adminId
     }));
-    
+
     return await prisma.userPollingStationAssignment.createMany({
       data: assignments
     });
@@ -345,7 +348,7 @@ class IMEICaptureService {
       // Attempt to auto-detect IMEI (platform-specific)
       const imei = await this.detectIMEI();
       const deviceInfo = await this.getDeviceDetails();
-      
+
       return {
         imeiNumber: imei,
         deviceModel: deviceInfo.model,
@@ -364,18 +367,18 @@ class IMEICaptureService {
       };
     }
   }
-  
+
   validateManualIMEI(imei: string): ValidationResult {
     // 15 digits validation
     if (!/^\d{15}$/.test(imei)) {
       return { valid: false, message: 'IMEI must be 15 digits' };
     }
-    
+
     // Luhn algorithm validation
     if (!this.luhnCheck(imei)) {
       return { valid: false, message: 'Invalid IMEI format' };
     }
-    
+
     return { valid: true, message: 'Valid IMEI' };
   }
 }
@@ -384,7 +387,7 @@ class IMEICaptureService {
 6.1 Enhanced Registration Endpoints
 // INITIATE REGISTRATION WITH DEVICE INFO
 POST /api/v1/auth/register/initiate
-Body: { 
+Body: {
   mobileNumber: string,
   deviceInfo?: {  // Optional initial device info
     imeiNumber?: string,
@@ -392,10 +395,10 @@ Body: {
     osVersion?: string
   }
 }
-Response: { 
-  success: boolean, 
+Response: {
+  success: boolean,
   requiresManualIMEI: boolean,
-  retryAfter?: number 
+  retryAfter?: number
 }
 
 // COMPLETE REGISTRATION WITH IMEI
@@ -410,8 +413,8 @@ Body: {
   deviceModel: string,       // MANDATORY
   osVersion: string          // MANDATORY
 }
-Response: { 
-  user: User, 
+Response: {
+  user: User,
   status: 'pending_approval',
   imeiRegistered: true
 }
@@ -442,8 +445,8 @@ Response: {
 
 // BULK STATION ASSIGNMENT WITH VALIDATION
 POST /api/v1/admin/users/:userId/assign-stations
-Body: { 
-  pollingStationIds: string[], 
+Body: {
+  pollingStationIds: string[],
   assignedBy: string,
   validateGeographicConsistency: boolean = true
 }
@@ -464,14 +467,14 @@ interface IMEIAuthenticationRules {
     allowMultipleSessions: false,
     sessionPerDevice: true
   },
-  
+
   // API ACCESS
   api: {
     requireIMEIHeader: true,
     validateDeviceConsistency: true,
     logDeviceMismatch: true
   },
-  
+
   // DATA SYNC
   sync: {
     validateDeviceBeforeSync: true,
@@ -484,16 +487,16 @@ class DeviceAwareAuthMiddleware {
   async validateRequest(req: Request, res: Response, next: NextFunction) {
     const token = this.extractToken(req);
     const deviceIMEI = req.headers['x-device-imei'] as string;
-    
+
     if (!deviceIMEI) {
       return res.status(401).json({ error: 'Device IMEI required' });
     }
-    
+
     const user = await this.verifyToken(token);
     if (!user) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    
+
     // CRITICAL: Verify IMEI matches registered device
     if (user.imeiNumber !== deviceIMEI) {
       await this.logSecurityEvent({
@@ -503,10 +506,10 @@ class DeviceAwareAuthMiddleware {
         providedIMEI: deviceIMEI,
         ipAddress: req.ip
       });
-      
+
       return res.status(401).json({ error: 'Device not authorized' });
     }
-    
+
     req.user = user;
     next();
   }
@@ -719,3 +722,4 @@ Assignment optimization algorithms
 Advanced reporting for administrators
 
 Mobile app performance monitoring
+```
