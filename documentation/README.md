@@ -26,7 +26,7 @@ API usage and integration guides.
 ### 🏗️ Architecture
 System architecture and design documentation.
 
-*(Architecture documentation to be added)*
+- [Component Refactoring Summary](architecture/component-refactoring-summary.md) - Frontend component reusability improvements
 
 ### 🚢 Deployment
 Deployment guides and configurations.
