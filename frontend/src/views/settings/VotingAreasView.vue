@@ -13,22 +13,40 @@
             Manage geographic hierarchy and polling stations
           </p>
         </div>
-        <Button variant="primary" @click="showAddModal = true">
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Add Location
-        </Button>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <Button variant="secondary" @click="showUploadModal = true">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+            Upload CSV
+          </Button>
+          <Button variant="primary" @click="showAddModal = true">
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Location
+          </Button>
+        </div>
       </div>
 
       <!-- Stats Cards -->
@@ -36,59 +54,80 @@
         <StatCard
           title="Counties"
           :value="stats.counties"
-          icon="location"
-          color="blue"
+          icon="check-circle"
+          color="primary"
         />
         <StatCard
           title="Constituencies"
           :value="stats.constituencies"
-          icon="location"
-          color="green"
+          icon="check-circle"
+          color="success"
         />
         <StatCard
           title="Wards"
           :value="stats.wards"
-          icon="location"
-          color="purple"
+          icon="check-circle"
+          color="warning"
         />
         <StatCard
           title="Polling Stations"
           :value="stats.pollingStations"
-          icon="location"
-          color="orange"
+          icon="check"
+          color="primary"
         />
       </div>
 
-      <!-- Filters and Search -->
-      <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4"
-      >
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Search -->
-          <div class="sm:col-span-2">
+      <!-- Search and Filters -->
+      <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+        <!-- Mobile: Stack all filters vertically -->
+        <div class="space-y-4 md:space-y-0">
+          <!-- Search - Full width on mobile, half on desktop -->
+          <div class="w-full">
             <SearchBar
               v-model="searchQuery"
               placeholder="Search by name or code..."
-              @search="handleSearch"
             />
           </div>
 
-          <!-- Level Filter -->
-          <Select
-            v-model="selectedLevel"
-            label=""
-            :options="levelOptions"
-            @update:modelValue="handleLevelChange"
-          />
+          <!-- Filters Grid - Stack on mobile, grid on desktop -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Level Filter -->
+            <Select
+              v-model="selectedLevel"
+              label="Level"
+              placeholder="All Levels"
+              :options="levelOptions"
+              @update:modelValue="handleLevelChange"
+            />
 
-          <!-- County Filter -->
-          <Select
-            v-model="selectedCounty"
-            label=""
-            :options="countyOptions"
-            @update:modelValue="handleCountyChange"
-            :disabled="!selectedLevel || selectedLevel === 'all'"
-          />
+            <!-- County Filter -->
+            <Select
+              v-model="selectedCounty"
+              label="County"
+              placeholder="All Counties"
+              :options="countyOptions"
+              @update:modelValue="handleCountyChange"
+              :disabled="!selectedLevel || selectedLevel === 'all'"
+            />
+          </div>
+
+          <!-- Actions - Full width on mobile, right-aligned on desktop -->
+          <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <Button
+              variant="secondary"
+              @click="resetFilters"
+              class="w-full sm:w-auto"
+            >
+              Reset Filters
+            </Button>
+            <Button
+              variant="primary"
+              @click="handleSearch"
+              class="w-full sm:w-auto"
+            >
+              Apply Filters
+            </Button>
+          </div>
         </div>
 
         <!-- Breadcrumb Navigation -->
@@ -122,24 +161,19 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-12">
+      <div v-if="loading" class="flex justify-center py-12">
         <LoadingSpinner size="lg" />
       </div>
 
       <!-- Error State -->
-      <Alert
-        v-else-if="error"
-        type="error"
-        :message="error"
-        @dismiss="error = null"
-      />
+      <Alert v-else-if="error" type="error" :message="error" class="mb-4" />
 
       <!-- Empty State -->
       <EmptyState
         v-else-if="filteredData.length === 0"
         title="No voting areas found"
-        message="Try adjusting your search or filters"
-        icon="location"
+        description="Try adjusting your search or filters"
+        icon="folder"
       />
 
       <!-- Data Table -->
@@ -362,6 +396,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Upload Modal -->
+    <VotingAreasUploadModal
+      v-model="showUploadModal"
+      @upload-complete="handleUploadComplete"
+    />
   </MainLayout>
 </template>
 
@@ -378,6 +418,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import Alert from '@/components/common/Alert.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import StatCard from '@/components/admin/StatCard.vue';
+import VotingAreasUploadModal from '@/components/admin/VotingAreasUploadModal.vue';
 
 // Types
 interface VotingArea {
@@ -407,6 +448,7 @@ const selectedLevel = ref('all');
 const selectedCounty = ref('');
 const currentLevel = ref('county');
 const showAddModal = ref(false);
+const showUploadModal = ref(false);
 const breadcrumbs = ref<Breadcrumb[]>([]);
 
 // Pagination
@@ -497,6 +539,13 @@ function handleCountyChange() {
   currentPage.value = 1;
 }
 
+function resetFilters() {
+  searchQuery.value = '';
+  selectedLevel.value = 'all';
+  selectedCounty.value = '';
+  currentPage.value = 1;
+}
+
 function drillDown(item: VotingArea) {
   breadcrumbs.value.push({
     label: item.name,
@@ -557,14 +606,36 @@ function formatType(type: string): string {
     .join(' ');
 }
 
-function getTypeColor(type: string): string {
-  const colors: Record<string, string> = {
+function getTypeColor(
+  type: string
+):
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'info'
+  | 'gray' {
+  const colors: Record<
+    string,
+    'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'gray'
+  > = {
     county: 'primary',
     constituency: 'success',
     ward: 'warning',
     polling_station: 'info',
   };
   return colors[type] || 'secondary';
+}
+
+function handleUploadComplete(summary: any) {
+  // Refresh the data after successful upload
+  // TODO: Implement data refresh when API endpoint is ready
+  console.log('Upload completed with summary:', summary);
+  
+  // For now, we can show a success message or refresh the page
+  // In a real implementation, you would reload the voting areas data
+  // loadVotingAreas();
 }
 
 // Lifecycle

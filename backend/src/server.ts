@@ -23,6 +23,7 @@ import {
 import authRouter from '@/domains/auth/auth.routes';
 import electionRouter from '@/domains/elections/election.routes';
 import policyRouter from '@/domains/policies/policy.routes';
+import geographicRouter from '@/domains/geographic/geographic.routes';
 
 // Server configuration
 const app: Application = express();
@@ -80,6 +81,7 @@ app.get('/api', (_req, res) => {
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/elections', electionRouter);
+app.use('/api/v1/geographic', geographicRouter); // Geographic data management
 app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
 // TODO: Add more routes
 // app.use('/api/v1/results', resultRouter);

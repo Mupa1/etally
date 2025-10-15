@@ -1,0 +1,76 @@
+/**
+ * Geographic Routes
+ * HTTP routes for geographic data management
+ */
+
+import { Router } from 'express';
+import {
+  authenticate,
+  requireSuperAdmin,
+} from '@/domains/auth/auth.middleware';
+import GeographicController from './geographic.controller';
+
+const router = Router();
+const geographicController = new GeographicController();
+
+/**
+ * @route   POST /api/v1/geographic/bulk-upload
+ * @desc    Bulk upload geographic data (counties, constituencies, wards, polling stations)
+ * @access  Protected - Super Admin only
+ * @body    { data: INormalizedCSVRow[], chunkIndex: number, totalChunks: number }
+ */
+router.post(
+  '/bulk-upload',
+  authenticate,
+  requireSuperAdmin,
+  geographicController.bulkUpload
+);
+
+/**
+ * @route   GET /api/v1/geographic/stats
+ * @desc    Get geographic statistics
+ * @access  Protected
+ */
+router.get('/stats', authenticate, geographicController.getStatistics);
+
+/**
+ * @route   GET /api/v1/geographic/counties
+ * @desc    Get all counties with nested constituencies, wards, and polling stations
+ * @access  Protected
+ * @query   ?isActive=true&countyId=xxx
+ */
+router.get('/counties', authenticate, geographicController.getCounties);
+
+/**
+ * @route   GET /api/v1/geographic/constituencies
+ * @desc    Get all constituencies with nested wards and polling stations
+ * @access  Protected
+ * @query   ?countyId=xxx&isActive=true
+ */
+router.get(
+  '/constituencies',
+  authenticate,
+  geographicController.getConstituencies
+);
+
+/**
+ * @route   GET /api/v1/geographic/wards
+ * @desc    Get all wards with nested polling stations
+ * @access  Protected
+ * @query   ?constituencyId=xxx&isActive=true
+ */
+router.get('/wards', authenticate, geographicController.getWards);
+
+/**
+ * @route   GET /api/v1/geographic/polling-stations
+ * @desc    Get all polling stations with hierarchy information
+ * @access  Protected
+ * @query   ?wardId=xxx&isActive=true
+ */
+router.get(
+  '/polling-stations',
+  authenticate,
+  geographicController.getPollingStations
+);
+
+export default router;

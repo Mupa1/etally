@@ -39,6 +39,7 @@ class AuthorizationMiddleware {
    * Usage: router.post('/elections', authenticate, requirePermission('election', 'create'), handler)
    */
   requirePermission(resourceType: ResourceType, action: PermissionAction) {
+    const self = this;
     return async (
       req: Request,
       _res: Response,
@@ -58,14 +59,14 @@ class AuthorizationMiddleware {
           action,
           ipAddress: req.ip,
           deviceId: req.get('X-Device-ID'),
-          latitude: this.parseFloat(req.body.latitude || req.query.latitude),
-          longitude: this.parseFloat(req.body.longitude || req.query.longitude),
+          latitude: self.parseFloat(req.body.latitude || req.query.latitude),
+          longitude: self.parseFloat(req.body.longitude || req.query.longitude),
           timestamp: new Date(),
-          resourceAttributes: this.extractResourceAttributes(req),
+          resourceAttributes: self.extractResourceAttributes(req),
         };
 
         // Check access
-        const result = await this.abac.checkAccess(context);
+        const result = await self.abac.checkAccess(context);
 
         if (!result.granted) {
           throw new AuthorizationError(result.reason || 'Access denied', {
@@ -89,6 +90,7 @@ class AuthorizationMiddleware {
    * Useful for features that should be available but with reduced functionality
    */
   optionalPermission(resourceType: ResourceType, action: PermissionAction) {
+    const self = this;
     return async (
       req: Request,
       _res: Response,
@@ -104,15 +106,15 @@ class AuthorizationMiddleware {
             action,
             ipAddress: req.ip,
             deviceId: req.get('X-Device-ID'),
-            latitude: this.parseFloat(req.body.latitude || req.query.latitude),
-            longitude: this.parseFloat(
+            latitude: self.parseFloat(req.body.latitude || req.query.latitude),
+            longitude: self.parseFloat(
               req.body.longitude || req.query.longitude
             ),
             timestamp: new Date(),
-            resourceAttributes: this.extractResourceAttributes(req),
+            resourceAttributes: self.extractResourceAttributes(req),
           };
 
-          const result = await this.abac.checkAccess(context);
+          const result = await self.abac.checkAccess(context);
           req.permissionCheck = result;
         }
 
