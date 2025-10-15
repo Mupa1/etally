@@ -15,22 +15,19 @@
           class="w-full sm:w-64"
         />
 
-        <select v-model="filters.isActive" class="form-input w-full sm:w-auto">
-          <option value="">All Status</option>
-          <option value="true">Active</option>
-          <option value="false">Disabled</option>
-        </select>
+        <Select
+          v-model="filters.isActive"
+          :options="statusOptions"
+          placeholder="All Status"
+          class="w-full sm:w-auto sm:min-w-[150px]"
+        />
 
-        <select
+        <Select
           v-model="filters.resourceType"
-          class="form-input w-full sm:w-auto"
-        >
-          <option value="">All Resources</option>
-          <option value="election">Elections</option>
-          <option value="election_result">Results</option>
-          <option value="candidate">Candidates</option>
-          <option value="user">Users</option>
-        </select>
+          :options="resourceTypeOptions"
+          placeholder="All Resources"
+          class="w-full sm:w-auto sm:min-w-[150px]"
+        />
       </div>
 
       <!-- Create Button -->
@@ -250,6 +247,7 @@ import { ref, computed, onMounted } from 'vue';
 import api from '@/utils/api';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import SearchBar from '@/components/common/SearchBar.vue';
+import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
 import Badge from '@/components/common/Badge.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
@@ -279,6 +277,21 @@ const filters = ref({
   isActive: '',
   resourceType: '',
 });
+
+// Filter options
+const statusOptions = [
+  { value: '', label: 'All Status' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Disabled' },
+];
+
+const resourceTypeOptions = [
+  { value: '', label: 'All Resources' },
+  { value: 'election', label: 'Elections' },
+  { value: 'election_result', label: 'Results' },
+  { value: 'candidate', label: 'Candidates' },
+  { value: 'user', label: 'Users' },
+];
 
 const showCreateModal = ref(false);
 const selectedPolicy = ref<Policy | null>(null);

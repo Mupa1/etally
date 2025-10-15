@@ -401,6 +401,12 @@ const adminItems = computed<NavigationItem[]>(() => {
     icon: SettingsIcon,
     children: [
       {
+        name: 'voting-areas',
+        label: 'Voting Areas',
+        path: '/settings/voting-areas',
+        icon: LocationIcon,
+      },
+      {
         name: 'db-settings',
         label: 'DB Settings',
         path: '/settings/database',

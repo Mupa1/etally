@@ -20,46 +20,28 @@
         </div>
 
         <!-- Resource Type Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Resource Type
-          </label>
-          <select v-model="filters.resourceType" class="form-input">
-            <option value="">All Resources</option>
-            <option value="election">Elections</option>
-            <option value="election_result">Results</option>
-            <option value="candidate">Candidates</option>
-            <option value="user">Users</option>
-          </select>
-        </div>
+        <Select
+          v-model="filters.resourceType"
+          :options="resourceTypeOptions"
+          label="Resource Type"
+          placeholder="All Resources"
+        />
 
         <!-- Action Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Action
-          </label>
-          <select v-model="filters.action" class="form-input">
-            <option value="">All Actions</option>
-            <option value="create">Create</option>
-            <option value="read">Read</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
-            <option value="approve">Approve</option>
-            <option value="verify">Verify</option>
-          </select>
-        </div>
+        <Select
+          v-model="filters.action"
+          :options="actionOptions"
+          label="Action"
+          placeholder="All Actions"
+        />
 
         <!-- Result Filter -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Result
-          </label>
-          <select v-model="filters.granted" class="form-input">
-            <option value="">All Results</option>
-            <option value="true">Granted</option>
-            <option value="false">Denied</option>
-          </select>
-        </div>
+        <Select
+          v-model="filters.granted"
+          :options="resultOptions"
+          label="Result"
+          placeholder="All Results"
+        />
       </div>
 
       <div class="flex justify-between items-center mt-4">
@@ -205,6 +187,7 @@
 import { ref, onMounted } from 'vue';
 import api from '@/utils/api';
 import MainLayout from '@/components/layout/MainLayout.vue';
+import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
 import Badge from '@/components/common/Badge.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
@@ -242,6 +225,31 @@ const pagination = ref({
   page: 1,
   limit: 50,
 });
+
+// Filter options
+const resourceTypeOptions = [
+  { value: '', label: 'All Resources' },
+  { value: 'election', label: 'Elections' },
+  { value: 'election_result', label: 'Results' },
+  { value: 'candidate', label: 'Candidates' },
+  { value: 'user', label: 'Users' },
+];
+
+const actionOptions = [
+  { value: '', label: 'All Actions' },
+  { value: 'create', label: 'Create' },
+  { value: 'read', label: 'Read' },
+  { value: 'update', label: 'Update' },
+  { value: 'delete', label: 'Delete' },
+  { value: 'approve', label: 'Approve' },
+  { value: 'verify', label: 'Verify' },
+];
+
+const resultOptions = [
+  { value: '', label: 'All Results' },
+  { value: 'true', label: 'Granted' },
+  { value: 'false', label: 'Denied' },
+];
 
 async function loadAuditTrail() {
   loading.value = true;

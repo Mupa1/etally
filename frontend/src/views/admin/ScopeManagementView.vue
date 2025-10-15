@@ -5,20 +5,14 @@
   >
     <!-- User Selection -->
     <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Select User
-      </label>
-      <select
+      <Select
         v-model="selectedUserId"
-        class="form-input w-full max-w-md"
-        @change="loadUserScopes"
-      >
-        <option value="">-- Select a user --</option>
-        <option v-for="user in users" :key="user.id" :value="user.id">
-          {{ user.firstName }} {{ user.lastName }} ({{ user.email }}) -
-          {{ user.role }}
-        </option>
-      </select>
+        :options="userOptions"
+        label="Select User"
+        placeholder="-- Select a user --"
+        class="w-full max-w-md"
+        @update:model-value="loadUserScopes"
+      />
     </div>
 
     <!-- User Scopes -->
@@ -106,9 +100,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import api from '@/utils/api';
 import MainLayout from '@/components/layout/MainLayout.vue';
+import Select from '@/components/common/Select.vue';
 import Button from '@/components/common/Button.vue';
 import Badge from '@/components/common/Badge.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
@@ -136,6 +131,15 @@ const selectedUserId = ref('');
 const userScopes = ref<Scope[]>([]);
 const loading = ref(false);
 const showAssignModal = ref(false);
+
+// Computed property for user options
+const userOptions = computed(() => [
+  { value: '', label: '-- Select a user --' },
+  ...users.value.map((user) => ({
+    value: user.id,
+    label: `${user.firstName} ${user.lastName} (${user.email}) - ${user.role}`,
+  })),
+]);
 
 async function loadUsers() {
   try {

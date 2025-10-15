@@ -81,6 +81,15 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/settings/voting-areas',
+    name: 'settings-voting-areas',
+    component: () => import('@/views/settings/VotingAreasView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
   // Admin Routes
   {
     path: '/admin/users',

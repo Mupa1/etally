@@ -50,33 +50,28 @@
         <!-- Filters Grid - Stack on mobile, grid on desktop -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <!-- Role Filter -->
-          <Select v-model="filters.role" label="Role" placeholder="All Roles">
-            <option value="super_admin">Super Admin</option>
-            <option value="election_manager">Election Manager</option>
-            <option value="field_observer">Field Observer</option>
-            <option value="public_viewer">Public Viewer</option>
-          </Select>
+          <Select
+            v-model="filters.role"
+            label="Role"
+            placeholder="All Roles"
+            :options="roleOptions"
+          />
 
           <!-- Status Filter -->
           <Select
             v-model="filters.isActive"
             label="Status"
             placeholder="All Status"
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </Select>
+            :options="statusOptions"
+          />
 
           <!-- Registration Status Filter -->
           <Select
             v-model="filters.registrationStatus"
             label="Registration Status"
             placeholder="All Registration Status"
-          >
-            <option value="pending_approval">Pending Approval</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </Select>
+            :options="registrationStatusOptions"
+          />
         </div>
 
         <!-- Actions - Full width on mobile, right-aligned on desktop -->
@@ -325,6 +320,12 @@ const filters = ref({
   registrationStatus: '',
 });
 
+// Filter options
+interface SelectOption {
+  value: string | number;
+  label: string;
+}
+
 // Pagination state
 const currentPage = ref(1);
 const perPage = ref(10);
@@ -522,6 +523,34 @@ function formatRegistrationStatus(status?: string): string {
   if (!status) return 'N/A';
   return status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 }
+
+// Computed properties to dynamically generate options from API data
+const roleOptions = computed(() => {
+  const uniqueRoles = [...new Set(users.value.map((user) => user.role))];
+  return uniqueRoles
+    .map((role) => ({
+      value: role,
+      label: formatRole(role),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+const statusOptions = computed(() => [
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Inactive' },
+]);
+
+const registrationStatusOptions = computed(() => {
+  const uniqueStatuses = [
+    ...new Set(users.value.map((user) => user.registrationStatus)),
+  ];
+  return uniqueStatuses
+    .map((status) => ({
+      value: status,
+      label: formatRegistrationStatus(status),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
 
 function getScopeLabel(scope: any): string {
   if (scope.scopeLevel === 'national') return 'National';
