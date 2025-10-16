@@ -54,31 +54,31 @@
         <StatCard
           title="Counties"
           :value="stats.counties.toLocaleString()"
-          icon="check-circle"
+          icon="map"
           color="primary"
         />
         <StatCard
           title="Constituencies"
           :value="stats.constituencies.toLocaleString()"
-          icon="check-circle"
+          icon="building"
           color="success"
         />
         <StatCard
           title="Wards"
           :value="stats.wards.toLocaleString()"
-          icon="check-circle"
+          icon="location"
           color="warning"
         />
         <StatCard
           title="Polling Stations"
           :value="stats.pollingStations.toLocaleString()"
-          icon="check"
+          icon="check-circle"
           color="primary"
         />
         <StatCard
           title="Registered Voters"
           :value="stats.totalRegisteredVoters.toLocaleString()"
-          icon="check-circle"
+          icon="users"
           color="success"
         />
       </div>
