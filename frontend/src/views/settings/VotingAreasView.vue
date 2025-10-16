@@ -50,30 +50,36 @@
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Counties"
-          :value="stats.counties"
+          :value="stats.counties.toLocaleString()"
           icon="check-circle"
           color="primary"
         />
         <StatCard
           title="Constituencies"
-          :value="stats.constituencies"
+          :value="stats.constituencies.toLocaleString()"
           icon="check-circle"
           color="success"
         />
         <StatCard
           title="Wards"
-          :value="stats.wards"
+          :value="stats.wards.toLocaleString()"
           icon="check-circle"
           color="warning"
         />
         <StatCard
           title="Polling Stations"
-          :value="stats.pollingStations"
+          :value="stats.pollingStations.toLocaleString()"
           icon="check"
           color="primary"
+        />
+        <StatCard
+          title="Registered Voters"
+          :value="stats.totalRegisteredVoters.toLocaleString()"
+          icon="check-circle"
+          color="success"
         />
       </div>
 
@@ -133,8 +139,40 @@
         <!-- Breadcrumb Navigation -->
         <div
           v-if="breadcrumbs.length > 0"
-          class="flex items-center space-x-2 text-sm"
+          class="flex items-center space-x-2 text-sm mt-4 pt-4 border-t border-gray-200"
         >
+          <button
+            @click="goHome"
+            class="flex items-center space-x-1 text-primary-600 hover:text-primary-700 font-medium"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+            <span>Home</span>
+          </button>
+          <svg
+            class="w-4 h-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
           <button
             v-for="(crumb, index) in breadcrumbs"
             :key="index"
@@ -144,7 +182,7 @@
             <span>{{ crumb.label }}</span>
             <svg
               v-if="index < breadcrumbs.length - 1"
-              class="w-4 h-4"
+              class="w-4 h-4 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -206,12 +244,32 @@
                   Parent
                 </th>
                 <th
-                  v-if="currentLevel === 'polling_station'"
-                  class="hidden md:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  v-if="currentLevel === 'county'"
+                  class="hidden md:table-cell px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Constituencies
+                </th>
+                <th
+                  v-if="
+                    currentLevel === 'county' || currentLevel === 'constituency'
+                  "
+                  class="hidden md:table-cell px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Wards
+                </th>
+                <th
+                  v-if="currentLevel !== 'polling_station'"
+                  class="hidden md:table-cell px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Polling Stations
+                </th>
+                <th
+                  class="hidden md:table-cell px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Registered Voters
                 </th>
                 <th
+                  v-if="currentLevel === 'polling_station'"
                   class="hidden md:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Status
@@ -259,12 +317,38 @@
                   {{ item.parent || '-' }}
                 </td>
                 <td
-                  v-if="currentLevel === 'polling_station'"
-                  class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                  v-if="currentLevel === 'county'"
+                  class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right"
                 >
-                  {{ item.registeredVoters?.toLocaleString() || '-' }}
+                  {{ item.totalConstituencies?.toLocaleString() || '-' }}
                 </td>
                 <td
+                  v-if="
+                    currentLevel === 'county' || currentLevel === 'constituency'
+                  "
+                  class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right"
+                >
+                  {{ item.totalWards?.toLocaleString() || '-' }}
+                </td>
+                <td
+                  v-if="currentLevel !== 'polling_station'"
+                  class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right"
+                >
+                  {{ item.totalPollingStations?.toLocaleString() || '-' }}
+                </td>
+                <td
+                  class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right"
+                >
+                  {{
+                    (
+                      item.registeredVoters ||
+                      item.totalRegisteredVoters ||
+                      0
+                    ).toLocaleString()
+                  }}
+                </td>
+                <td
+                  v-if="currentLevel === 'polling_station'"
                   class="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap"
                 >
                   <Badge :variant="item.isActive ? 'success' : 'danger'">
@@ -365,10 +449,10 @@
               <span class="font-medium">{{ startIndex + 1 }}</span>
               to
               <span class="font-medium">{{
-                Math.min(endIndex, filteredData.length)
+                Math.min(startIndex + hierarchyItems.length, totalCount)
               }}</span>
               of
-              <span class="font-medium">{{ filteredData.length }}</span>
+              <span class="font-medium">{{ totalCount.toLocaleString() }}</span>
               results
             </div>
             <div class="flex items-center space-x-2">
@@ -387,7 +471,7 @@
                 variant="secondary"
                 size="sm"
                 @click="nextPage"
-                :disabled="currentPage === totalPages"
+                :disabled="currentPage >= totalPages"
               >
                 Next
               </Button>
@@ -419,6 +503,7 @@ import Alert from '@/components/common/Alert.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import StatCard from '@/components/admin/StatCard.vue';
 import VotingAreasUploadModal from '@/components/admin/VotingAreasUploadModal.vue';
+import api from '@/utils/api';
 
 // Types
 interface VotingArea {
@@ -429,15 +514,79 @@ interface VotingArea {
   parent?: string;
   parentId?: string;
   registeredVoters?: number;
+  totalRegisteredVoters?: number;
+  totalConstituencies?: number;
+  totalWards?: number;
+  totalPollingStations?: number;
   isActive: boolean;
   latitude?: number;
   longitude?: number;
+}
+
+interface PollingStation {
+  id: string;
+  code: string;
+  name: string;
+  registeredVoters: number;
+  isActive: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  ward: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  constituency: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  county: {
+    id: string;
+    code: string;
+    name: string;
+  };
+}
+
+interface HierarchyItem {
+  id: string;
+  code: string;
+  name: string;
+  type: 'county' | 'constituency' | 'ward' | 'polling_station';
+
+  // Statistics
+  totalConstituencies?: number;
+  totalWards?: number;
+  totalPollingStations?: number;
+  totalRegisteredVoters: number;
+  registeredVoters?: number;
+
+  // Parent info
+  countyId?: string;
+  countyName?: string;
+  constituencyId?: string;
+  constituencyName?: string;
+  wardId?: string;
+  wardName?: string;
+
+  isActive?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface Breadcrumb {
   label: string;
   type: string;
   id?: string;
+}
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 // State
@@ -453,19 +602,146 @@ const breadcrumbs = ref<Breadcrumb[]>([]);
 
 // Pagination
 const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const itemsPerPage = ref(20);
+const totalPages = ref(1);
+const totalCount = ref(0);
 
-// Mock data (replace with API calls later)
-const allData = ref<VotingArea[]>([]);
+// Hierarchy data
+const hierarchyItems = ref<HierarchyItem[]>([]);
 
-// Stats
-const stats = computed(() => ({
-  counties: allData.value.filter((d) => d.type === 'county').length,
-  constituencies: allData.value.filter((d) => d.type === 'constituency').length,
-  wards: allData.value.filter((d) => d.type === 'ward').length,
-  pollingStations: allData.value.filter((d) => d.type === 'polling_station')
-    .length,
-}));
+// Stats state
+const stats = ref({
+  counties: 0,
+  constituencies: 0,
+  wards: 0,
+  pollingStations: 0,
+  totalRegisteredVoters: 0,
+});
+
+// County data for dropdown
+const counties = ref<Array<{ id: string; code: string; name: string }>>([]);
+
+// Function to load voting area statistics
+async function loadVotingAreaStatistics() {
+  try {
+    console.log('Fetching voting area statistics...');
+    const response = await api.get('/geographic/voting-stats');
+    console.log('Statistics response:', response.data);
+
+    if (response.data.success && response.data.data) {
+      const data = response.data.data;
+      console.log('Updating stats with data:', data);
+
+      stats.value = {
+        counties: data.totalCounties || 0,
+        constituencies: data.totalConstituencies || 0,
+        wards: data.totalWards || 0,
+        pollingStations: data.totalPollingStations || 0,
+        totalRegisteredVoters: data.totalRegisteredVoters || 0,
+      };
+
+      // Extract counties for dropdown
+      if (data.counties && Array.isArray(data.counties)) {
+        counties.value = data.counties.map((c: any) => ({
+          id: c.id,
+          code: c.code,
+          name: c.name,
+        }));
+      }
+
+      console.log('Stats updated:', stats.value);
+    } else {
+      console.warn('No data in response or success is false');
+    }
+  } catch (err: any) {
+    console.error('Failed to load voting area statistics:', err);
+    console.error('Error details:', err.response?.data);
+    // Keep default values on error
+  }
+}
+
+// Function to load hierarchy data based on current context
+async function loadHierarchyData() {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    // Determine the current level based on breadcrumbs and selections
+    let level: 'county' | 'constituency' | 'ward' | 'polling_station' =
+      'county';
+
+    if (selectedLevel.value !== 'all') {
+      level = selectedLevel.value as any;
+    } else {
+      // Auto-determine level based on breadcrumbs
+      if (breadcrumbs.value.length === 0) {
+        level = 'county';
+      } else {
+        const lastBreadcrumb = breadcrumbs.value[breadcrumbs.value.length - 1];
+        if (lastBreadcrumb.type === 'county') level = 'constituency';
+        else if (lastBreadcrumb.type === 'constituency') level = 'ward';
+        else if (lastBreadcrumb.type === 'ward') level = 'polling_station';
+      }
+    }
+
+    console.log('Fetching hierarchy data:', {
+      level,
+      search: searchQuery.value,
+      breadcrumbs: breadcrumbs.value,
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    });
+
+    const params: any = {
+      level,
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    };
+
+    if (searchQuery.value) {
+      params.search = searchQuery.value;
+    }
+
+    // Add appropriate ID based on current breadcrumb context
+    if (breadcrumbs.value.length > 0) {
+      const lastBreadcrumb = breadcrumbs.value[breadcrumbs.value.length - 1];
+      if (lastBreadcrumb.type === 'county') {
+        params.countyId = lastBreadcrumb.id;
+      } else if (lastBreadcrumb.type === 'constituency') {
+        params.constituencyId = lastBreadcrumb.id;
+      } else if (lastBreadcrumb.type === 'ward') {
+        params.wardId = lastBreadcrumb.id;
+      }
+    }
+
+    // Override with manual county filter if set
+    if (selectedCounty.value && breadcrumbs.value.length === 0) {
+      params.countyId = selectedCounty.value;
+      level = 'constituency'; // Show constituencies when a county is selected
+    }
+
+    const response = await api.get('/geographic/hierarchy', { params });
+    console.log('Hierarchy response:', response.data);
+
+    if (response.data.success) {
+      hierarchyItems.value = response.data.data || [];
+      currentLevel.value = level;
+
+      if (response.data.pagination) {
+        totalPages.value = response.data.pagination.totalPages;
+        totalCount.value = response.data.pagination.totalCount;
+      }
+
+      console.log(`Loaded ${hierarchyItems.value.length} ${level} items`);
+    }
+  } catch (err: any) {
+    console.error('Failed to load hierarchy data:', err);
+    error.value = err.response?.data?.message || 'Failed to load voting areas';
+    hierarchyItems.value = [];
+  } finally {
+    loading.value = false;
+  }
+}
 
 // Options
 const levelOptions = computed(() => [
@@ -478,109 +754,120 @@ const levelOptions = computed(() => [
 
 const countyOptions = computed(() => [
   { value: '', label: 'All Counties' },
-  ...allData.value
-    .filter((d) => d.type === 'county')
-    .map((d) => ({ value: d.id, label: d.name })),
+  ...counties.value.map((c) => ({ value: c.id, label: c.name })),
 ]);
 
-// Filtered and paginated data
+// Transform hierarchy items to VotingArea format for display
 const filteredData = computed(() => {
-  let data = allData.value;
+  return hierarchyItems.value.map((item) => {
+    let parent = '';
 
-  // Filter by level
-  if (selectedLevel.value !== 'all') {
-    data = data.filter((d) => d.type === selectedLevel.value);
-  }
+    if (item.type === 'constituency') {
+      parent = item.countyName || '';
+    } else if (item.type === 'ward') {
+      parent = `${item.constituencyName} (${item.countyName})`;
+    } else if (item.type === 'polling_station') {
+      parent = `${item.wardName} (${item.constituencyName}, ${item.countyName})`;
+    }
 
-  // Filter by search
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    data = data.filter(
-      (d) =>
-        d.name.toLowerCase().includes(query) ||
-        d.code.toLowerCase().includes(query)
-    );
-  }
-
-  // Filter by county
-  if (selectedCounty.value) {
-    data = data.filter(
-      (d) =>
-        d.parentId === selectedCounty.value || d.id === selectedCounty.value
-    );
-  }
-
-  return data;
+    return {
+      id: item.id,
+      code: item.code,
+      name: item.name,
+      type: item.type,
+      parent: parent || undefined,
+      parentId: item.wardId || item.constituencyId || item.countyId,
+      registeredVoters: item.registeredVoters,
+      totalRegisteredVoters: item.totalRegisteredVoters,
+      totalConstituencies: item.totalConstituencies,
+      totalWards: item.totalWards,
+      totalPollingStations: item.totalPollingStations,
+      isActive: item.isActive !== undefined ? item.isActive : true,
+      latitude: item.latitude || undefined,
+      longitude: item.longitude || undefined,
+    };
+  });
 });
 
-const totalPages = computed(() =>
-  Math.ceil(filteredData.value.length / itemsPerPage.value)
-);
-
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
-const endIndex = computed(() => startIndex.value + itemsPerPage.value);
+const endIndex = computed(() => currentPage.value * itemsPerPage.value);
 
-const paginatedData = computed(() =>
-  filteredData.value.slice(startIndex.value, endIndex.value)
-);
+// Since we're using server-side pagination, paginatedData is just the current data
+const paginatedData = computed(() => filteredData.value);
 
 // Methods
-function handleSearch() {
+async function handleSearch() {
   currentPage.value = 1;
+  await loadHierarchyData();
 }
 
-function handleLevelChange() {
+async function handleLevelChange() {
   currentPage.value = 1;
   currentLevel.value =
     selectedLevel.value === 'all' ? 'county' : selectedLevel.value;
+  await loadHierarchyData();
 }
 
-function handleCountyChange() {
+async function handleCountyChange() {
   currentPage.value = 1;
+  await loadHierarchyData();
 }
 
-function resetFilters() {
+async function resetFilters() {
   searchQuery.value = '';
   selectedLevel.value = 'all';
   selectedCounty.value = '';
+  breadcrumbs.value = [];
   currentPage.value = 1;
+  await loadHierarchyData();
 }
 
-function drillDown(item: VotingArea) {
+async function drillDown(item: VotingArea) {
   breadcrumbs.value.push({
     label: item.name,
     type: item.type,
     id: item.id,
   });
-  selectedCounty.value = item.id;
 
-  // Update level based on item type
-  if (item.type === 'county') {
-    selectedLevel.value = 'constituency';
-  } else if (item.type === 'constituency') {
-    selectedLevel.value = 'ward';
-  } else if (item.type === 'ward') {
-    selectedLevel.value = 'polling_station';
-  }
+  // Clear manual filters when drilling down
+  selectedCounty.value = '';
+  selectedLevel.value = 'all';
+  currentPage.value = 1;
+
+  // Reload data to show children of this item
+  await loadHierarchyData();
 }
 
-function navigateTo(crumb: Breadcrumb) {
+async function goHome() {
+  breadcrumbs.value = [];
+  selectedCounty.value = '';
+  selectedLevel.value = 'all';
+  currentPage.value = 1;
+  await loadHierarchyData();
+}
+
+async function navigateTo(crumb: Breadcrumb) {
   const index = breadcrumbs.value.findIndex((b) => b.id === crumb.id);
   breadcrumbs.value = breadcrumbs.value.slice(0, index + 1);
-  if (crumb.id) {
-    selectedCounty.value = crumb.id;
-  }
+
+  selectedCounty.value = '';
+  selectedLevel.value = 'all';
+  currentPage.value = 1;
+
+  await loadHierarchyData();
 }
 
-function previousPage() {
+async function previousPage() {
   if (currentPage.value > 1) {
     currentPage.value--;
+    await loadHierarchyData();
   }
 }
 
-function nextPage() {
+async function nextPage() {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
+    await loadHierarchyData();
   }
 }
 
@@ -628,31 +915,32 @@ function getTypeColor(
   return colors[type] || 'secondary';
 }
 
-function handleUploadComplete(summary: any) {
+async function handleUploadComplete(summary: any) {
   // Refresh the data after successful upload
-  // TODO: Implement data refresh when API endpoint is ready
   console.log('Upload completed with summary:', summary);
-  
-  // For now, we can show a success message or refresh the page
-  // In a real implementation, you would reload the voting areas data
-  // loadVotingAreas();
+
+  // Reload statistics to reflect the new data
+  await loadVotingAreaStatistics();
+
+  // Reload hierarchy data
+  await loadHierarchyData();
 }
 
 // Lifecycle
 onMounted(async () => {
-  loading.value = true;
+  console.log('=== VotingAreasView mounted ===');
   try {
-    // TODO: Implement API call when backend endpoint is ready
-    // Example:
-    // const response = await api.get('/api/v1/geographic/all');
-    // allData.value = response.data.data;
+    // Load voting area statistics
+    console.log('Calling loadVotingAreaStatistics...');
+    await loadVotingAreaStatistics();
+    console.log('loadVotingAreaStatistics completed');
 
-    // For now, initialize with empty array
-    allData.value = [];
+    // Load hierarchy data (starts at county level)
+    console.log('Calling loadHierarchyData...');
+    await loadHierarchyData();
+    console.log('loadHierarchyData completed');
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Failed to load voting areas';
-  } finally {
-    loading.value = false;
   }
 });
 </script>

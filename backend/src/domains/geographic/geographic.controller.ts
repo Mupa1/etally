@@ -8,6 +8,9 @@ import GeographicService from './geographic.service';
 import {
   bulkUploadSchema,
   geographicFiltersSchema,
+  statisticsFiltersSchema,
+  pollingStationSearchSchema,
+  hierarchyFiltersSchema,
 } from './geographic.validator';
 import { IBulkUploadChunk } from './geographic.types';
 import { ValidationError } from '@/shared/types/errors';
@@ -213,7 +216,7 @@ class GeographicController {
   };
 
   /**
-   * Get geographic statistics
+   * Get geographic statistics (legacy)
    * GET /api/v1/geographic/stats
    */
   getStatistics = async (
@@ -228,6 +231,119 @@ class GeographicController {
         success: true,
         message: 'Statistics retrieved successfully',
         data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get comprehensive voting area statistics
+   * GET /api/v1/geographic/voting-stats
+   */
+  getVotingAreaStatistics = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Validate query parameters
+      const validationResult = statisticsFiltersSchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const stats = await this.geographicService.getVotingAreaStatistics(
+        validationResult.data
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Voting area statistics retrieved successfully',
+        data: stats,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Search and filter polling stations
+   * GET /api/v1/geographic/search
+   */
+  searchPollingStations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Validate query parameters
+      const validationResult = pollingStationSearchSchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const result = await this.geographicService.searchPollingStations(
+        validationResult.data
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Polling stations retrieved successfully',
+        data: result.data,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get hierarchical data with drill-down support
+   * GET /api/v1/geographic/hierarchy
+   */
+  getHierarchyData = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // Validate query parameters
+      const validationResult = hierarchyFiltersSchema.safeParse(req.query);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const result = await this.geographicService.getHierarchyData(
+        validationResult.data
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Hierarchy data retrieved successfully',
+        data: result.data,
+        pagination: result.pagination,
       });
     } catch (error) {
       next(error);

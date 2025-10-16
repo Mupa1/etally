@@ -28,10 +28,38 @@ router.post(
 
 /**
  * @route   GET /api/v1/geographic/stats
- * @desc    Get geographic statistics
+ * @desc    Get basic geographic statistics (legacy)
  * @access  Protected
  */
 router.get('/stats', authenticate, geographicController.getStatistics);
+
+/**
+ * @route   GET /api/v1/geographic/voting-stats
+ * @desc    Get comprehensive voting area statistics with voter counts and hierarchical breakdown
+ * @access  Protected
+ * @query   ?countyId=xxx&constituencyId=yyy&wardId=zzz&isActive=true
+ */
+router.get(
+  '/voting-stats',
+  authenticate,
+  geographicController.getVotingAreaStatistics
+);
+
+/**
+ * @route   GET /api/v1/geographic/hierarchy
+ * @desc    Get hierarchical data with drill-down support (counties → constituencies → wards → polling stations)
+ * @access  Protected
+ * @query   ?level=county&countyId=xxx&constituencyId=yyy&wardId=zzz&search=xxx&isActive=true&page=1&limit=100
+ */
+router.get('/hierarchy', authenticate, geographicController.getHierarchyData);
+
+/**
+ * @route   GET /api/v1/geographic/search
+ * @desc    Search and filter polling stations with full hierarchy information
+ * @access  Protected
+ * @query   ?search=xxx&countyId=yyy&constituencyId=zzz&wardId=www&isActive=true&page=1&limit=20&sortBy=name&sortOrder=asc
+ */
+router.get('/search', authenticate, geographicController.searchPollingStations);
 
 /**
  * @route   GET /api/v1/geographic/counties
