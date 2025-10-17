@@ -84,12 +84,20 @@ export class ObserverService {
       },
     });
 
-    // Send confirmation email
-    await this.emailService.sendRegistrationConfirmation(
-      data.email,
-      data.firstName,
-      trackingNumber
-    );
+    // Send confirmation email (non-blocking - don't fail registration if email fails)
+    try {
+      await this.emailService.sendRegistrationConfirmation(
+        data.email,
+        data.firstName,
+        trackingNumber
+      );
+    } catch (emailError: any) {
+      console.error(
+        'Failed to send registration confirmation email:',
+        emailError.message
+      );
+      // Continue with registration - email failure should not block observer registration
+    }
 
     return {
       success: true,
@@ -396,12 +404,19 @@ export class ObserverService {
         },
       });
 
-      // 7. Send password setup email
-      await this.emailService.sendPasswordSetupEmail(
-        user.email,
-        user.firstName,
-        setupToken
-      );
+      // 7. Send password setup email (non-blocking)
+      try {
+        await this.emailService.sendPasswordSetupEmail(
+          user.email,
+          user.firstName,
+          setupToken
+        );
+      } catch (emailError: any) {
+        console.error(
+          'Failed to send password setup email:',
+          emailError.message
+        );
+      }
 
       return {
         success: true,
@@ -450,13 +465,17 @@ export class ObserverService {
         },
       });
 
-      // Send rejection email
+      // Send rejection email (non-blocking)
       if (application) {
-        await this.emailService.sendRejectionEmail(
-          application.email,
-          application.firstName,
-          rejectionReason
-        );
+        try {
+          await this.emailService.sendRejectionEmail(
+            application.email,
+            application.firstName,
+            rejectionReason
+          );
+        } catch (emailError: any) {
+          console.error('Failed to send rejection email:', emailError.message);
+        }
       }
 
       return {
@@ -482,12 +501,19 @@ export class ObserverService {
       },
     });
 
-    // Send clarification request email
-    await this.emailService.sendClarificationRequest(
-      application.email,
-      application.firstName,
-      notes
-    );
+    // Send clarification request email (non-blocking)
+    try {
+      await this.emailService.sendClarificationRequest(
+        application.email,
+        application.firstName,
+        notes
+      );
+    } catch (emailError: any) {
+      console.error(
+        'Failed to send clarification request email:',
+        emailError.message
+      );
+    }
 
     return {
       success: true,
@@ -560,11 +586,15 @@ export class ObserverService {
         },
       });
 
-      // 7. Send welcome email
-      await this.emailService.sendWelcomeEmail(
-        tokenRecord.user.email,
-        tokenRecord.user.firstName
-      );
+      // 7. Send welcome email (non-blocking)
+      try {
+        await this.emailService.sendWelcomeEmail(
+          tokenRecord.user.email,
+          tokenRecord.user.firstName
+        );
+      } catch (emailError: any) {
+        console.error('Failed to send welcome email:', emailError.message);
+      }
 
       return {
         success: true,

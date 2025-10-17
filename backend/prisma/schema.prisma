@@ -708,6 +708,39 @@ model RateLimit {
 }
 
 // ==========================================
+// SYSTEM CONFIGURATION
+// ==========================================
+
+enum ConfigurationType {
+  string
+  number
+  boolean
+  json
+}
+
+model Configuration {
+  id          String            @id @default(uuid())
+  key         String            @unique
+  name        String
+  description String?
+  value       String? // Stored as string, parsed based on type
+  type        ConfigurationType @default(string)
+  category    String // general, security, email, notifications, rate-limiting, storage, database
+  isRequired  Boolean           @default(false)
+  isDefault   Boolean           @default(false)
+
+  // Audit fields
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastModified DateTime @default(now())
+  modifiedBy   String? // User ID who last modified
+
+  @@index([category])
+  @@index([key])
+  @@map("configurations")
+}
+
+// ==========================================
 // ABAC (Attribute-Based Access Control) MODELS
 // ==========================================
 

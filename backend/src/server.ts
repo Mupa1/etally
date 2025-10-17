@@ -24,6 +24,7 @@ import authRouter from '@/domains/auth/auth.routes';
 import electionRouter from '@/domains/elections/election.routes';
 import policyRouter from '@/domains/policies/policy.routes';
 import geographicRouter from '@/domains/geographic/geographic.routes';
+import configurationRouter from '@/domains/configurations/configuration.routes';
 import { observerRoutes } from '@/domains/mobile';
 
 // Server configuration
@@ -83,6 +84,7 @@ app.get('/api', (_req, res) => {
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/elections', electionRouter);
 app.use('/api/v1/geographic', geographicRouter); // Geographic data management
+app.use('/api/v1/configurations', configurationRouter); // System configuration management
 app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
 app.use('/api/mobile', observerRoutes); // Mobile observer registration and PWA
 app.use('/api/admin/observers', observerRoutes); // Admin observer management
