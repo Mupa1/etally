@@ -1,0 +1,106 @@
+<template>
+  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div class="max-w-md w-full">
+      <div class="bg-white shadow-lg rounded-lg p-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-2xl font-bold text-gray-900 mb-2">
+            Observer Portal Login
+          </h1>
+          <p class="text-gray-600">Login to submit election results</p>
+        </div>
+
+        <!-- Login Form -->
+        <form @submit.prevent="handleLogin">
+          <div class="space-y-4">
+            <FormField
+              v-model="form.identifier"
+              label="Email or National ID"
+              type="text"
+              placeholder="email@example.com or 12345678"
+              required
+            />
+
+            <PasswordInput
+              v-model="form.password"
+              label="Password"
+              placeholder="Enter password"
+              required
+            />
+          </div>
+
+          <!-- Submit Button -->
+          <Button
+            type="submit"
+            :loading="submitting"
+            full-width
+            class="mt-6"
+            size="lg"
+          >
+            Login
+          </Button>
+        </form>
+
+        <!-- Error Display -->
+        <Alert v-if="error" variant="danger" :message="error" class="mt-4" />
+
+        <!-- Links -->
+        <div class="mt-6 text-center space-y-2">
+          <router-link
+            to="/mobile/track"
+            class="block text-sm text-blue-600 hover:text-blue-700"
+          >
+            Track Application Status
+          </router-link>
+          <router-link
+            to="/mobile/register"
+            class="block text-sm text-blue-600 hover:text-blue-700"
+          >
+            New Observer Registration
+          </router-link>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import Alert from '@/components/common/Alert.vue';
+import Button from '@/components/common/Button.vue';
+import PasswordInput from '@/components/common/PasswordInput.vue';
+import FormField from '@/components/mobile/FormField.vue';
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const submitting = ref(false);
+const error = ref('');
+
+const form = ref({
+  identifier: '',
+  password: '',
+});
+
+async function handleLogin() {
+  error.value = '';
+  submitting.value = true;
+
+  try {
+    // Login using existing auth store
+    await authStore.login({
+      email: form.value.identifier,
+      password: form.value.password,
+    });
+
+    // Redirect to mobile dashboard
+    router.push('/mobile/dashboard');
+  } catch (err: any) {
+    error.value = err.response?.data?.error || 'Invalid credentials';
+  } finally {
+    submitting.value = false;
+  }
+}
+</script>

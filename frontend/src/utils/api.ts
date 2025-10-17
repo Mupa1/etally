@@ -29,6 +29,21 @@ export interface ApiError {
   details?: any;
 }
 
+// Simple UUID v4 generator (fallback for environments without crypto.randomUUID)
+function generateUUID(): string {
+  // Try native crypto.randomUUID first (faster, more secure)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // Fallback: Generate UUID v4 manually
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
@@ -48,7 +63,7 @@ api.interceptors.request.use(
     }
 
     // Add request ID for tracing
-    config.headers['X-Request-ID'] = crypto.randomUUID();
+    config.headers['X-Request-ID'] = generateUUID();
 
     return config;
   },

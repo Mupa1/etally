@@ -107,6 +107,15 @@ enum NotificationPriority {
   critical
 }
 
+enum ObserverStatus {
+  pending_review
+  approved
+  active
+  rejected
+  suspended
+  inactive
+}
+
 enum UploadStatus {
   pending
   processing
@@ -193,16 +202,22 @@ model User {
   deletedBy String?
 
   // Relations
-  sessions              Session[]
-  mobileDevices         MobileDevice[]
-  auditLogs             AuditLog[]
-  createdElections      Election[]
-  submittedResults      ElectionResult[]
-  notifications         Notification[]
-  uploadedMedia         MediaAttachment[]
-  reportedIncidents     Incident[]
-  geographicScopes      UserGeographicScope[]
-  userPermissions       UserPermission[]
+  sessions          Session[]
+  mobileDevices     MobileDevice[]
+  auditLogs         AuditLog[]
+  createdElections  Election[]
+  submittedResults  ElectionResult[]
+  notifications     Notification[]
+  uploadedMedia     MediaAttachment[]
+  reportedIncidents Incident[]
+  geographicScopes  UserGeographicScope[]
+  userPermissions   UserPermission[]
+
+  // Observer Relations (NEW)
+  observerProfile      ObserverRegistration?  @relation("ObserverProfile")
+  reviewedApplications ObserverRegistration[] @relation("ReviewedApplications")
+  assignedObservers    ObserverAssignment[]   @relation("AssignedObservers")
+  passwordSetupTokens  PasswordSetupToken[]
 
   @@index([email])
   @@index([nationalId])
@@ -242,8 +257,9 @@ model County {
   deletedAt DateTime?
 
   // Relations
-  constituencies    Constituency[]
-  geographicScopes  UserGeographicScope[]
+  constituencies       Constituency[]
+  geographicScopes     UserGeographicScope[]
+  preferredByObservers ObserverRegistration[]
 
   @@index([code])
   @@map("counties")
@@ -261,8 +277,9 @@ model Constituency {
   deletedAt DateTime?
 
   // Relations
-  wards             ElectoralWard[]
-  geographicScopes  UserGeographicScope[]
+  wards                ElectoralWard[]
+  geographicScopes     UserGeographicScope[]
+  preferredByObservers ObserverRegistration[]
 
   @@index([countyId])
   @@index([code])
@@ -281,8 +298,9 @@ model ElectoralWard {
   deletedAt DateTime?
 
   // Relations
-  pollingStations   PollingStation[]
-  geographicScopes  UserGeographicScope[]
+  pollingStations      PollingStation[]
+  geographicScopes     UserGeographicScope[]
+  preferredByObservers ObserverRegistration[]
 
   @@index([constituencyId])
   @@index([code])
@@ -307,6 +325,10 @@ model PollingStation {
   // Relations
   results   ElectionResult[]
   incidents Incident[]
+
+  // Observer Relations (NEW)
+  preferredByObservers ObserverRegistration[]
+  observerAssignments  ObserverAssignment[]
 
   @@index([wardId])
   @@index([code])
@@ -440,12 +462,24 @@ model ElectionResult {
   updatedAt      DateTime @updatedAt
   auditSignature String?
 
+  // Form 34A Tracking (NEW)
+  form34ANumber     String?
+  form34APhotos     String[]  @default([]) // Array of MinIO paths
+  form34AUploadedAt DateTime?
+  rejectedBallots   Int?      @default(0)
+  spoiltBallots     Int?      @default(0)
+
+  // Observer App Flag (NEW)
+  submittedViaObserverApp Boolean @default(false)
+
   @@unique([contestId, pollingStationId, candidateId, resultLevel])
   @@index([electionId, contestId])
   @@index([pollingStationId])
   @@index([submittedBy])
   @@index([createdAt])
   @@index([resultStatus])
+  @@index([form34ANumber])
+  @@index([submittedViaObserverApp])
   @@map("election_results")
 }
 
@@ -704,11 +738,11 @@ model UserGeographicScope {
 
 // ABAC Policies
 model AccessPolicy {
-  id          String         @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   description String?
-  effect      PolicyEffect   @default(allow)
-  priority    Int            @default(0) // Higher priority = evaluated first
+  effect      PolicyEffect @default(allow)
+  priority    Int          @default(0) // Higher priority = evaluated first
 
   // Role restrictions
   roles UserRole[]
@@ -737,7 +771,7 @@ model UserPermission {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   resourceType ResourceType
-  resourceId   String?          // Specific resource or null for all
+  resourceId   String? // Specific resource or null for all
   action       PermissionAction
   effect       PolicyEffect     @default(allow)
 
@@ -775,4 +809,120 @@ model PermissionCheck {
   @@index([userId, checkedAt])
   @@index([resourceType, action])
   @@map("permission_checks")
+}
+
+// ==========================================
+// FIELD OBSERVER REGISTRATION MODELS
+// ==========================================
+
+// Observer registration applications (public registration)
+model ObserverRegistration {
+  id String @id @default(uuid())
+
+  // Personal Information
+  nationalId  String   @unique
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+  phoneNumber String
+  email       String   @unique
+
+  // Preferred Assignment (optional during registration)
+  preferredCountyId       String?
+  preferredCounty         County?         @relation(fields: [preferredCountyId], references: [id])
+  preferredConstituencyId String?
+  preferredConstituency   Constituency?   @relation(fields: [preferredConstituencyId], references: [id])
+  preferredWardId         String?
+  preferredWard           ElectoralWard?  @relation(fields: [preferredWardId], references: [id])
+  preferredStationId      String?
+  preferredStation        PollingStation? @relation(fields: [preferredStationId], references: [id])
+
+  // Documents (MinIO paths)
+  nationalIdFrontUrl String?
+  nationalIdBackUrl  String?
+  profilePhotoUrl    String?
+  additionalDocs     String[] // JSON array of MinIO paths
+
+  // Application Status
+  status         ObserverStatus @default(pending_review)
+  trackingNumber String         @unique
+  submissionDate DateTime       @default(now())
+
+  // Review Information
+  reviewDate      DateTime?
+  reviewedBy      String?
+  reviewer        User?     @relation("ReviewedApplications", fields: [reviewedBy], references: [id])
+  reviewNotes     String?
+  rejectionReason String?
+
+  // User Link (created on approval)
+  userId String? @unique
+  user   User?   @relation("ObserverProfile", fields: [userId], references: [id])
+
+  // Consent
+  termsAccepted         Boolean @default(false)
+  dataProcessingConsent Boolean @default(false)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  assignments ObserverAssignment[]
+
+  @@index([nationalId])
+  @@index([email])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([submissionDate])
+  @@map("observer_registrations")
+}
+
+// Observer assignments to polling stations
+model ObserverAssignment {
+  id String @id @default(uuid())
+
+  // Observer (via registration)
+  observerRegistrationId String
+  observerRegistration   ObserverRegistration @relation(fields: [observerRegistrationId], references: [id], onDelete: Cascade)
+
+  // Polling Station
+  pollingStationId String
+  pollingStation   PollingStation @relation(fields: [pollingStationId], references: [id])
+
+  // Assignment Details
+  assignmentDate DateTime @default(now())
+  assignedBy     String
+  assigner       User     @relation("AssignedObservers", fields: [assignedBy], references: [id])
+
+  // Status
+  isActive           Boolean   @default(true)
+  deactivatedAt      DateTime?
+  deactivatedBy      String?
+  deactivationReason String?
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([observerRegistrationId, pollingStationId])
+  @@index([pollingStationId])
+  @@index([isActive])
+  @@map("observer_assignments")
+}
+
+// Password setup tokens for approved observers
+model PasswordSetupToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_setup_tokens")
 }

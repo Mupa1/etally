@@ -24,6 +24,7 @@ import authRouter from '@/domains/auth/auth.routes';
 import electionRouter from '@/domains/elections/election.routes';
 import policyRouter from '@/domains/policies/policy.routes';
 import geographicRouter from '@/domains/geographic/geographic.routes';
+import { observerRoutes } from '@/domains/mobile';
 
 // Server configuration
 const app: Application = express();
@@ -83,6 +84,8 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/elections', electionRouter);
 app.use('/api/v1/geographic', geographicRouter); // Geographic data management
 app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
+app.use('/api/mobile', observerRoutes); // Mobile observer registration and PWA
+app.use('/api/admin/observers', observerRoutes); // Admin observer management
 // TODO: Add more routes
 // app.use('/api/v1/results', resultRouter);
 // app.use('/api/v1/candidates', candidateRouter);

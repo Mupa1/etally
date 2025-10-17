@@ -145,6 +145,44 @@ const routes: RouteRecordRaw[] = [
       requiresRole: ['super_admin'],
     },
   },
+  // Mobile Observer Routes
+  {
+    path: '/mobile/register',
+    name: 'observer-register',
+    component: () => import('@/views/mobile/ObserverRegisterView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/mobile/success/:trackingNumber',
+    name: 'observer-registration-success',
+    component: () =>
+      import('@/views/mobile/ObserverRegistrationSuccessView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/mobile/track/:trackingNumber?',
+    name: 'observer-tracking',
+    component: () => import('@/views/mobile/ObserverTrackingView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/mobile/setup-password',
+    name: 'observer-password-setup',
+    component: () => import('@/views/mobile/PasswordSetupView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/mobile/login',
+    name: 'observer-login',
+    component: () => import('@/views/mobile/ObserverLoginView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/mobile/dashboard',
+    name: 'observer-dashboard',
+    component: () => import('@/views/mobile/ObserverDashboardView.vue'),
+    meta: { requiresAuth: true, requiresRole: ['field_observer'] },
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
