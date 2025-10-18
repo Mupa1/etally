@@ -133,6 +133,6 @@ onMounted(() => {
 
 function handleLogout() {
   authStore.logout();
-  router.push('/mobile/login');
+  router.push('/agent/login');
 }
 </script>

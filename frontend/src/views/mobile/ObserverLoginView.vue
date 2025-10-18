@@ -47,13 +47,19 @@
         <!-- Links -->
         <div class="mt-6 text-center space-y-2">
           <router-link
-            to="/mobile/track"
+            to="/agent"
+            class="block text-sm text-gray-600 hover:text-gray-700 mb-3"
+          >
+            ← Back to Agent Portal
+          </router-link>
+          <router-link
+            to="/agent/track"
             class="block text-sm text-blue-600 hover:text-blue-700"
           >
             Track Application Status
           </router-link>
           <router-link
-            to="/mobile/register"
+            to="/agent/register"
             class="block text-sm text-blue-600 hover:text-blue-700"
           >
             New Observer Registration
@@ -95,8 +101,8 @@ async function handleLogin() {
       password: form.value.password,
     });
 
-    // Redirect to mobile dashboard
-    router.push('/mobile/dashboard');
+    // Redirect to agent dashboard
+    router.push('/agent/dashboard');
   } catch (err: any) {
     error.value = err.response?.data?.error || 'Invalid credentials';
   } finally {

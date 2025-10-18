@@ -66,7 +66,7 @@
         <!-- Success Display -->
         <Alert v-if="success" variant="success" :message="success" class="mt-4">
           <router-link
-            to="/mobile/login"
+            to="/agent/login"
             class="block text-center w-full mt-3 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
             Go to Login
@@ -139,7 +139,7 @@ async function handleSubmit() {
 
   try {
     const response = await api.post(
-      '/mobile/setup-password',
+      '/agent/setup-password',
       {
         token: token.value,
         password: form.value.password,

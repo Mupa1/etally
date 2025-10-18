@@ -1,6 +1,29 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8 px-4">
     <div class="max-w-2xl mx-auto">
+      <!-- Back Link -->
+      <div class="mb-4">
+        <router-link
+          to="/agent"
+          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+        >
+          <svg
+            class="w-4 h-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Back to Agent Portal
+        </router-link>
+      </div>
+
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
@@ -108,7 +131,7 @@
           >
             Refresh Status
           </Button>
-          <router-link to="/mobile/register" class="flex-1">
+          <router-link to="/agent/register" class="flex-1">
             <Button variant="primary" full-width> New Application </Button>
           </router-link>
         </div>
@@ -198,7 +221,7 @@ async function fetchApplicationStatus(number: string) {
   error.value = '';
 
   try {
-    const response = await api.get(`/mobile/track/${number}`, {
+    const response = await api.get(`/agent/track/${number}`, {
       baseURL: '/api',
     });
     application.value = response.data;

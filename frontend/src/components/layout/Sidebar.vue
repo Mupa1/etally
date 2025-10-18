@@ -413,9 +413,9 @@ const adminItems = computed<NavigationItem[]>(() => {
         icon: SettingsIcon,
       },
       {
-        name: 'rate-limiting',
-        label: 'Rate Limiting',
-        path: '/settings/rate-limiting',
+        name: 'configurations',
+        label: 'Configurations',
+        path: '/settings/configurations',
         icon: SettingsIcon,
       },
     ],

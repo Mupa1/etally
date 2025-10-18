@@ -97,17 +97,17 @@
         <!-- Actions -->
         <div class="space-y-3">
           <router-link
-            :to="`/mobile/track/${trackingNumber}`"
+            :to="`/agent/track/${trackingNumber}`"
             class="block w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Track Application Status
           </router-link>
 
           <router-link
-            to="/"
+            to="/agent"
             class="block w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
           >
-            Return to Home
+            Return to Agent Portal
           </router-link>
         </div>
       </div>

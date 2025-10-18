@@ -170,8 +170,8 @@ const selectedStation = computed(() => {
 // Load counties on mount
 (async () => {
   try {
-    // Use full URL to bypass baseURL (mobile endpoints are at /api/mobile, not /api/v1)
-    const response = await api.get('/mobile/geographic/counties', {
+    // Use full URL to bypass baseURL (agent endpoints are at /api/agent, not /api/v1)
+    const response = await api.get('/agent/geographic/counties', {
       baseURL: '/api',
     });
     if (response.data.success) {
@@ -227,7 +227,7 @@ async function handleCountyChange(value: string) {
   loadingConstituencies.value = true;
   try {
     const response = await api.get(
-      `/mobile/geographic/constituencies?countyId=${value}`,
+      `/agent/geographic/constituencies?countyId=${value}`,
       {
         baseURL: '/api',
       }
@@ -258,7 +258,7 @@ async function handleConstituencyChange(value: string) {
   loadingWards.value = true;
   try {
     const response = await api.get(
-      `/mobile/geographic/wards?constituencyId=${value}`,
+      `/agent/geographic/wards?constituencyId=${value}`,
       {
         baseURL: '/api',
       }
@@ -286,7 +286,7 @@ async function handleWardChange(value: string) {
   loadingStations.value = true;
   try {
     const response = await api.get(
-      `/mobile/geographic/polling-stations?wardId=${value}`,
+      `/agent/geographic/polling-stations?wardId=${value}`,
       {
         baseURL: '/api',
       }

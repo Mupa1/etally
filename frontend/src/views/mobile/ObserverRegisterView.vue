@@ -1,6 +1,29 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-8 px-4">
     <div class="max-w-2xl mx-auto">
+      <!-- Back Link -->
+      <div class="mb-4">
+        <router-link
+          to="/agent"
+          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+        >
+          <svg
+            class="w-4 h-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Back to Agent Portal
+        </router-link>
+      </div>
+
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
@@ -343,27 +366,49 @@ async function submitRegistration() {
       preferredStationId: form.value.preferredStationId || undefined,
     };
 
-    const response = await api.post('/mobile/register', registrationData, {
+    console.log('Submitting registration:', registrationData);
+
+    const response = await api.post('/agent/register', registrationData, {
       baseURL: '/api',
     });
+
+    console.log('Registration response:', response.data);
 
     if (!response.data.success) {
       throw new Error(response.data.error || 'Registration failed');
     }
 
-    const { trackingNumber } = response.data;
+    // Extract trackingNumber from response
+    const trackingNumber =
+      response.data.trackingNumber || response.data.data?.trackingNumber;
+
+    console.log('Tracking number:', trackingNumber);
+
+    if (!trackingNumber) {
+      throw new Error('Failed to get tracking number from server');
+    }
 
     // 2. Upload documents
-    await uploadDocuments(trackingNumber);
+    if (documents.value.profilePhoto) {
+      console.log('Uploading documents...');
+      await uploadDocuments(trackingNumber);
+      console.log('Documents uploaded successfully');
+    }
 
     // 3. Redirect to success page
+    console.log('Redirecting to success page...');
     router.push({
-      name: 'ObserverRegistrationSuccess',
+      name: 'observer-registration-success',
       params: { trackingNumber },
     });
   } catch (err: any) {
+    console.error('Registration error:', err);
+    console.error('Error response:', err.response?.data);
     error.value =
-      err.response?.data?.error || err.message || 'Registration failed';
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      err.message ||
+      'Registration failed';
   } finally {
     submitting.value = false;
   }
@@ -378,7 +423,7 @@ async function uploadDocuments(trackingNumber: string) {
   formData.append('documentType', 'profile_photo');
 
   await api.post(
-    `/mobile/register/${trackingNumber}/upload-document`,
+    `/agent/register/${trackingNumber}/upload-document`,
     formData,
     {
       baseURL: '/api',

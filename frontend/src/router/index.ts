@@ -90,6 +90,15 @@ const routes: RouteRecordRaw[] = [
       requiresRole: ['super_admin', 'election_manager'],
     },
   },
+  {
+    path: '/settings/configurations',
+    name: 'settings-configurations',
+    component: () => import('@/views/settings/ConfigurationsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
   // Admin Routes
   {
     path: '/admin/users',
@@ -145,40 +154,46 @@ const routes: RouteRecordRaw[] = [
       requiresRole: ['super_admin'],
     },
   },
-  // Mobile Observer Routes
+  // Agent/Observer Routes
   {
-    path: '/mobile/register',
+    path: '/agent',
+    name: 'agent-landing',
+    component: () => import('@/views/mobile/AgentLandingView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/register',
     name: 'observer-register',
     component: () => import('@/views/mobile/ObserverRegisterView.vue'),
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
-    path: '/mobile/success/:trackingNumber',
+    path: '/agent/success/:trackingNumber',
     name: 'observer-registration-success',
     component: () =>
       import('@/views/mobile/ObserverRegistrationSuccessView.vue'),
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
-    path: '/mobile/track/:trackingNumber?',
+    path: '/agent/track/:trackingNumber?',
     name: 'observer-tracking',
     component: () => import('@/views/mobile/ObserverTrackingView.vue'),
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
-    path: '/mobile/setup-password',
+    path: '/agent/setup-password',
     name: 'observer-password-setup',
     component: () => import('@/views/mobile/PasswordSetupView.vue'),
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
-    path: '/mobile/login',
+    path: '/agent/login',
     name: 'observer-login',
     component: () => import('@/views/mobile/ObserverLoginView.vue'),
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
-    path: '/mobile/dashboard',
+    path: '/agent/dashboard',
     name: 'observer-dashboard',
     component: () => import('@/views/mobile/ObserverDashboardView.vue'),
     meta: { requiresAuth: true, requiresRole: ['field_observer'] },
