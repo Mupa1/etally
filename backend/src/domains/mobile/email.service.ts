@@ -48,7 +48,7 @@ export class EmailService {
       
       <p><strong>Application Tracking Number:</strong> ${trackingNumber}</p>
       <p>You can track your application status at:</p>
-      <p><a href="${this.appUrl}/mobile/track/${trackingNumber}">Track Application</a></p>
+      <p><a href="${this.appUrl}/agent/track/${trackingNumber}">Track Application</a></p>
       
       <p>You will receive another email when your application is reviewed (typically within 24-48 hours).</p>
       
@@ -67,7 +67,7 @@ export class EmailService {
     setupToken: string
   ): Promise<void> {
     const subject = 'Observer Application Approved - Set Your Password';
-    const setupUrl = `${this.appUrl}/mobile/setup-password?token=${setupToken}`;
+    const setupUrl = `${this.appUrl}/agent/setup-password?token=${setupToken}`;
 
     const html = `
       <h2>Congratulations ${firstName}!</h2>
@@ -91,7 +91,7 @@ export class EmailService {
    */
   async sendWelcomeEmail(email: string, firstName: string): Promise<void> {
     const subject = 'Welcome to Field Observer Portal';
-    const loginUrl = `${this.appUrl}/mobile/login`;
+    const loginUrl = `${this.appUrl}/agent/login`;
 
     const html = `
       <h2>Welcome ${firstName}!</h2>

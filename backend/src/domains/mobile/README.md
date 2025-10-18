@@ -27,10 +27,10 @@ This domain handles field observer registration, approval, and mobile result sub
 #### Public Endpoints (No Auth)
 
 ```
-POST   /api/mobile/register                      - Register new observer
-GET    /api/mobile/track/:trackingNumber         - Track application
-POST   /api/mobile/setup-password                - Set password
-POST   /api/mobile/register/:id/upload-document  - Upload documents
+POST   /api/agent/register                      - Register new observer
+GET    /api/agent/track/:trackingNumber         - Track application
+POST   /api/agent/setup-password                - Set password
+POST   /api/agent/register/:id/upload-document  - Upload documents
 ```
 
 #### Admin Endpoints (Requires super_admin or election_manager)
@@ -99,7 +99,7 @@ app.use('/api/mobile', observerRoutes);
 ### Register Observer (Public)
 
 ```bash
-curl -X POST http://localhost:3000/api/mobile/register \
+curl -X POST http://localhost:3000/api/agent/register \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "John",
@@ -117,7 +117,7 @@ curl -X POST http://localhost:3000/api/mobile/register \
 ### Upload Document
 
 ```bash
-curl -X POST http://localhost:3000/api/mobile/register/{registrationId}/upload-document \
+curl -X POST http://localhost:3000/api/agent/register/{registrationId}/upload-document \
   -F "file=@national_id.jpg" \
   -F "documentType=national_id_front"
 ```
@@ -125,7 +125,7 @@ curl -X POST http://localhost:3000/api/mobile/register/{registrationId}/upload-d
 ### Track Application
 
 ```bash
-curl http://localhost:3000/api/mobile/track/OBS-2024-001234
+curl http://localhost:3000/api/agent/track/OBS-2024-001234
 ```
 
 ### Review Application (Admin)

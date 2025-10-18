@@ -86,7 +86,7 @@ app.use('/api/v1/elections', electionRouter);
 app.use('/api/v1/geographic', geographicRouter); // Geographic data management
 app.use('/api/v1/configurations', configurationRouter); // System configuration management
 app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
-app.use('/api/mobile', observerRoutes); // Mobile observer registration and PWA
+app.use('/api/agent', observerRoutes); // Agent/Observer registration and PWA
 app.use('/api/admin/observers', observerRoutes); // Admin observer management
 // TODO: Add more routes
 // app.use('/api/v1/results', resultRouter);

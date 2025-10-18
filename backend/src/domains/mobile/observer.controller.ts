@@ -18,7 +18,7 @@ export class ObserverController {
   constructor(private observerService: ObserverService) {}
 
   /**
-   * POST /api/mobile/register
+   * POST /api/agent/register
    * Public registration endpoint
    */
   register = async (
@@ -50,7 +50,7 @@ export class ObserverController {
   };
 
   /**
-   * GET /api/mobile/track/:trackingNumber
+   * GET /api/agent/track/:trackingNumber
    * Track application status
    */
   trackApplication = async (
@@ -81,7 +81,7 @@ export class ObserverController {
   };
 
   /**
-   * POST /api/mobile/setup-password
+   * POST /api/agent/setup-password
    * Set password for approved observer
    */
   setupPassword = async (
@@ -112,7 +112,7 @@ export class ObserverController {
   };
 
   /**
-   * POST /api/mobile/register/:trackingNumber/upload-document
+   * POST /api/agent/register/:trackingNumber/upload-document
    * Upload observer documents
    */
   uploadDocument = async (

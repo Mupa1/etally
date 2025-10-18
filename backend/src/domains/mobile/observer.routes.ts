@@ -37,7 +37,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   // ==========================================
 
   /**
-   * POST /api/mobile/register
+   * POST /api/agent/register
    * Register new field observer
    * Rate limit: 5 requests per 15 minutes per IP
    */
@@ -52,7 +52,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   );
 
   /**
-   * GET /api/mobile/track/:trackingNumber
+   * GET /api/agent/track/:trackingNumber
    * Track application status
    * Rate limit: 10 requests per 5 minutes
    */
@@ -66,7 +66,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   );
 
   /**
-   * POST /api/mobile/setup-password
+   * POST /api/agent/setup-password
    * Set password for approved observer
    * Rate limit: 3 attempts per token
    */
@@ -80,7 +80,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   );
 
   /**
-   * POST /api/mobile/register/:trackingNumber/upload-document
+   * POST /api/agent/register/:trackingNumber/upload-document
    * Upload observer documents during or after registration
    * Rate limit: 10 uploads per hour
    */
@@ -177,7 +177,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   });
 
   /**
-   * GET /api/mobile/geographic/counties
+   * GET /api/agent/geographic/counties
    * Get all counties for dropdown selection
    * Public endpoint for registration form
    */
@@ -191,7 +191,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   });
 
   /**
-   * GET /api/mobile/geographic/constituencies
+   * GET /api/agent/geographic/constituencies
    * Get constituencies for selected county
    * Query: ?countyId=xxx
    * Public endpoint for registration form
@@ -219,7 +219,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   );
 
   /**
-   * GET /api/mobile/geographic/wards
+   * GET /api/agent/geographic/wards
    * Get wards for selected constituency
    * Query: ?constituencyId=xxx
    * Public endpoint for registration form
@@ -243,7 +243,7 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   });
 
   /**
-   * GET /api/mobile/geographic/polling-stations
+   * GET /api/agent/geographic/polling-stations
    * Get polling stations for selected ward
    * Query: ?wardId=xxx
    * Public endpoint for registration form
