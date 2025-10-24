@@ -708,4 +708,234 @@ export class ObserverService {
 
     return results;
   }
+
+  // ==========================================
+  // MOBILE PWA SERVICE METHODS
+  // ==========================================
+
+  /**
+   * Get observer profile for authenticated observer
+   */
+  async getObserverProfile(userId: string) {
+    const observer = await this.prisma.observerRegistration.findFirst({
+      where: { userId },
+      include: {
+        preferredCounty: true,
+        preferredConstituency: true,
+        reviewer: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+            role: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!observer) {
+      throw new Error('Observer profile not found');
+    }
+
+    return observer;
+  }
+
+  /**
+   * Update observer profile
+   */
+  async updateObserverProfile(userId: string, updateData: any) {
+    const observer = await this.prisma.observerRegistration.findFirst({
+      where: { userId },
+    });
+
+    if (!observer) {
+      throw new Error('Observer profile not found');
+    }
+
+    const updatedObserver = await this.prisma.observerRegistration.update({
+      where: { id: observer.id },
+      data: updateData,
+      include: {
+        preferredCounty: true,
+        preferredConstituency: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    });
+
+    return updatedObserver;
+  }
+
+  /**
+   * Get observer assignments
+   */
+  async getObserverAssignments(userId: string) {
+    const assignments = await this.prisma.observerAssignment.findMany({
+      where: { observerRegistrationId: userId },
+      include: {
+        pollingStation: {
+          include: {
+            ward: {
+              include: {
+                constituency: {
+                  include: {
+                    county: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return assignments;
+  }
+
+  /**
+   * Get observer status and registration info
+   */
+  async getObserverStatus(userId: string) {
+    const observer = await this.prisma.observerRegistration.findFirst({
+      where: { userId },
+      include: {
+        preferredCounty: true,
+        preferredConstituency: true,
+        reviewer: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!observer) {
+      throw new Error('Observer not found');
+    }
+
+    return {
+      registration: observer,
+      status: observer.status,
+      isApproved: observer.status === 'approved',
+      isActive: observer.user?.isActive || false,
+    };
+  }
+
+  // ==========================================
+  // APPLICATION MANAGEMENT SERVICE METHODS
+  // ==========================================
+
+  /**
+   * Bulk reject applications
+   */
+  async bulkRejectApplications(applicationIds: string[], reason: string) {
+    const results = {
+      successful: 0,
+      failed: 0,
+      errors: [] as Array<{ id: string; error: string }>,
+    };
+
+    for (const applicationId of applicationIds) {
+      try {
+        await this.prisma.observerRegistration.update({
+          where: { id: applicationId },
+          data: {
+            status: 'rejected',
+            rejectionReason: reason,
+            reviewDate: new Date(),
+          },
+        });
+        results.successful++;
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push({
+          id: applicationId,
+          error: error.message,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Export applications to CSV
+   */
+  async exportApplications() {
+    const applications = await this.prisma.observerRegistration.findMany({
+      include: {
+        preferredCounty: true,
+        preferredConstituency: true,
+        reviewer: true,
+        user: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+            phoneNumber: true,
+          },
+        },
+      },
+    });
+
+    // Simple CSV generation
+    const headers = [
+      'ID',
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'Status',
+      'County',
+      'Constituency',
+      'Created At',
+      'Reviewed At',
+    ];
+
+    const rows = applications.map((app) => [
+      app.id,
+      app.user?.firstName || '',
+      app.user?.lastName || '',
+      app.user?.email || '',
+      app.user?.phoneNumber || '',
+      app.status,
+      app.preferredCounty?.name || '',
+      app.preferredConstituency?.name || '',
+      app.createdAt.toISOString(),
+      app.reviewDate?.toISOString() || '',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((field) => `"${field}"`).join(','))
+      .join('\n');
+
+    return csvContent;
+  }
+
+  /**
+   * Delete application (soft delete)
+   */
+  async deleteApplication(applicationId: string) {
+    await this.prisma.observerRegistration.update({
+      where: { id: applicationId },
+      data: { status: 'inactive' },
+    });
+  }
 }

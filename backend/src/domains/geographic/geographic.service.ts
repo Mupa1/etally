@@ -466,72 +466,62 @@ class GeographicService {
         ? { ...baseWhere, id: filters.countyId }
         : baseWhere;
 
+      // Get all counties first, then get their statistics separately to ensure we include all counties
       const counties = await this.prisma.county.findMany({
         where: countyWhere,
-        include: {
-          constituencies: {
-            where: { deletedAt: null },
-            include: {
-              wards: {
-                where: { deletedAt: null },
-                include: {
-                  pollingStations: {
-                    where: pollingStationWhere,
-                    select: { registeredVoters: true },
-                  },
-                  _count: {
-                    select: {
-                      pollingStations: {
-                        where: pollingStationWhere,
-                      },
-                    },
-                  },
-                },
-              },
-              _count: {
-                select: {
-                  wards: { where: { deletedAt: null } },
-                },
-              },
-            },
-          },
-          _count: {
-            select: {
-              constituencies: { where: { deletedAt: null } },
-            },
-          },
-        },
         orderBy: { name: 'asc' },
       });
 
-      // Process county-level data
-      const countyStats = counties.map((county: any) => {
-        let totalWards = 0;
-        let totalPollingStations = 0;
-        let totalVoters = 0;
-
-        county.constituencies.forEach((constituency: any) => {
-          totalWards += constituency.wards.length;
-
-          constituency.wards.forEach((ward: any) => {
-            totalPollingStations += ward._count.pollingStations;
-            totalVoters += ward.pollingStations.reduce(
-              (sum: number, ps: any) => sum + ps.registeredVoters,
-              0
-            );
+      // Get statistics for each county separately to handle counties without complete data
+      const countyStats = await Promise.all(
+        counties.map(async (county) => {
+          // Get constituency count for this county
+          const constituencyCount = await this.prisma.constituency.count({
+            where: { countyId: county.id, deletedAt: null },
           });
-        });
 
-        return {
-          id: county.id,
-          code: county.code,
-          name: county.name,
-          totalConstituencies: county._count.constituencies,
-          totalWards,
-          totalPollingStations,
-          totalRegisteredVoters: totalVoters,
-        };
-      });
+          // Get ward count for this county
+          const wardCount = await this.prisma.electoralWard.count({
+            where: {
+              constituency: {
+                countyId: county.id,
+                deletedAt: null,
+              },
+              deletedAt: null,
+            },
+          });
+
+          // Get polling station count and registered voters for this county
+          const pollingStationStats =
+            await this.prisma.pollingStation.aggregate({
+              where: {
+                ward: {
+                  constituency: {
+                    countyId: county.id,
+                    deletedAt: null,
+                  },
+                  deletedAt: null,
+                },
+                ...pollingStationWhere,
+              },
+              _count: { id: true },
+              _sum: { registeredVoters: true },
+            });
+
+          return {
+            id: county.id,
+            code: county.code,
+            name: county.name,
+            totalConstituencies: constituencyCount,
+            totalWards: wardCount,
+            totalPollingStations: pollingStationStats._count.id,
+            totalRegisteredVoters:
+              pollingStationStats._sum.registeredVoters || 0,
+          };
+        })
+      );
+
+      // countyStats is already processed above
 
       const result: IVotingAreaStatistics = {
         totalCounties,
@@ -1136,6 +1126,71 @@ class GeographicService {
         throw error;
       }
       throw new DatabaseError('Failed to fetch hierarchy data', error as Error);
+    }
+  }
+
+  /**
+   * Delete all voting areas data
+   * This is a highly sensitive operation that should only be performed by super admins
+   */
+  async deleteAllVotingAreas(): Promise<{
+    deletedCount: {
+      counties: number;
+      constituencies: number;
+      wards: number;
+      pollingStations: number;
+    };
+  }> {
+    try {
+      console.log('Starting deletion of all voting areas data...');
+
+      // Use transaction to ensure atomicity
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Delete in reverse order of dependencies to avoid foreign key constraints
+        // 1. Delete polling stations first (they reference wards)
+        const deletedPollingStations = await tx.pollingStation.deleteMany({});
+        console.log(`Deleted ${deletedPollingStations.count} polling stations`);
+
+        // 2. Delete wards (they reference constituencies)
+        const deletedWards = await tx.electoralWard.deleteMany({});
+        console.log(`Deleted ${deletedWards.count} wards`);
+
+        // 3. Delete constituencies (they reference counties)
+        const deletedConstituencies = await tx.constituency.deleteMany({});
+        console.log(`Deleted ${deletedConstituencies.count} constituencies`);
+
+        // 4. Delete counties last
+        const deletedCounties = await tx.county.deleteMany({});
+        console.log(`Deleted ${deletedCounties.count} counties`);
+
+        return {
+          counties: deletedCounties.count,
+          constituencies: deletedConstituencies.count,
+          wards: deletedWards.count,
+          pollingStations: deletedPollingStations.count,
+        };
+      });
+
+      // Clear Redis cache for geographic data
+      try {
+        await this.redis.del('geographic:*');
+        console.log('Cleared geographic data from Redis cache');
+      } catch (cacheError) {
+        console.warn('Failed to clear Redis cache:', cacheError);
+        // Don't throw error for cache clearing failure
+      }
+
+      console.log('Successfully deleted all voting areas data:', result);
+
+      return {
+        deletedCount: result,
+      };
+    } catch (error) {
+      console.error('Failed to delete all voting areas data:', error);
+      throw new DatabaseError(
+        'Failed to delete all voting areas data',
+        error as Error
+      );
     }
   }
 }

@@ -1,35 +1,35 @@
 <template>
   <MainLayout
-    page-title="Field Observers Management"
-    page-description="Manage and monitor field observers for election monitoring"
+    page-title="Observer Management"
+    page-description="Manage field observers, review applications, and monitor observer activities"
   >
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <StatCard
         title="Total Observers"
-        :value="stats.total"
-        icon="check"
+        :value="stats.total || 0"
+        icon="users"
         color="primary"
       />
       <StatCard
-        title="Active (24h)"
-        :value="stats.active"
+        title="Active Observers"
+        :value="stats.active || 0"
         :percentage="stats.total > 0 ? (stats.active / stats.total) * 100 : 0"
         icon="check-circle"
         color="success"
       />
       <StatCard
-        title="Pending Approval"
-        :value="stats.pending"
+        title="Pending Applications"
+        :value="stats.pending || 0"
         icon="clock"
         color="warning"
       />
       <StatCard
-        title="Assigned Locations"
-        :value="stats.assigned"
+        title="Assigned Observers"
+        :value="stats.assigned || 0"
         :percentage="stats.total > 0 ? (stats.assigned / stats.total) * 100 : 0"
         icon="location"
-        color="info"
+        color="primary"
       />
     </div>
 
@@ -41,7 +41,7 @@
         <div class="w-full">
           <SearchBar
             v-model="searchQuery"
-            placeholder="Search by name, email, tracking number..."
+            placeholder="Search by name, email, phone, or ID..."
           />
         </div>
 
@@ -49,26 +49,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <!-- Status Filter -->
           <Select
-            v-model="filters.status"
+            v-model="statusFilter"
             label="Status"
-            placeholder="All Status"
+            placeholder="All Statuses"
             :options="statusOptions"
           />
 
-          <!-- Location Filter -->
+          <!-- View Toggle Filter -->
           <Select
-            v-model="filters.location"
-            label="Location"
-            placeholder="All Locations"
-            :options="locationOptions"
-          />
-
-          <!-- Registration Status Filter -->
-          <Select
-            v-model="filters.registrationStatus"
-            label="Registration Status"
-            placeholder="All Registration Status"
-            :options="registrationStatusOptions"
+            v-model="viewMode"
+            label="View Mode"
+            placeholder="Select View"
+            :options="viewModeOptions"
           />
         </div>
 
@@ -85,8 +77,19 @@
             variant="primary"
             @click="loadObservers"
             class="w-full sm:w-auto"
+            :disabled="loading"
           >
-            Apply Filters
+            <i class="icon-refresh mr-2" :class="{ spinning: loading }"></i>
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            @click="exportObservers"
+            class="w-full sm:w-auto"
+            :disabled="loading"
+          >
+            <i class="icon-download mr-2"></i>
+            Export
           </Button>
         </div>
       </div>
@@ -131,7 +134,7 @@
               {{ item.firstName }} {{ item.lastName }}
             </div>
             <div class="text-xs sm:text-sm text-gray-500">
-              ID: {{ item.trackingNumber }}
+              ID: {{ item.nationalId }}
             </div>
             <!-- Mobile: Show email and phone -->
             <div class="lg:hidden mt-1 space-y-0.5">
@@ -145,12 +148,6 @@
               <Badge :variant="getStatusBadgeVariant(item.status)" size="sm">
                 {{ formatStatus(item.status) }}
               </Badge>
-              <Badge
-                :variant="item.isActive ? 'success' : 'secondary'"
-                size="sm"
-              >
-                {{ item.isActive ? 'Active' : 'Inactive' }}
-              </Badge>
             </div>
           </div>
         </div>
@@ -162,31 +159,21 @@
         <div class="text-sm text-gray-500">{{ item.phoneNumber || 'N/A' }}</div>
       </template>
 
+      <!-- County Column -->
+      <template #cell-county="{ item }">
+        {{ item.preferredCounty?.name || 'N/A' }}
+      </template>
+
       <!-- Status Column -->
       <template #cell-status="{ item }">
         <Badge :variant="getStatusBadgeVariant(item.status)">
           {{ formatStatus(item.status) }}
         </Badge>
-        <Badge
-          v-if="item.registrationStatus !== 'approved'"
-          :variant="getRegistrationBadgeVariant(item.registrationStatus)"
-          class="ml-1"
-        >
-          {{ formatRegistrationStatus(item.registrationStatus) }}
-        </Badge>
       </template>
 
-      <!-- Location Column -->
-      <template #cell-location="{ item }">
-        <div v-if="item.location" class="text-sm text-gray-900">
-          {{ item.location }}
-        </div>
-        <span v-else class="text-sm text-gray-400">Not assigned</span>
-      </template>
-
-      <!-- Last Activity Column -->
-      <template #cell-lastActivity="{ item }">
-        {{ item.lastActivity ? formatDate(item.lastActivity) : 'Never' }}
+      <!-- Registration Date Column -->
+      <template #cell-registrationDate="{ item }">
+        {{ formatDate(item.createdAt) }}
       </template>
 
       <!-- Actions Column -->
@@ -195,20 +182,14 @@
           button-label="Actions"
           button-class="px-3 py-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
         >
-          <DropdownItem @click="viewObserverDetails(item)">
+          <DropdownItem @click="viewObserver(item.id)">
             View Details
           </DropdownItem>
-          <DropdownItem @click="editObserver(item)">
+          <DropdownItem @click="editObserver(item.id)">
             Edit Observer
           </DropdownItem>
-          <DropdownItem @click="assignLocation(item)">
-            Assign Location
-          </DropdownItem>
-          <DropdownItem
-            @click="toggleObserverStatus(item)"
-            :variant="item.isActive ? 'danger' : 'default'"
-          >
-            {{ item.isActive ? 'Deactivate' : 'Activate' }}
+          <DropdownItem @click="deleteObserver(item.id)" variant="danger">
+            Delete Observer
           </DropdownItem>
         </Dropdown>
       </template>
@@ -217,8 +198,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '@/utils/api';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import SearchBar from '@/components/common/SearchBar.vue';
 import Select from '@/components/common/Select.vue';
@@ -245,46 +227,69 @@ const tableColumns: TableColumn[] = [
     className: 'hidden lg:table-cell',
     cellClassName: 'hidden lg:table-cell',
   },
-  { key: 'status', label: 'Status' },
   {
-    key: 'location',
-    label: 'Location',
-    className: 'hidden sm:table-cell',
-    cellClassName: 'hidden sm:table-cell',
-  },
-  {
-    key: 'lastActivity',
-    label: 'Last Activity',
+    key: 'county',
+    label: 'County',
     className: 'hidden md:table-cell',
     cellClassName: 'hidden md:table-cell',
+  },
+  { key: 'status', label: 'Status' },
+  {
+    key: 'registrationDate',
+    label: 'Registration Date',
+    className: 'hidden sm:table-cell',
+    cellClassName: 'hidden sm:table-cell',
   },
   { key: 'actions', label: 'Actions', align: 'right' },
 ];
 
 interface Observer {
   id: string;
-  trackingNumber: string;
+  nationalId: string;
   email: string;
   phoneNumber?: string;
   firstName: string;
   lastName: string;
   status: string;
-  registrationStatus: string;
-  isActive: boolean;
-  location?: string;
-  lastActivity?: string;
   createdAt: string;
-  updatedAt: string;
+  preferredCounty?: { name: string };
+  profilePhotoUrl?: string;
 }
 
-const observers = ref<Observer[]>([]);
+interface ObserverStats {
+  total: number;
+  active: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  suspended: number;
+  inactive: number;
+  assigned: number;
+  unassigned: number;
+  recentRegistrations: number;
+  recentApprovals: number;
+}
+
+// Reactive data
 const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref('');
-const filters = ref({
-  status: '',
-  location: '',
-  registrationStatus: '',
+const statusFilter = ref('');
+const viewMode = ref('observers');
+
+const observers = ref<Observer[]>([]);
+const stats = ref<ObserverStats>({
+  total: 0,
+  active: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  suspended: 0,
+  inactive: 0,
+  assigned: 0,
+  unassigned: 0,
+  recentRegistrations: 0,
+  recentApprovals: 0,
 });
 
 // Pagination state
@@ -297,271 +302,169 @@ interface SelectOption {
   label: string;
 }
 
-const stats = computed(() => {
-  const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+const statusOptions = computed(() => [
+  { value: '', label: 'All Statuses' },
+  { value: 'pending_review', label: 'Pending Review' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'active', label: 'Active' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'suspended', label: 'Suspended' },
+  { value: 'inactive', label: 'Inactive' },
+]);
 
-  return {
-    // Total observers
-    total: observers.value.length,
+const viewModeOptions = computed(() => [
+  { value: 'observers', label: 'Show Observers' },
+  { value: 'applications', label: 'Show Applications' },
+]);
 
-    // Observers who were active within the last 1 day
-    active: observers.value.filter(
-      (o) =>
-        o.isActive && o.lastActivity && new Date(o.lastActivity) >= oneDayAgo
-    ).length,
-
-    // Observers with pending approval status
-    pending: observers.value.filter(
-      (o) => o.registrationStatus === 'pending_approval'
-    ).length,
-
-    // Observers with assigned locations
-    assigned: observers.value.filter((o) => o.location).length,
-  };
-});
-
+// Computed properties
 const filteredObservers = computed(() => {
-  let result = observers.value;
+  let filtered = observers.value;
 
-  // Search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    result = result.filter(
-      (o) =>
-        o.firstName.toLowerCase().includes(query) ||
-        o.lastName.toLowerCase().includes(query) ||
-        o.email.toLowerCase().includes(query) ||
-        o.trackingNumber.toLowerCase().includes(query) ||
-        o.phoneNumber?.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      (observer) =>
+        observer.firstName.toLowerCase().includes(query) ||
+        observer.lastName.toLowerCase().includes(query) ||
+        observer.email.toLowerCase().includes(query) ||
+        observer.nationalId.toLowerCase().includes(query) ||
+        observer.phoneNumber?.toLowerCase().includes(query)
     );
   }
 
-  // Status filter
-  if (filters.value.status) {
-    result = result.filter((o) => o.status === filters.value.status);
-  }
-
-  // Location filter
-  if (filters.value.location) {
-    result = result.filter(
-      (o) => o.location?.toLowerCase() === filters.value.location.toLowerCase()
+  if (statusFilter.value) {
+    filtered = filtered.filter(
+      (observer) => observer.status === statusFilter.value
     );
   }
 
-  // Registration status filter
-  if (filters.value.registrationStatus) {
-    result = result.filter(
-      (o) => o.registrationStatus === filters.value.registrationStatus
-    );
-  }
-
-  return result;
+  return filtered;
 });
 
-// Computed properties to dynamically generate options from API data
-const statusOptions = computed(() => {
-  const uniqueStatuses = [
-    ...new Set(observers.value.map((observer) => observer.status)),
-  ];
-  return uniqueStatuses
-    .map((status) => ({
-      value: status,
-      label: formatStatus(status),
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-});
-
-const locationOptions = computed(() => {
-  const uniqueLocations = [
-    ...new Set(
-      observers.value.map((observer) => observer.location).filter(Boolean)
-    ),
-  ];
-  return uniqueLocations
-    .map((location) => ({
-      value: location,
-      label: location,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-});
-
-const registrationStatusOptions = computed(() => {
-  const uniqueStatuses = [
-    ...new Set(observers.value.map((observer) => observer.registrationStatus)),
-  ];
-  return uniqueStatuses
-    .map((status) => ({
-      value: status,
-      label: formatRegistrationStatus(status),
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-});
-
-async function loadObservers() {
+// Methods
+const loadObservers = async () => {
   loading.value = true;
   error.value = null;
   currentPage.value = 1; // Reset to first page when reloading
 
   try {
-    // Mock data - replace with actual API call
-    observers.value = [
-      {
-        id: '1',
-        trackingNumber: 'OBS001',
-        email: 'john.doe@example.com',
-        phoneNumber: '+254712345678',
-        firstName: 'John',
-        lastName: 'Doe',
-        status: 'approved',
-        registrationStatus: 'approved',
-        isActive: true,
-        location: 'Nairobi',
-        lastActivity: '2024-01-20T14:45:00Z',
-        createdAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-20T14:45:00Z',
+    // Load observers data
+    const observersResponse = await api.get('/admin/observers', {
+      params: {
+        page: currentPage.value,
+        limit: perPage.value,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
       },
-      {
-        id: '2',
-        trackingNumber: 'OBS002',
-        email: 'jane.smith@example.com',
-        phoneNumber: '+254723456789',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        status: 'pending',
-        registrationStatus: 'pending_approval',
-        isActive: false,
-        location: 'Mombasa',
-        lastActivity: '2024-01-19T16:20:00Z',
-        createdAt: '2024-01-16T09:15:00Z',
-        updatedAt: '2024-01-19T16:20:00Z',
-      },
-      {
-        id: '3',
-        trackingNumber: 'OBS003',
-        email: 'michael.johnson@example.com',
-        phoneNumber: '+254734567890',
-        firstName: 'Michael',
-        lastName: 'Johnson',
-        status: 'active',
-        registrationStatus: 'approved',
-        isActive: true,
-        location: 'Kisumu',
-        lastActivity: '2024-01-20T12:30:00Z',
-        createdAt: '2024-01-14T11:45:00Z',
-        updatedAt: '2024-01-20T12:30:00Z',
-      },
-    ];
+    });
+
+    observers.value = observersResponse.data.data;
+
+    // Load stats data
+    const statsResponse = await api.get('/admin/observers/stats');
+    stats.value = statsResponse.data.data;
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Failed to load observers';
+    console.error('Error loading observers:', err);
   } finally {
     loading.value = false;
   }
-}
+};
 
-async function toggleObserverStatus(observer: Observer) {
-  const action = observer.isActive ? 'deactivate' : 'activate';
-  if (
-    !confirm(
-      `Are you sure you want to ${action} ${observer.firstName} ${observer.lastName}?`
-    )
-  ) {
-    return;
-  }
-
+const exportObservers = async () => {
   try {
-    // This endpoint would need to be created
-    // await api.patch(`/observers/${observer.id}/status`, {
-    //   isActive: !observer.isActive,
-    // });
-    observer.isActive = !observer.isActive;
-  } catch (err: any) {
-    error.value = err.response?.data?.message || `Failed to ${action} observer`;
+    const response = await api.get('/admin/observers/export', {
+      responseType: 'blob',
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'observers.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Error exporting observers:', err);
+    error.value = 'Failed to export observers';
   }
-}
+};
 
-function viewObserverDetails(observer: Observer) {
-  // Navigate to observer details page
-  router.push(`/admin/observers/${observer.id}`);
-}
+const resetFilters = () => {
+  searchQuery.value = '';
+  statusFilter.value = '';
+  viewMode.value = 'observers';
+  currentPage.value = 1; // Reset to first page when resetting filters
+};
 
-function editObserver(observer: Observer) {
-  // Navigate to edit observer page
-  router.push(`/admin/observers/${observer.id}/edit`);
-}
-
-function assignLocation(observer: Observer) {
-  // Navigate to location assignment page
-  router.push(`/admin/observers/${observer.id}/location`);
-}
-
-function handlePerPageChange(newPerPage: number) {
+const handlePerPageChange = (newPerPage: number) => {
   perPage.value = newPerPage;
   currentPage.value = 1; // Reset to first page when changing per page
-}
+};
 
-function resetFilters() {
-  searchQuery.value = '';
-  filters.value = {
-    status: '',
-    location: '',
-    registrationStatus: '',
-  };
-  currentPage.value = 1; // Reset to first page when resetting filters
-}
+const viewObserver = (id: string) => {
+  router.push(`/admin/observers/${id}`);
+};
 
-function getStatusBadgeVariant(
+const editObserver = (id: string) => {
+  router.push(`/admin/observers/${id}/edit`);
+};
+
+const deleteObserver = async (id: string) => {
+  if (confirm('Are you sure you want to delete this observer?')) {
+    try {
+      await api.delete(`/admin/observers/${id}`);
+      // Refresh the data after deletion
+      await loadObservers();
+    } catch (err: any) {
+      console.error('Error deleting observer:', err);
+      error.value = err.response?.data?.message || 'Failed to delete observer';
+    }
+  }
+};
+
+const getStatusBadgeVariant = (
   status: string
-): 'primary' | 'secondary' | 'success' | 'warning' | 'danger' {
+): 'primary' | 'secondary' | 'success' | 'warning' | 'danger' => {
   const variants: Record<
     string,
     'primary' | 'secondary' | 'success' | 'warning' | 'danger'
   > = {
+    pending_review: 'warning',
     approved: 'success',
-    active: 'success',
-    pending: 'warning',
+    active: 'primary',
     rejected: 'danger',
+    suspended: 'secondary',
     inactive: 'secondary',
   };
   return variants[status] || 'secondary';
-}
+};
 
-function formatStatus(status: string): string {
-  const statuses: Record<string, string> = {
-    approved: 'Approved',
-    active: 'Active',
-    pending: 'Pending',
-    rejected: 'Rejected',
-    inactive: 'Inactive',
-  };
-  return statuses[status] || status;
-}
-
-function getRegistrationBadgeVariant(
-  status: string
-): 'primary' | 'secondary' | 'success' | 'warning' | 'danger' {
-  const variants: Record<
-    string,
-    'primary' | 'secondary' | 'success' | 'warning' | 'danger'
-  > = {
-    pending_approval: 'warning',
-    approved: 'success',
-    rejected: 'danger',
-  };
-  return variants[status] || 'secondary';
-}
-
-function formatRegistrationStatus(status?: string): string {
-  if (!status) return 'N/A';
+const formatStatus = (status: string) => {
   return status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
-}
+};
 
-function formatDate(dateString?: string): string {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString();
-}
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString();
+};
 
+// Lifecycle
 onMounted(() => {
   loadObservers();
 });
 </script>
+
+<style scoped>
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

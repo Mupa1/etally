@@ -46,6 +46,27 @@
             </svg>
             Add Location
           </Button>
+          <Button
+            v-if="isSuperAdmin"
+            variant="danger"
+            @click="showDeleteAllModal = true"
+            class="bg-red-600 hover:bg-red-700 text-white"
+          >
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Delete All Voting Areas
+          </Button>
         </div>
       </div>
 
@@ -486,6 +507,106 @@
       v-model="showUploadModal"
       @upload-complete="handleUploadComplete"
     />
+
+    <!-- Delete All Confirmation Modal -->
+    <div
+      v-if="showDeleteAllModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      @click="showDeleteAllModal = false"
+    >
+      <div
+        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+        @click.stop
+      >
+        <div class="mt-3 text-center">
+          <div
+            class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100"
+          >
+            <svg
+              class="h-6 w-6 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mt-4">
+            Delete All Voting Areas
+          </h3>
+          <div class="mt-2 px-7 py-3">
+            <p class="text-sm text-gray-500">
+              <strong class="text-red-600">WARNING:</strong> This action will
+              permanently delete ALL voting areas data including:
+            </p>
+            <ul class="text-sm text-gray-500 mt-2 text-left">
+              <li>• All counties</li>
+              <li>• All constituencies</li>
+              <li>• All wards</li>
+              <li>• All polling stations</li>
+              <li>• All registered voter counts</li>
+            </ul>
+            <p class="text-sm text-red-600 font-semibold mt-3">
+              This action cannot be undone!
+            </p>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Type "DELETE ALL" to confirm:
+            </label>
+            <input
+              v-model="deleteConfirmationText"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              placeholder="DELETE ALL"
+            />
+          </div>
+          <div class="flex justify-center space-x-4 mt-6">
+            <Button
+              variant="secondary"
+              @click="showDeleteAllModal = false"
+              class="px-4 py-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              @click="confirmDeleteAll"
+              :disabled="deleteConfirmationText !== 'DELETE ALL' || deletingAll"
+              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              <svg
+                v-if="deletingAll"
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {{ deletingAll ? 'Deleting...' : 'Delete All' }}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   </MainLayout>
 </template>
 
@@ -503,6 +624,7 @@ import Alert from '@/components/common/Alert.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import StatCard from '@/components/admin/StatCard.vue';
 import VotingAreasUploadModal from '@/components/admin/VotingAreasUploadModal.vue';
+import { useAuthStore } from '@/stores/auth';
 import api from '@/utils/api';
 
 // Types
@@ -589,6 +711,9 @@ interface PaginationInfo {
   hasPreviousPage: boolean;
 }
 
+// Auth store
+const authStore = useAuthStore();
+
 // State
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -598,6 +723,9 @@ const selectedCounty = ref('');
 const currentLevel = ref('county');
 const showAddModal = ref(false);
 const showUploadModal = ref(false);
+const showDeleteAllModal = ref(false);
+const deleteConfirmationText = ref('');
+const deletingAll = ref(false);
 const breadcrumbs = ref<Breadcrumb[]>([]);
 
 // Pagination
@@ -620,6 +748,11 @@ const stats = ref({
 
 // County data for dropdown
 const counties = ref<Array<{ id: string; code: string; name: string }>>([]);
+
+// Computed properties
+const isSuperAdmin = computed(() => {
+  return authStore.user?.role === 'super_admin';
+});
 
 // Function to load voting area statistics
 async function loadVotingAreaStatistics() {
@@ -929,6 +1062,47 @@ async function handleUploadComplete(summary: any) {
 
   // Reload hierarchy data
   await loadHierarchyData();
+}
+
+// Delete all voting areas function
+async function confirmDeleteAll() {
+  if (deleteConfirmationText.value !== 'DELETE ALL') {
+    return;
+  }
+
+  deletingAll.value = true;
+  error.value = null;
+
+  try {
+    console.log('Deleting all voting areas...');
+
+    // Call the API endpoint to delete all voting areas
+    const response = await api.delete('/geographic/delete-all');
+
+    if (response.data.success) {
+      console.log('All voting areas deleted successfully');
+
+      // Reset the modal state
+      showDeleteAllModal.value = false;
+      deleteConfirmationText.value = '';
+
+      // Refresh the data
+      await loadVotingAreaStatistics();
+      await loadHierarchyData();
+
+      // Show success message (you might want to add a toast notification here)
+      alert('All voting areas have been deleted successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to delete voting areas');
+    }
+  } catch (err: any) {
+    console.error('Failed to delete all voting areas:', err);
+    error.value =
+      err.response?.data?.message || 'Failed to delete all voting areas';
+    alert('Error: ' + error.value);
+  } finally {
+    deletingAll.value = false;
+  }
 }
 
 // Lifecycle

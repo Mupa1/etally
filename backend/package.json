@@ -23,6 +23,9 @@
     "db:push": "prisma db push",
     "prepare": "husky install"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "keywords": [
     "election",
     "monitoring",

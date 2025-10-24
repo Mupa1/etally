@@ -101,4 +101,17 @@ router.get(
   geographicController.getPollingStations
 );
 
+/**
+ * @route   DELETE /api/v1/geographic/delete-all
+ * @desc    Delete all voting areas data (counties, constituencies, wards, polling stations)
+ * @access  Protected - Super Admin only
+ * @warning This action is irreversible and will delete ALL geographic data
+ */
+router.delete(
+  '/delete-all',
+  authenticate,
+  requireSuperAdmin,
+  geographicController.deleteAllVotingAreas
+);
+
 export default router;

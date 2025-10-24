@@ -26,7 +26,13 @@ import policyRouter from '@/domains/policies/policy.routes';
 import geographicRouter from '@/domains/geographic/geographic.routes';
 import configurationRouter from '@/domains/configurations/configuration.routes';
 import partyRouter from '@/domains/parties/party.routes';
-import { observerRoutes } from '@/domains/mobile';
+import observerMobileRoutes from '@/domains/mobile/observer-mobile.routes';
+import observerAdminRoutes from '@/domains/mobile/observer-admin.routes';
+import observerApplicationsRoutes from '@/domains/mobile/observer-applications.routes';
+import { createObserverRoutes } from '@/domains/mobile/observer.routes';
+import { ObserverService } from '@/domains/mobile/observer.service';
+import { ObserverMinIOService } from '@/domains/mobile/minio.service';
+import { EmailService } from '@/domains/mobile/email.service';
 
 // Server configuration
 const app: Application = express();
@@ -81,6 +87,15 @@ app.get('/api', (_req, res) => {
   });
 });
 
+// Initialize observer services
+const observerMinIOService = new ObserverMinIOService();
+const emailService = new EmailService();
+const observerService = new ObserverService(
+  PrismaService.getInstance(),
+  observerMinIOService,
+  emailService
+);
+
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/elections', electionRouter);
@@ -88,8 +103,12 @@ app.use('/api/v1/geographic', geographicRouter); // Geographic data management
 app.use('/api/v1/configurations', configurationRouter); // System configuration management
 app.use('/api/v1/parties', partyRouter); // Political party management
 app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
-app.use('/api/agent', observerRoutes); // Agent/Observer registration and PWA
-app.use('/api/admin/observers', observerRoutes); // Admin observer management
+app.use('/api/v1/observers/mobile', observerMobileRoutes); // Mobile PWA observer routes
+app.use('/api/v1/admin/observers', observerAdminRoutes); // Admin observer management
+app.use('/api/v1/admin/observer-applications', observerApplicationsRoutes); // Observer applications management
+
+// Agent routes (public registration endpoints)
+app.use('/api/agent', createObserverRoutes(observerService));
 // TODO: Add more routes
 // app.use('/api/v1/results', resultRouter);
 // app.use('/api/v1/candidates', candidateRouter);

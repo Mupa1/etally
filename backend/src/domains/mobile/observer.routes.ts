@@ -8,7 +8,6 @@ import multer from 'multer';
 import { ObserverController } from './observer.controller';
 import { ObserverService } from './observer.service';
 import { MobileGeographicService } from './geographic.service';
-import { authenticate, requireRoles } from '@/domains/auth/auth.middleware';
 import { rateLimiter } from '@/infrastructure/middleware/rate-limit.middleware';
 
 // File upload configuration
@@ -92,70 +91,6 @@ export function createObserverRoutes(observerService: ObserverService): Router {
     }),
     upload.single('file'),
     controller.uploadDocument
-  );
-
-  // ==========================================
-  // ADMIN ROUTES (Authentication + Role required)
-  // ==========================================
-
-  /**
-   * GET /api/admin/observers/applications
-   * List all observer applications
-   * Requires: super_admin OR election_manager
-   */
-  router.get(
-    '/admin/applications',
-    authenticate,
-    requireRoles(['super_admin', 'election_manager']),
-    controller.getApplications
-  );
-
-  /**
-   * GET /api/admin/observers/applications/:id
-   * Get application detail
-   * Requires: super_admin OR election_manager
-   */
-  router.get(
-    '/admin/applications/:id',
-    authenticate,
-    requireRoles(['super_admin', 'election_manager']),
-    controller.getApplicationDetail
-  );
-
-  /**
-   * POST /api/admin/observers/applications/:id/review
-   * Review and approve/reject application
-   * Requires: super_admin OR election_manager
-   */
-  router.post(
-    '/admin/applications/:id/review',
-    authenticate,
-    requireRoles(['super_admin', 'election_manager']),
-    controller.reviewApplication
-  );
-
-  /**
-   * POST /api/admin/observers/bulk-approve
-   * Bulk approve multiple applications
-   * Requires: super_admin OR election_manager
-   */
-  router.post(
-    '/admin/bulk-approve',
-    authenticate,
-    requireRoles(['super_admin', 'election_manager']),
-    controller.bulkApprove
-  );
-
-  /**
-   * GET /api/admin/observers/statistics
-   * Get observer statistics
-   * Requires: super_admin OR election_manager
-   */
-  router.get(
-    '/admin/statistics',
-    authenticate,
-    requireRoles(['super_admin', 'election_manager']),
-    controller.getStatistics
   );
 
   // ==========================================

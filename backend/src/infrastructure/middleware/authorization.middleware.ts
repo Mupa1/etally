@@ -40,11 +40,11 @@ class AuthorizationMiddleware {
    */
   requirePermission(resourceType: ResourceType, action: PermissionAction) {
     const self = this;
-    return async (
+    return async function (
       req: Request,
       _res: Response,
       next: NextFunction
-    ): Promise<void> => {
+    ): Promise<void> {
       try {
         if (!req.user) {
           throw new AuthenticationError('User not authenticated');
@@ -91,11 +91,11 @@ class AuthorizationMiddleware {
    */
   optionalPermission(resourceType: ResourceType, action: PermissionAction) {
     const self = this;
-    return async (
+    return async function (
       req: Request,
       _res: Response,
       next: NextFunction
-    ): Promise<void> => {
+    ): Promise<void> {
       try {
         if (req.user) {
           const context: IAccessContext = {

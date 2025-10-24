@@ -299,4 +299,150 @@ export class ObserverController {
       next(error);
     }
   };
+
+  // ==========================================
+  // MOBILE PWA CONTROLLER METHODS
+  // ==========================================
+
+  /**
+   * GET /api/v1/observers/mobile/profile
+   * Get observer profile (authenticated)
+   */
+  getProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const profile = await this.observerService.getObserverProfile(
+        req.user!.userId
+      );
+      res.status(200).json(profile);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PUT /api/v1/observers/mobile/profile
+   * Update observer profile (authenticated)
+   */
+  updateProfile = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const updatedProfile = await this.observerService.updateObserverProfile(
+        req.user!.userId,
+        req.body
+      );
+      res.status(200).json(updatedProfile);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/v1/observers/mobile/assignments
+   * Get observer assignments (authenticated)
+   */
+  getAssignments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const assignments = await this.observerService.getObserverAssignments(
+        req.user!.userId
+      );
+      res.status(200).json(assignments);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/v1/observers/mobile/status
+   * Get observer status and registration info (authenticated)
+   */
+  getStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const status = await this.observerService.getObserverStatus(
+        req.user!.userId
+      );
+      res.status(200).json(status);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ==========================================
+  // APPLICATION MANAGEMENT CONTROLLER METHODS
+  // ==========================================
+
+  /**
+   * POST /api/v1/admin/observer-applications/bulk-reject
+   * Bulk reject multiple applications
+   */
+  bulkReject = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { applicationIds, reason } = req.body;
+      const result = await this.observerService.bulkRejectApplications(
+        applicationIds,
+        reason
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/v1/admin/observer-applications/export
+   * Export applications to CSV
+   */
+  exportApplications = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const csvData = await this.observerService.exportApplications();
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="observer-applications.csv"'
+      );
+      res.status(200).send(csvData);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * DELETE /api/v1/admin/observer-applications/:id
+   * Delete application (soft delete)
+   */
+  deleteApplication = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      await this.observerService.deleteApplication(id);
+      res.status(200).json({ message: 'Application deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

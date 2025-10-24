@@ -349,6 +349,36 @@ class GeographicController {
       next(error);
     }
   };
+
+  /**
+   * Delete all voting areas data
+   * DELETE /api/v1/geographic/delete-all
+   */
+  deleteAllVotingAreas = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new ValidationError('User not authenticated');
+      }
+
+      console.log(
+        `Super admin ${req.user.userId} is deleting all voting areas data`
+      );
+
+      const result = await this.geographicService.deleteAllVotingAreas();
+
+      res.status(200).json({
+        success: true,
+        message: 'All voting areas data has been deleted successfully',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default GeographicController;

@@ -614,7 +614,7 @@
       "name": "Admin - Observer Management",
       "item": [
         {
-          "name": "List Applications",
+          "name": "List Observers",
           "request": {
             "auth": {
               "type": "bearer",
@@ -629,162 +629,43 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/applications?status=pending_review&limit=20&offset=0",
+              "raw": "{{baseUrl}}/api/v1/admin/observers?status=approved&search=john&page=1&limit=20&sortBy=name&sortOrder=asc",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "observers", "applications"],
+              "path": ["api", "v1", "admin", "observers"],
               "query": [
                 {
                   "key": "status",
-                  "value": "pending_review"
+                  "value": "approved",
+                  "description": "Filter by observer status"
+                },
+                {
+                  "key": "search",
+                  "value": "john",
+                  "description": "Search by name, email, tracking number"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (1-based)"
                 },
                 {
                   "key": "limit",
-                  "value": "20"
+                  "value": "20",
+                  "description": "Items per page (1-100)"
                 },
                 {
-                  "key": "offset",
-                  "value": "0"
-                }
-              ]
-            },
-            "description": "List observer applications - requires super_admin or election_manager"
-          },
-          "response": []
-        },
-        {
-          "name": "Get Application Detail",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "Sort field (name, email, status, submissionDate, createdAt)"
+                },
                 {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Sort order (asc, desc)"
                 }
               ]
             },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/applications/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "observers", "applications", ":id"]
-            },
-            "description": "Get detailed application information"
-          },
-          "response": []
-        },
-        {
-          "name": "Approve Application",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"approve\",\n  \"notes\": \"All documents verified and accepted\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/applications/:id/review",
-              "host": ["{{baseUrl}}"],
-              "path": [
-                "api",
-                "admin",
-                "observers",
-                "applications",
-                ":id",
-                "review"
-              ]
-            },
-            "description": "Approve observer application - creates user account and sends password setup email"
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Application",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"action\": \"reject\",\n  \"rejectionReason\": \"Incomplete documentation\",\n  \"notes\": \"National ID photo is unclear\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/applications/:id/review",
-              "host": ["{{baseUrl}}"],
-              "path": [
-                "api",
-                "admin",
-                "observers",
-                "applications",
-                ":id",
-                "review"
-              ]
-            },
-            "description": "Reject observer application - sends rejection email"
-          },
-          "response": []
-        },
-        {
-          "name": "Bulk Approve Applications",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"applicationIds\": [\n    \"uuid-1\",\n    \"uuid-2\",\n    \"uuid-3\"\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/bulk-approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "observers", "bulk-approve"]
-            },
-            "description": "Bulk approve multiple applications at once"
+            "description": "List observers with filtering and pagination - requires super_admin or election_manager"
           },
           "response": []
         },
@@ -804,16 +685,221 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/observers/statistics",
+              "raw": "{{baseUrl}}/api/v1/admin/observers/stats",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "observers", "statistics"]
+              "path": ["api", "v1", "admin", "observers", "stats"]
             },
-            "description": "Get observer registration statistics"
+            "description": "Get comprehensive observer statistics - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Observer Analytics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/analytics?days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", "analytics"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "description": "Number of days for analytics (1-365)"
+                }
+              ]
+            },
+            "description": "Get detailed observer analytics and trends - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Observer Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", "dashboard"]
+            },
+            "description": "Get combined dashboard data (stats + recent + analytics) - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Observers",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/export?status=approved&format=csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", "export"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "approved",
+                  "description": "Filter by status for export"
+                },
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "description": "Export format (csv, xlsx)"
+                }
+              ]
+            },
+            "description": "Export observers to CSV with optional filtering - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Observer by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", ":id"]
+            },
+            "description": "Get detailed information about a specific observer - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Observer",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+254712345678\",\n  \"email\": \"john.doe@example.com\",\n  \"status\": \"approved\",\n  \"location\": \"Nairobi\",\n  \"reviewNotes\": \"Updated after additional verification\",\n  \"rejectionReason\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", ":id"]
+            },
+            "description": "Update observer information - requires super_admin or election_manager"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Observer",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", ":id"]
+            },
+            "description": "Soft delete observer by changing status to inactive - requires super_admin only"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Update Observer Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observerIds\": [\n    \"uuid-1\",\n    \"uuid-2\",\n    \"uuid-3\"\n  ],\n  \"status\": \"approved\",\n  \"notes\": \"Bulk approval after document verification\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/bulk-update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "observers", "bulk-update"]
+            },
+            "description": "Update multiple observers' status at once - requires super_admin or election_manager"
           },
           "response": []
         }
       ],
-      "description": "Admin endpoints for managing observer applications"
+      "description": "Admin endpoints for comprehensive observer management and analytics"
     },
     {
       "name": "User Management",

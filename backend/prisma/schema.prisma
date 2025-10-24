@@ -1,25 +1,624 @@
-// ==========================================
-// Election Management System
-// Prisma Schema - Database Models
-// ==========================================
-
-// ==========================================
-// DATASOURCE & GENERATOR CONFIGURATION
-// ==========================================
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+model User {
+  id                      String                 @id @default(uuid())
+  nationalId              String                 @unique
+  email                   String                 @unique
+  phoneNumber             String?
+  firstName               String
+  lastName                String
+  role                    UserRole               @default(field_observer)
+  isActive                Boolean                @default(true)
+  lastLogin               DateTime?
+  failedLoginAttempts     Int                    @default(0)
+  passwordHash            String
+  mfaSecret               String?
+  registrationStatus      UserRegistrationStatus @default(pending_approval)
+  registrationSubmittedAt DateTime?              @default(now())
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  createdBy               String?
+  deletedAt               DateTime?
+  deletedBy               String?
+  auditLogs               AuditLog[]
+  submittedResults        ElectionResult[]
+  createdElections        Election[]
+  reportedIncidents       Incident[]
+  uploadedMedia           MediaAttachment[]
+  mobileDevices           MobileDevice[]
+  notifications           Notification[]
+  assignedObservers       ObserverAssignment[]   @relation("AssignedObservers")
+  reviewedApplications    ObserverRegistration[] @relation("ReviewedApplications")
+  observerProfile         ObserverRegistration?  @relation("ObserverProfile")
+  passwordSetupTokens     PasswordSetupToken[]
+  sessions                Session[]
+  geographicScopes        UserGeographicScope[]
+  userPermissions         UserPermission[]
+
+  @@index([email])
+  @@index([nationalId])
+  @@index([role, isActive])
+  @@index([registrationStatus])
+  @@map("users")
 }
 
-// ==========================================
-// ENUM DEFINITIONS
-// ==========================================
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  deviceInfo   Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model County {
+  id                   String                 @id @default(uuid())
+  code                 String                 @unique
+  name                 String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  constituencies       Constituency[]
+  preferredByObservers ObserverRegistration[]
+  geographicScopes     UserGeographicScope[]
+
+  @@index([code])
+  @@map("counties")
+}
+
+model Constituency {
+  id                   String                 @id @default(uuid())
+  code                 String                 @unique
+  name                 String
+  countyId             String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  county               County                 @relation(fields: [countyId], references: [id])
+  wards                ElectoralWard[]
+  preferredByObservers ObserverRegistration[]
+  geographicScopes     UserGeographicScope[]
+
+  @@index([countyId])
+  @@index([code])
+  @@map("constituencies")
+}
+
+model ElectoralWard {
+  id                   String                 @id @default(uuid())
+  code                 String                 @unique
+  name                 String
+  constituencyId       String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  constituency         Constituency           @relation(fields: [constituencyId], references: [id])
+  preferredByObservers ObserverRegistration[]
+  pollingStations      PollingStation[]
+  geographicScopes     UserGeographicScope[]
+
+  @@index([constituencyId])
+  @@index([code])
+  @@map("electoral_wards")
+}
+
+model PollingStation {
+  id                   String                 @id @default(uuid())
+  code                 String                 @unique
+  name                 String
+  wardId               String
+  latitude             Float?
+  longitude            Float?
+  registeredVoters     Int                    @default(0)
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  results              ElectionResult[]
+  incidents            Incident[]
+  observerAssignments  ObserverAssignment[]
+  preferredByObservers ObserverRegistration[]
+  ward                 ElectoralWard          @relation(fields: [wardId], references: [id])
+
+  @@index([wardId])
+  @@index([code])
+  @@index([isActive])
+  @@map("polling_stations")
+}
+
+model Election {
+  id           String            @id @default(uuid())
+  electionCode String            @unique
+  title        String
+  electionType ElectionType
+  electionDate DateTime
+  status       ElectionStatus    @default(draft)
+  description  String?
+  createdBy    String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?
+  deletedBy    String?
+  contests     ElectionContest[]
+  results      ElectionResult[]
+  creator      User              @relation(fields: [createdBy], references: [id])
+
+  @@index([status, electionDate])
+  @@index([electionType, electionDate])
+  @@index([electionCode])
+  @@map("elections")
+}
+
+model ElectionContest {
+  id           String           @id @default(uuid())
+  electionId   String
+  positionName String
+  description  String?
+  orderIndex   Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  candidates   Candidate[]
+  election     Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  results      ElectionResult[]
+
+  @@index([electionId])
+  @@map("election_contests")
+}
+
+model Candidate {
+  id              String           @id @default(uuid())
+  contestId       String
+  fullName        String
+  partyId         String?
+  candidateNumber Int?
+  biography       String?
+  photoUrl        String?
+  isIndependent   Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  contest         ElectionContest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  party           PoliticalParty?  @relation(fields: [partyId], references: [id])
+  results         ElectionResult[]
+
+  @@index([contestId])
+  @@index([partyId])
+  @@map("candidates")
+}
+
+model PoliticalParty {
+  id                 String            @id @default(uuid())
+  serialNumber       String?
+  certificateNumber  String            @unique
+  partyName          String
+  abbreviation       String?
+  certificateDate    String?
+  symbol             String?
+  colors             String?
+  postalAddress      String?
+  headOfficeLocation String?
+  slogan             String?
+  changes            String?
+  logoUrl            String?
+  primaryColor       String?
+  affiliation        PartyAffiliation?
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  candidates         Candidate[]
+
+  @@index([certificateNumber])
+  @@index([abbreviation])
+  @@index([isActive])
+  @@index([affiliation])
+  @@map("political_parties")
+}
+
+model ElectionResult {
+  id                      String          @id @default(uuid())
+  electionId              String
+  contestId               String
+  candidateId             String
+  pollingStationId        String
+  votes                   Int             @default(0)
+  resultLevel             ResultLevel
+  resultStatus            ResultStatus    @default(preliminary)
+  submittedBy             String
+  deviceId                String?
+  latitude                Float?
+  longitude               Float?
+  accuracyMeters          Int?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  auditSignature          String?
+  form34ANumber           String?
+  form34APhotos           String[]        @default([])
+  form34AUploadedAt       DateTime?
+  rejectedBallots         Int?            @default(0)
+  spoiltBallots           Int?            @default(0)
+  submittedViaObserverApp Boolean         @default(false)
+  candidate               Candidate       @relation(fields: [candidateId], references: [id])
+  contest                 ElectionContest @relation(fields: [contestId], references: [id])
+  election                Election        @relation(fields: [electionId], references: [id])
+  pollingStation          PollingStation  @relation(fields: [pollingStationId], references: [id])
+  submitter               User            @relation(fields: [submittedBy], references: [id])
+
+  @@unique([contestId, pollingStationId, candidateId, resultLevel])
+  @@index([electionId, contestId])
+  @@index([pollingStationId])
+  @@index([submittedBy])
+  @@index([createdAt])
+  @@index([resultStatus])
+  @@index([form34ANumber])
+  @@index([submittedViaObserverApp])
+  @@map("election_results")
+}
+
+model MobileDevice {
+  id             String          @id @default(uuid())
+  deviceId       String          @unique
+  userId         String
+  deviceName     String?
+  deviceModel    String?
+  osVersion      String?
+  appVersion     String?
+  lastSync       DateTime?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offlineActions OfflineAction[]
+  syncLogs       SyncLog[]
+
+  @@index([userId])
+  @@index([deviceId])
+  @@index([isActive])
+  @@map("mobile_devices")
+}
+
+model SyncLog {
+  id              String       @id @default(uuid())
+  deviceId        String
+  syncType        SyncType
+  recordsSynced   Int          @default(0)
+  syncStartedAt   DateTime     @default(now())
+  syncCompletedAt DateTime?
+  syncStatus      SyncStatus   @default(in_progress)
+  errorMessage    String?
+  createdAt       DateTime     @default(now())
+  device          MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, syncStatus])
+  @@index([syncStartedAt])
+  @@map("sync_logs")
+}
+
+model OfflineAction {
+  id            String       @id @default(uuid())
+  deviceId      String
+  actionType    String
+  entityType    String
+  entityData    Json
+  actionStatus  ActionStatus @default(pending)
+  retryCount    Int          @default(0)
+  lastAttemptAt DateTime?
+  errorMessage  String?
+  createdAt     DateTime     @default(now())
+  processedAt   DateTime?
+  device        MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, actionStatus])
+  @@index([actionStatus, createdAt])
+  @@map("offline_actions")
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  action        AuditAction
+  entityType    String
+  entityId      String
+  userId        String
+  oldValues     Json?
+  newValues     Json?
+  ipAddress     String?
+  userAgent     String?
+  deviceId      String?
+  latitude      Float?
+  longitude     Float?
+  requestId     String?
+  correlationId String?
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@index([userId, entityType, entityId])
+  @@index([action, createdAt])
+  @@index([correlationId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id          String               @id @default(uuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType
+  priority    NotificationPriority @default(medium)
+  actionUrl   String?
+  actionLabel String?
+  isRead      Boolean              @default(false)
+  sentAt      DateTime             @default(now())
+  readAt      DateTime?
+  createdAt   DateTime             @default(now())
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@index([userId, type])
+  @@map("notifications")
+}
+
+model MediaAttachment {
+  id                 String       @id @default(uuid())
+  entityType         String
+  entityId           String
+  fileName           String
+  filePath           String
+  fileSize           BigInt
+  mimeType           String
+  thumbnailPath      String?
+  uploadedBy         String
+  deviceId           String?
+  latitude           Float?
+  longitude          Float?
+  uploadStatus       UploadStatus @default(pending)
+  processingMetadata Json?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  uploader           User         @relation(fields: [uploadedBy], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([uploadStatus])
+  @@index([uploadedBy])
+  @@map("media_attachments")
+}
+
+model Incident {
+  id               String           @id @default(uuid())
+  title            String
+  description      String
+  severity         IncidentSeverity
+  status           IncidentStatus   @default(reported)
+  pollingStationId String?
+  latitude         Float?
+  longitude        Float?
+  reportedBy       String
+  deviceId         String?
+  resolvedBy       String?
+  resolutionNotes  String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  resolvedAt       DateTime?
+  pollingStation   PollingStation?  @relation(fields: [pollingStationId], references: [id])
+  reporter         User             @relation(fields: [reportedBy], references: [id])
+
+  @@index([pollingStationId])
+  @@index([reportedBy])
+  @@index([status, severity])
+  @@index([createdAt])
+  @@map("incidents")
+}
+
+model RateLimit {
+  id           String    @id @default(uuid())
+  identifier   String
+  endpoint     String
+  requestCount Int       @default(0)
+  windowStart  DateTime  @default(now())
+  blockedUntil DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([identifier, endpoint, windowStart])
+  @@index([identifier, windowStart])
+  @@index([blockedUntil])
+  @@map("rate_limits")
+}
+
+model Configuration {
+  id           String            @id @default(uuid())
+  key          String            @unique
+  name         String
+  description  String?
+  value        String?
+  type         ConfigurationType @default(string)
+  category     String
+  isRequired   Boolean           @default(false)
+  isDefault    Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  lastModified DateTime          @default(now())
+  modifiedBy   String?
+
+  @@index([category])
+  @@index([key])
+  @@map("configurations")
+}
+
+model UserGeographicScope {
+  id             String         @id @default(uuid())
+  userId         String
+  countyId       String?
+  constituencyId String?
+  wardId         String?
+  scopeLevel     String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  constituency   Constituency?  @relation(fields: [constituencyId], references: [id])
+  county         County?        @relation(fields: [countyId], references: [id])
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ward           ElectoralWard? @relation(fields: [wardId], references: [id])
+
+  @@unique([userId, countyId, constituencyId, wardId])
+  @@index([userId])
+  @@map("user_geographic_scopes")
+}
+
+model AccessPolicy {
+  id           String             @id @default(uuid())
+  name         String
+  description  String?
+  effect       PolicyEffect       @default(allow)
+  priority     Int                @default(0)
+  roles        UserRole[]
+  resourceType ResourceType
+  actions      PermissionAction[]
+  conditions   Json?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  createdBy    String
+
+  @@index([resourceType, isActive])
+  @@index([priority])
+  @@map("access_policies")
+}
+
+model UserPermission {
+  id           String           @id @default(uuid())
+  userId       String
+  resourceType ResourceType
+  resourceId   String?
+  action       PermissionAction
+  effect       PolicyEffect     @default(allow)
+  expiresAt    DateTime?
+  reason       String?
+  grantedBy    String
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId, action])
+  @@index([userId, resourceType])
+  @@index([expiresAt])
+  @@map("user_permissions")
+}
+
+model PermissionCheck {
+  id           String           @id @default(uuid())
+  userId       String
+  resourceType ResourceType
+  resourceId   String?
+  action       PermissionAction
+  granted      Boolean
+  reason       String?
+  ipAddress    String?
+  deviceId     String?
+  latitude     Float?
+  longitude    Float?
+  checkedAt    DateTime         @default(now())
+
+  @@index([userId, checkedAt])
+  @@index([resourceType, action])
+  @@map("permission_checks")
+}
+
+model ObserverRegistration {
+  id                      String               @id @default(uuid())
+  nationalId              String               @unique
+  firstName               String
+  lastName                String
+  dateOfBirth             DateTime
+  phoneNumber             String
+  email                   String               @unique
+  preferredCountyId       String?
+  preferredConstituencyId String?
+  preferredWardId         String?
+  preferredStationId      String?
+  nationalIdFrontUrl      String?
+  nationalIdBackUrl       String?
+  profilePhotoUrl         String?
+  additionalDocs          String[]
+  status                  ObserverStatus       @default(pending_review)
+  trackingNumber          String               @unique
+  submissionDate          DateTime             @default(now())
+  reviewDate              DateTime?
+  reviewedBy              String?
+  reviewNotes             String?
+  rejectionReason         String?
+  userId                  String?              @unique
+  termsAccepted           Boolean              @default(false)
+  dataProcessingConsent   Boolean              @default(false)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  assignments             ObserverAssignment[]
+  preferredConstituency   Constituency?        @relation(fields: [preferredConstituencyId], references: [id])
+  preferredCounty         County?              @relation(fields: [preferredCountyId], references: [id])
+  preferredStation        PollingStation?      @relation(fields: [preferredStationId], references: [id])
+  preferredWard           ElectoralWard?       @relation(fields: [preferredWardId], references: [id])
+  reviewer                User?                @relation("ReviewedApplications", fields: [reviewedBy], references: [id])
+  user                    User?                @relation("ObserverProfile", fields: [userId], references: [id])
+
+  @@index([nationalId])
+  @@index([email])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([submissionDate])
+  @@map("observer_registrations")
+}
+
+model ObserverAssignment {
+  id                     String               @id @default(uuid())
+  observerRegistrationId String
+  pollingStationId       String
+  assignmentDate         DateTime             @default(now())
+  assignedBy             String
+  isActive               Boolean              @default(true)
+  deactivatedAt          DateTime?
+  deactivatedBy          String?
+  deactivationReason     String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  assigner               User                 @relation("AssignedObservers", fields: [assignedBy], references: [id])
+  observerRegistration   ObserverRegistration @relation(fields: [observerRegistrationId], references: [id], onDelete: Cascade)
+  pollingStation         PollingStation       @relation(fields: [pollingStationId], references: [id])
+
+  @@unique([observerRegistrationId, pollingStationId])
+  @@index([pollingStationId])
+  @@index([isActive])
+  @@map("observer_assignments")
+}
+
+model PasswordSetupToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_setup_tokens")
+}
 
 enum UserRole {
   super_admin
@@ -149,10 +748,6 @@ enum PartyAffiliation {
   competitor
 }
 
-// ==========================================
-// ABAC (Attribute-Based Access Control) ENUMS
-// ==========================================
-
 enum PermissionAction {
   create
   read
@@ -173,6 +768,7 @@ enum ResourceType {
   user
   audit_log
   polling_station
+  observer
 }
 
 enum PolicyEffect {
@@ -180,808 +776,9 @@ enum PolicyEffect {
   deny
 }
 
-// ==========================================
-// CORE USER & AUTHENTICATION MODELS
-// ==========================================
-
-model User {
-  id                      String                 @id @default(uuid())
-  nationalId              String                 @unique
-  email                   String                 @unique
-  phoneNumber             String?
-  firstName               String
-  lastName                String
-  role                    UserRole               @default(field_observer)
-  isActive                Boolean                @default(true)
-  lastLogin               DateTime?
-  failedLoginAttempts     Int                    @default(0)
-  passwordHash            String
-  mfaSecret               String?
-  registrationStatus      UserRegistrationStatus @default(pending_approval)
-  registrationSubmittedAt DateTime?              @default(now())
-
-  // Audit fields
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  createdBy String? // ID of user who created this account
-  deletedAt DateTime?
-  deletedBy String?
-
-  // Relations
-  sessions          Session[]
-  mobileDevices     MobileDevice[]
-  auditLogs         AuditLog[]
-  createdElections  Election[]
-  submittedResults  ElectionResult[]
-  notifications     Notification[]
-  uploadedMedia     MediaAttachment[]
-  reportedIncidents Incident[]
-  geographicScopes  UserGeographicScope[]
-  userPermissions   UserPermission[]
-
-  // Observer Relations (NEW)
-  observerProfile      ObserverRegistration?  @relation("ObserverProfile")
-  reviewedApplications ObserverRegistration[] @relation("ReviewedApplications")
-  assignedObservers    ObserverAssignment[]   @relation("AssignedObservers")
-  passwordSetupTokens  PasswordSetupToken[]
-
-  @@index([email])
-  @@index([nationalId])
-  @@index([role, isActive])
-  @@index([registrationStatus])
-  @@map("users")
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refreshToken String   @unique
-  expiresAt    DateTime
-  deviceInfo   Json?
-  ipAddress    String?
-  userAgent    String?
-  createdAt    DateTime @default(now())
-
-  @@index([userId])
-  @@index([refreshToken])
-  @@index([expiresAt])
-  @@map("sessions")
-}
-
-// ==========================================
-// GEOGRAPHIC HIERARCHY MODELS
-// ==========================================
-
-model County {
-  id   String @id @default(uuid())
-  code String @unique
-  name String
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  constituencies       Constituency[]
-  geographicScopes     UserGeographicScope[]
-  preferredByObservers ObserverRegistration[]
-
-  @@index([code])
-  @@map("counties")
-}
-
-model Constituency {
-  id       String @id @default(uuid())
-  code     String @unique
-  name     String
-  countyId String
-  county   County @relation(fields: [countyId], references: [id])
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  wards                ElectoralWard[]
-  geographicScopes     UserGeographicScope[]
-  preferredByObservers ObserverRegistration[]
-
-  @@index([countyId])
-  @@index([code])
-  @@map("constituencies")
-}
-
-model ElectoralWard {
-  id             String       @id @default(uuid())
-  code           String       @unique
-  name           String
-  constituencyId String
-  constituency   Constituency @relation(fields: [constituencyId], references: [id])
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  pollingStations      PollingStation[]
-  geographicScopes     UserGeographicScope[]
-  preferredByObservers ObserverRegistration[]
-
-  @@index([constituencyId])
-  @@index([code])
-  @@map("electoral_wards")
-}
-
-model PollingStation {
-  id               String        @id @default(uuid())
-  code             String        @unique
-  name             String
-  wardId           String
-  ward             ElectoralWard @relation(fields: [wardId], references: [id])
-  latitude         Float?
-  longitude        Float?
-  registeredVoters Int           @default(0)
-  isActive         Boolean       @default(true)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  results   ElectionResult[]
-  incidents Incident[]
-
-  // Observer Relations (NEW)
-  preferredByObservers ObserverRegistration[]
-  observerAssignments  ObserverAssignment[]
-
-  @@index([wardId])
-  @@index([code])
-  @@index([isActive])
-  @@map("polling_stations")
-}
-
-// ==========================================
-// ELECTION MANAGEMENT MODELS
-// ==========================================
-
-model Election {
-  id           String         @id @default(uuid())
-  electionCode String         @unique
-  title        String
-  electionType ElectionType
-  electionDate DateTime
-  status       ElectionStatus @default(draft)
-  description  String?
-
-  // Audit fields
-  createdBy String
-  creator   User      @relation(fields: [createdBy], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  deletedBy String?
-
-  // Relations
-  contests ElectionContest[]
-  results  ElectionResult[]
-
-  @@index([status, electionDate])
-  @@index([electionType, electionDate])
-  @@index([electionCode])
-  @@map("elections")
-}
-
-model ElectionContest {
-  id           String   @id @default(uuid())
-  electionId   String
-  election     Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
-  positionName String
-  description  String?
-  orderIndex   Int      @default(0)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  candidates Candidate[]
-  results    ElectionResult[]
-
-  @@index([electionId])
-  @@map("election_contests")
-}
-
-model Candidate {
-  id              String          @id @default(uuid())
-  contestId       String
-  contest         ElectionContest @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  fullName        String
-  partyId         String?
-  party           PoliticalParty? @relation(fields: [partyId], references: [id])
-  candidateNumber Int?
-  biography       String?
-  photoUrl        String?
-  isIndependent   Boolean         @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  results ElectionResult[]
-
-  @@index([contestId])
-  @@index([partyId])
-  @@map("candidates")
-}
-
-model PoliticalParty {
-  id                 String  @id @default(uuid())
-  serialNumber       String? // S/No from registration
-  certificateNumber  String  @unique // Certificate Serial No.
-  partyName          String // Name of the Party
-  abbreviation       String? // Abbreviation/Acronym
-  certificateDate    String? // Certificate Date of Issue
-  symbol             String? // Party Symbol
-  colors             String? // Party Colors
-  postalAddress      String? // Postal Address of Party
-  headOfficeLocation String? // Location of Head Office of Party
-  slogan             String? // Party Slogan
-  changes            String? // Changes/Notes
-
-  // Visual identity
-  logoUrl      String? // Logo/Image URL
-  primaryColor String? // Hex color for UI
-
-  // Affiliation
-  affiliation PartyAffiliation? // Main party, Friendly party, or Competitor
-
-  // Status
-  isActive Boolean @default(true)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  candidates Candidate[]
-
-  @@index([certificateNumber])
-  @@index([abbreviation])
-  @@index([isActive])
-  @@index([affiliation])
-  @@map("political_parties")
-}
-
-// ==========================================
-// RESULTS MANAGEMENT
-// ==========================================
-
-model ElectionResult {
-  id               String          @id @default(uuid())
-  electionId       String
-  election         Election        @relation(fields: [electionId], references: [id])
-  contestId        String
-  contest          ElectionContest @relation(fields: [contestId], references: [id])
-  candidateId      String
-  candidate        Candidate       @relation(fields: [candidateId], references: [id])
-  pollingStationId String
-  pollingStation   PollingStation  @relation(fields: [pollingStationId], references: [id])
-
-  // Results data
-  votes        Int          @default(0)
-  resultLevel  ResultLevel
-  resultStatus ResultStatus @default(preliminary)
-
-  // Mobile submission metadata
-  submittedBy    String
-  submitter      User    @relation(fields: [submittedBy], references: [id])
-  deviceId       String?
-  latitude       Float?
-  longitude      Float?
-  accuracyMeters Int?
-
-  // Audit fields
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  auditSignature String?
-
-  // Form 34A Tracking (NEW)
-  form34ANumber     String?
-  form34APhotos     String[]  @default([]) // Array of MinIO paths
-  form34AUploadedAt DateTime?
-  rejectedBallots   Int?      @default(0)
-  spoiltBallots     Int?      @default(0)
-
-  // Observer App Flag (NEW)
-  submittedViaObserverApp Boolean @default(false)
-
-  @@unique([contestId, pollingStationId, candidateId, resultLevel])
-  @@index([electionId, contestId])
-  @@index([pollingStationId])
-  @@index([submittedBy])
-  @@index([createdAt])
-  @@index([resultStatus])
-  @@index([form34ANumber])
-  @@index([submittedViaObserverApp])
-  @@map("election_results")
-}
-
-// ==========================================
-// MOBILE OFFLINE-FIRST MODELS
-// ==========================================
-
-model MobileDevice {
-  id          String    @id @default(uuid())
-  deviceId    String    @unique
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceName  String?
-  deviceModel String?
-  osVersion   String?
-  appVersion  String?
-  lastSync    DateTime?
-  isActive    Boolean   @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  syncLogs       SyncLog[]
-  offlineActions OfflineAction[]
-
-  @@index([userId])
-  @@index([deviceId])
-  @@index([isActive])
-  @@map("mobile_devices")
-}
-
-model SyncLog {
-  id              String       @id @default(uuid())
-  deviceId        String
-  device          MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  syncType        SyncType
-  recordsSynced   Int          @default(0)
-  syncStartedAt   DateTime     @default(now())
-  syncCompletedAt DateTime?
-  syncStatus      SyncStatus   @default(in_progress)
-  errorMessage    String?
-
-  createdAt DateTime @default(now())
-
-  @@index([deviceId, syncStatus])
-  @@index([syncStartedAt])
-  @@map("sync_logs")
-}
-
-model OfflineAction {
-  id            String       @id @default(uuid())
-  deviceId      String
-  device        MobileDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  actionType    String
-  entityType    String
-  entityData    Json
-  actionStatus  ActionStatus @default(pending)
-  retryCount    Int          @default(0)
-  lastAttemptAt DateTime?
-  errorMessage  String?
-
-  createdAt   DateTime  @default(now())
-  processedAt DateTime?
-
-  @@index([deviceId, actionStatus])
-  @@index([actionStatus, createdAt])
-  @@map("offline_actions")
-}
-
-// ==========================================
-// AUDIT & COMPLIANCE
-// ==========================================
-
-model AuditLog {
-  id         String      @id @default(uuid())
-  action     AuditAction
-  entityType String
-  entityId   String
-  userId     String
-  user       User        @relation(fields: [userId], references: [id])
-
-  // Change tracking
-  oldValues Json?
-  newValues Json?
-
-  // Context metadata
-  ipAddress String?
-  userAgent String?
-  deviceId  String?
-  latitude  Float?
-  longitude Float?
-
-  // Technical metadata
-  requestId     String?
-  correlationId String?
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, entityType, entityId])
-  @@index([action, createdAt])
-  @@index([correlationId])
-  @@index([entityType, entityId])
-  @@map("audit_logs")
-}
-
-// ==========================================
-// NOTIFICATIONS
-// ==========================================
-
-model Notification {
-  id       String               @id @default(uuid())
-  userId   String
-  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title    String
-  message  String
-  type     NotificationType
-  priority NotificationPriority @default(medium)
-
-  // Actionable notifications
-  actionUrl   String?
-  actionLabel String?
-
-  // Delivery tracking
-  isRead Boolean   @default(false)
-  sentAt DateTime  @default(now())
-  readAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  @@index([userId, isRead, createdAt])
-  @@index([userId, type])
-  @@map("notifications")
-}
-
-// ==========================================
-// MEDIA & FILE MANAGEMENT
-// ==========================================
-
-model MediaAttachment {
-  id            String  @id @default(uuid())
-  entityType    String
-  entityId      String
-  fileName      String
-  filePath      String
-  fileSize      BigInt
-  mimeType      String
-  thumbnailPath String?
-
-  // Mobile metadata
-  uploadedBy String
-  uploader   User    @relation(fields: [uploadedBy], references: [id])
-  deviceId   String?
-  latitude   Float?
-  longitude  Float?
-
-  // Processing status
-  uploadStatus       UploadStatus @default(pending)
-  processingMetadata Json?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([entityType, entityId])
-  @@index([uploadStatus])
-  @@index([uploadedBy])
-  @@map("media_attachments")
-}
-
-// ==========================================
-// INCIDENT REPORTING
-// ==========================================
-
-model Incident {
-  id          String           @id @default(uuid())
-  title       String
-  description String
-  severity    IncidentSeverity
-  status      IncidentStatus   @default(reported)
-
-  // Location
-  pollingStationId String?
-  pollingStation   PollingStation? @relation(fields: [pollingStationId], references: [id])
-  latitude         Float?
-  longitude        Float?
-
-  // Reporting
-  reportedBy String
-  reporter   User    @relation(fields: [reportedBy], references: [id])
-  deviceId   String?
-
-  // Resolution
-  resolvedBy      String?
-  resolutionNotes String?
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  resolvedAt DateTime?
-
-  @@index([pollingStationId])
-  @@index([reportedBy])
-  @@index([status, severity])
-  @@index([createdAt])
-  @@map("incidents")
-}
-
-// ==========================================
-// RATE LIMITING
-// ==========================================
-
-model RateLimit {
-  id           String    @id @default(uuid())
-  identifier   String
-  endpoint     String
-  requestCount Int       @default(0)
-  windowStart  DateTime  @default(now())
-  blockedUntil DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([identifier, endpoint, windowStart])
-  @@index([identifier, windowStart])
-  @@index([blockedUntil])
-  @@map("rate_limits")
-}
-
-// ==========================================
-// SYSTEM CONFIGURATION
-// ==========================================
-
 enum ConfigurationType {
   string
   number
   boolean
   json
-}
-
-model Configuration {
-  id          String            @id @default(uuid())
-  key         String            @unique
-  name        String
-  description String?
-  value       String? // Stored as string, parsed based on type
-  type        ConfigurationType @default(string)
-  category    String // general, security, email, notifications, rate-limiting, storage, database
-  isRequired  Boolean           @default(false)
-  isDefault   Boolean           @default(false)
-
-  // Audit fields
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  lastModified DateTime @default(now())
-  modifiedBy   String? // User ID who last modified
-
-  @@index([category])
-  @@index([key])
-  @@map("configurations")
-}
-
-// ==========================================
-// ABAC (Attribute-Based Access Control) MODELS
-// ==========================================
-
-// User geographic scope assignments
-model UserGeographicScope {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Geographic scope (null = national level access)
-  countyId       String?
-  county         County?        @relation(fields: [countyId], references: [id])
-  constituencyId String?
-  constituency   Constituency?  @relation(fields: [constituencyId], references: [id])
-  wardId         String?
-  ward           ElectoralWard? @relation(fields: [wardId], references: [id])
-
-  // Scope level
-  scopeLevel String // 'national', 'county', 'constituency', 'ward'
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, countyId, constituencyId, wardId])
-  @@index([userId])
-  @@map("user_geographic_scopes")
-}
-
-// ABAC Policies
-model AccessPolicy {
-  id          String       @id @default(uuid())
-  name        String
-  description String?
-  effect      PolicyEffect @default(allow)
-  priority    Int          @default(0) // Higher priority = evaluated first
-
-  // Role restrictions
-  roles UserRole[]
-
-  // Resource restrictions
-  resourceType ResourceType
-  actions      PermissionAction[]
-
-  // Conditions (stored as JSON)
-  conditions Json? // { "timeRange": {...}, "ipRange": [...], "deviceType": [...] }
-
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String
-
-  @@index([resourceType, isActive])
-  @@index([priority])
-  @@map("access_policies")
-}
-
-// User-specific permissions (overrides)
-model UserPermission {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  resourceType ResourceType
-  resourceId   String? // Specific resource or null for all
-  action       PermissionAction
-  effect       PolicyEffect     @default(allow)
-
-  // Expiry for temporary permissions
-  expiresAt DateTime?
-
-  reason    String? // Why this permission was granted
-  grantedBy String
-  createdAt DateTime @default(now())
-
-  @@unique([userId, resourceType, resourceId, action])
-  @@index([userId, resourceType])
-  @@index([expiresAt])
-  @@map("user_permissions")
-}
-
-// Audit trail for permission checks
-model PermissionCheck {
-  id           String           @id @default(uuid())
-  userId       String
-  resourceType ResourceType
-  resourceId   String?
-  action       PermissionAction
-  granted      Boolean
-  reason       String? // Why denied
-
-  // Context
-  ipAddress String?
-  deviceId  String?
-  latitude  Float?
-  longitude Float?
-
-  checkedAt DateTime @default(now())
-
-  @@index([userId, checkedAt])
-  @@index([resourceType, action])
-  @@map("permission_checks")
-}
-
-// ==========================================
-// FIELD OBSERVER REGISTRATION MODELS
-// ==========================================
-
-// Observer registration applications (public registration)
-model ObserverRegistration {
-  id String @id @default(uuid())
-
-  // Personal Information
-  nationalId  String   @unique
-  firstName   String
-  lastName    String
-  dateOfBirth DateTime
-  phoneNumber String
-  email       String   @unique
-
-  // Preferred Assignment (optional during registration)
-  preferredCountyId       String?
-  preferredCounty         County?         @relation(fields: [preferredCountyId], references: [id])
-  preferredConstituencyId String?
-  preferredConstituency   Constituency?   @relation(fields: [preferredConstituencyId], references: [id])
-  preferredWardId         String?
-  preferredWard           ElectoralWard?  @relation(fields: [preferredWardId], references: [id])
-  preferredStationId      String?
-  preferredStation        PollingStation? @relation(fields: [preferredStationId], references: [id])
-
-  // Documents (MinIO paths)
-  nationalIdFrontUrl String?
-  nationalIdBackUrl  String?
-  profilePhotoUrl    String?
-  additionalDocs     String[] // JSON array of MinIO paths
-
-  // Application Status
-  status         ObserverStatus @default(pending_review)
-  trackingNumber String         @unique
-  submissionDate DateTime       @default(now())
-
-  // Review Information
-  reviewDate      DateTime?
-  reviewedBy      String?
-  reviewer        User?     @relation("ReviewedApplications", fields: [reviewedBy], references: [id])
-  reviewNotes     String?
-  rejectionReason String?
-
-  // User Link (created on approval)
-  userId String? @unique
-  user   User?   @relation("ObserverProfile", fields: [userId], references: [id])
-
-  // Consent
-  termsAccepted         Boolean @default(false)
-  dataProcessingConsent Boolean @default(false)
-
-  // Audit
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  assignments ObserverAssignment[]
-
-  @@index([nationalId])
-  @@index([email])
-  @@index([status])
-  @@index([trackingNumber])
-  @@index([submissionDate])
-  @@map("observer_registrations")
-}
-
-// Observer assignments to polling stations
-model ObserverAssignment {
-  id String @id @default(uuid())
-
-  // Observer (via registration)
-  observerRegistrationId String
-  observerRegistration   ObserverRegistration @relation(fields: [observerRegistrationId], references: [id], onDelete: Cascade)
-
-  // Polling Station
-  pollingStationId String
-  pollingStation   PollingStation @relation(fields: [pollingStationId], references: [id])
-
-  // Assignment Details
-  assignmentDate DateTime @default(now())
-  assignedBy     String
-  assigner       User     @relation("AssignedObservers", fields: [assignedBy], references: [id])
-
-  // Status
-  isActive           Boolean   @default(true)
-  deactivatedAt      DateTime?
-  deactivatedBy      String?
-  deactivationReason String?
-
-  // Audit
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([observerRegistrationId, pollingStationId])
-  @@index([pollingStationId])
-  @@index([isActive])
-  @@map("observer_assignments")
-}
-
-// Password setup tokens for approved observers
-model PasswordSetupToken {
-  id        String    @id @default(uuid())
-  token     String    @unique
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([token])
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("password_setup_tokens")
 }
