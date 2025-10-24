@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { addHapticFeedback } from '@/utils/mobileTouchInteractions';
 
 interface Props {
   modelValue: File | null;
@@ -161,10 +162,12 @@ watch(
 );
 
 function triggerFileInput() {
+  addHapticFeedback(document.body, 'light');
   fileInputRef.value?.click();
 }
 
 function triggerCamera() {
+  addHapticFeedback(document.body, 'light');
   cameraInputRef.value?.click();
 }
 

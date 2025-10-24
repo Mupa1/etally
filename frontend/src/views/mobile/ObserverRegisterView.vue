@@ -39,7 +39,13 @@
 
       <!-- Form Card -->
       <FormCard>
-        <form @submit.prevent="handleNext">
+        <!-- Loading skeleton while form is loading -->
+        <div v-if="loading" class="space-y-6">
+          <LoadingSkeleton variant="form" />
+        </div>
+
+        <!-- Form content -->
+        <form v-else @submit.prevent="handleNext">
           <!-- Step 1: Personal Information -->
           <div v-if="currentStep === 0">
             <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
@@ -228,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
@@ -243,8 +249,14 @@ import {
   getOptimalImageSettings,
 } from '@/utils/imageOptimization';
 import { performanceMonitor } from '@/utils/bundleOptimization';
+import { ProgressiveFormSaver } from '@/utils/progressiveFormSaving';
+import {
+  addTouchInteractions,
+  addHapticFeedback,
+} from '@/utils/mobileTouchInteractions';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue';
 import FormCard from '@/components/mobile/FormCard.vue';
 import FormField from '@/components/mobile/FormField.vue';
 import FileUploadField from '@/components/mobile/FileUploadField.vue';
@@ -262,10 +274,34 @@ const steps = [
 const currentStep = ref(0);
 const submitting = ref(false);
 const error = ref('');
+const loading = ref(false);
+
+// Progressive form saving
+const formSaver = new ProgressiveFormSaver('observer-registration', {
+  autoSaveInterval: 30000, // 30 seconds
+  debounceDelay: 1000, // 1 second
+});
 
 // Performance monitoring
 onMounted(() => {
   performanceMonitor.mark('observer-register-mounted');
+
+  // Load saved form data
+  const savedData = formSaver.loadFormData();
+  if (savedData) {
+    // Restore form data
+    Object.assign(form.value, savedData);
+    console.log('Form data restored from previous session');
+  }
+
+  // Start auto-saving
+  formSaver.startAutoSave(form.value);
+
+  // Add touch interactions to form elements
+  const formElements = document.querySelectorAll('input, button, select');
+  formElements.forEach((element) => {
+    addTouchInteractions(element as HTMLElement);
+  });
 });
 
 onUnmounted(() => {
@@ -273,6 +309,9 @@ onUnmounted(() => {
     'observer-register-lifetime',
     'observer-register-mounted'
   );
+
+  // Stop auto-saving
+  formSaver.stopAutoSave();
 });
 
 // Form data
@@ -314,6 +353,15 @@ const canSubmit = computed(() => {
   );
 });
 
+// Watch for form changes and auto-save
+watch(
+  form,
+  (newForm) => {
+    formSaver.debouncedSave(newForm);
+  },
+  { deep: true }
+);
+
 // Handle file upload errors
 function handleFileError(message: string) {
   error.value = message;
@@ -323,12 +371,18 @@ function handleFileError(message: string) {
 function handleNext() {
   error.value = '';
 
+  // Add haptic feedback
+  addHapticFeedback(document.body, 'light');
+
   // Validate current step
   if (currentStep.value === 0) {
     if (!validatePersonalInfo()) return;
   } else if (currentStep.value === 2) {
     if (!validateDocuments()) return;
   }
+
+  // Save form data before moving to next step
+  formSaver.saveFormData(form.value);
 
   if (currentStep.value < steps.length - 1) {
     currentStep.value++;
@@ -454,6 +508,12 @@ async function submitRegistration() {
       console.log('Documents uploaded successfully');
     }
 
+    // Clear saved form data on successful submission
+    formSaver.clearFormData();
+
+    // Add success haptic feedback
+    addHapticFeedback(document.body, 'success');
+
     // 3. Redirect to success page
     console.log('Redirecting to success page...');
     router.push({
@@ -470,6 +530,9 @@ async function submitRegistration() {
       action: 'form_submission',
       metadata: { step: currentStep.value },
     });
+
+    // Add error haptic feedback
+    addHapticFeedback(document.body, 'error');
 
     error.value =
       err.response?.data?.message ||
