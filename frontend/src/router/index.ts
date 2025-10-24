@@ -128,6 +128,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/observers',
+    name: 'admin-observers',
+    component: () => import('@/views/admin/ObserversView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
     path: '/admin/policies',
     name: 'admin-policies',
     component: () => import('@/views/admin/PolicyManagementView.vue'),

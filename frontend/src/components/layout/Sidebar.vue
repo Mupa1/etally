@@ -403,6 +403,12 @@ const adminItems = computed<NavigationItem[]>(() => {
           icon: UsersIcon,
         },
         {
+          name: 'observers',
+          label: 'Observers',
+          path: '/admin/observers',
+          icon: UsersIcon,
+        },
+        {
           name: 'policies',
           label: 'Policies',
           path: '/admin/policies',
