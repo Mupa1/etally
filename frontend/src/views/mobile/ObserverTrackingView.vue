@@ -147,6 +147,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/utils/api';
+import { handleError } from '@/utils/errorHandler';
 import Alert from '@/components/common/Alert.vue';
 import Badge from '@/components/common/Badge.vue';
 import Button from '@/components/common/Button.vue';
@@ -226,6 +227,13 @@ async function fetchApplicationStatus(number: string) {
     });
     application.value = response.data;
   } catch (err: any) {
+    // Use enhanced error handling
+    const recovery = handleError(err, {
+      component: 'ObserverTrackingView',
+      action: 'fetch_application_status',
+      metadata: { trackingNumber: number },
+    });
+
     error.value = err.response?.data?.error || 'Application not found';
     application.value = null;
   } finally {

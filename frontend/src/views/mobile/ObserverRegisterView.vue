@@ -228,9 +228,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
+import { handleError } from '@/utils/errorHandler';
+import {
+  validateFormInput,
+  validateFileUpload,
+  sanitizeInput,
+} from '@/utils/security';
+import {
+  optimizeImage,
+  validateImageFile,
+  getOptimalImageSettings,
+} from '@/utils/imageOptimization';
+import { performanceMonitor } from '@/utils/bundleOptimization';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
 import FormCard from '@/components/mobile/FormCard.vue';
@@ -250,6 +262,18 @@ const steps = [
 const currentStep = ref(0);
 const submitting = ref(false);
 const error = ref('');
+
+// Performance monitoring
+onMounted(() => {
+  performanceMonitor.mark('observer-register-mounted');
+});
+
+onUnmounted(() => {
+  performanceMonitor.measure(
+    'observer-register-lifetime',
+    'observer-register-mounted'
+  );
+});
 
 // Form data
 const form = ref({
@@ -327,13 +351,27 @@ function validatePersonalInfo(): boolean {
     return false;
   }
 
-  if (!/^\d{7,8}$/.test(form.value.nationalId)) {
-    error.value = 'National ID must be 7-8 digits';
+  // Validate national ID
+  const nationalIdValidation = validateFormInput(
+    form.value.nationalId,
+    'nationalId'
+  );
+  if (!nationalIdValidation.isValid) {
+    error.value = nationalIdValidation.error || 'Invalid national ID';
     return false;
   }
 
-  if (!/^(\+254|0)[17]\d{8}$/.test(form.value.phoneNumber)) {
-    error.value = 'Invalid phone number format';
+  // Validate phone number
+  const phoneValidation = validateFormInput(form.value.phoneNumber, 'phone');
+  if (!phoneValidation.isValid) {
+    error.value = phoneValidation.error || 'Invalid phone number';
+    return false;
+  }
+
+  // Validate email
+  const emailValidation = validateFormInput(form.value.email, 'email');
+  if (!emailValidation.isValid) {
+    error.value = emailValidation.error || 'Invalid email';
     return false;
   }
 
@@ -346,6 +384,21 @@ function validateDocuments(): boolean {
     error.value = 'Please upload your profile photo';
     return false;
   }
+
+  // Validate image file
+  const imageValidation = validateImageFile(documents.value.profilePhoto);
+  if (!imageValidation.isValid) {
+    error.value = imageValidation.error || 'Invalid image file';
+    return false;
+  }
+
+  // Validate file upload
+  const fileValidation = validateFileUpload(documents.value.profilePhoto);
+  if (!fileValidation.isValid) {
+    error.value = fileValidation.error || 'Invalid file';
+    return false;
+  }
+
   return true;
 }
 
@@ -358,6 +411,12 @@ async function submitRegistration() {
     // 1. Submit registration
     const registrationData = {
       ...form.value,
+      // Sanitize all text inputs
+      firstName: sanitizeInput(form.value.firstName),
+      lastName: sanitizeInput(form.value.lastName),
+      nationalId: sanitizeInput(form.value.nationalId),
+      phoneNumber: sanitizeInput(form.value.phoneNumber),
+      email: sanitizeInput(form.value.email),
       dateOfBirth: new Date(form.value.dateOfBirth).toISOString(),
       // Convert empty strings to undefined for optional fields
       preferredCountyId: form.value.preferredCountyId || undefined,
@@ -404,6 +463,14 @@ async function submitRegistration() {
   } catch (err: any) {
     console.error('Registration error:', err);
     console.error('Error response:', err.response?.data);
+
+    // Use enhanced error handling
+    const recovery = handleError(err, {
+      component: 'ObserverRegisterView',
+      action: 'form_submission',
+      metadata: { step: currentStep.value },
+    });
+
     error.value =
       err.response?.data?.message ||
       err.response?.data?.error ||
@@ -418,17 +485,60 @@ async function submitRegistration() {
 async function uploadDocuments(trackingNumber: string) {
   if (!documents.value.profilePhoto) return;
 
-  const formData = new FormData();
-  formData.append('file', documents.value.profilePhoto);
-  formData.append('documentType', 'profile_photo');
+  try {
+    // Check if we can optimize the image without running out of memory
+    const shouldOptimize = documents.value.profilePhoto.size > 500 * 1024; // Only optimize if > 500KB
 
-  await api.post(
-    `/agent/register/${trackingNumber}/upload-document`,
-    formData,
-    {
-      baseURL: '/api',
-      headers: { 'Content-Type': 'multipart/form-data' },
+    if (shouldOptimize) {
+      try {
+        // Optimize image before upload with device-appropriate settings
+        const optimalSettings = getOptimalImageSettings();
+        const optimizedImage = await optimizeImage(
+          documents.value.profilePhoto,
+          optimalSettings
+        );
+
+        const formData = new FormData();
+        formData.append('file', optimizedImage.file);
+        formData.append('documentType', 'profile_photo');
+
+        await api.post(
+          `/agent/register/${trackingNumber}/upload-document`,
+          formData,
+          {
+            baseURL: '/api',
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        );
+
+        console.log(
+          `Image optimized: ${optimizedImage.compressionRatio.toFixed(2)}x compression`
+        );
+        return;
+      } catch (optimizationError) {
+        console.error('Image optimization failed:', optimizationError);
+        // Fall through to upload original file
+      }
     }
-  );
+
+    // Upload original file (either because it's small or optimization failed)
+    const formData = new FormData();
+    formData.append('file', documents.value.profilePhoto);
+    formData.append('documentType', 'profile_photo');
+
+    await api.post(
+      `/agent/register/${trackingNumber}/upload-document`,
+      formData,
+      {
+        baseURL: '/api',
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+
+    console.log('Original file uploaded successfully');
+  } catch (error) {
+    console.error('File upload failed:', error);
+    throw new Error('Failed to upload profile photo. Please try again.');
+  }
 }
 </script>

@@ -19,8 +19,13 @@
       :pattern="pattern"
       :max="max"
       :min="min"
+      :aria-label="label || placeholder"
+      :aria-describedby="hint ? `${id}-hint` : undefined"
+      :aria-invalid="hasError"
+      :aria-required="required"
+      role="textbox"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-      :class="{ 'bg-gray-100': disabled }"
+      :class="{ 'bg-gray-100': disabled, 'border-red-500': hasError }"
       @input="
         $emit('update:modelValue', ($event.target as HTMLInputElement).value)
       "
@@ -31,8 +36,12 @@
       :value="modelValue"
       :required="required"
       :disabled="disabled"
+      :aria-label="label || placeholder"
+      :aria-describedby="hint ? `${id}-hint` : undefined"
+      :aria-invalid="hasError"
+      :aria-required="required"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-      :class="{ 'bg-gray-100': disabled }"
+      :class="{ 'bg-gray-100': disabled, 'border-red-500': hasError }"
       @change="
         $emit('update:modelValue', ($event.target as HTMLSelectElement).value)
       "
@@ -47,13 +56,24 @@
       :required="required"
       :disabled="disabled"
       :rows="rows"
+      :aria-label="label || placeholder"
+      :aria-describedby="hint ? `${id}-hint` : undefined"
+      :aria-invalid="hasError"
+      :aria-required="required"
       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-      :class="{ 'bg-gray-100': disabled }"
+      :class="{ 'bg-gray-100': disabled, 'border-red-500': hasError }"
       @input="
         $emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)
       "
     />
-    <p v-if="hint" class="text-xs text-gray-500 mt-1">{{ hint }}</p>
+    <p
+      v-if="hint"
+      :id="`${id}-hint`"
+      class="text-xs text-gray-500 mt-1"
+      role="note"
+    >
+      {{ hint }}
+    </p>
   </div>
 </template>
 
@@ -71,6 +91,7 @@ interface Props {
   max?: string;
   min?: string;
   rows?: number;
+  hasError?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {

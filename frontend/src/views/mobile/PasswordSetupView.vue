@@ -81,6 +81,7 @@
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/utils/api';
+import { handleError } from '@/utils/errorHandler';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
 import PasswordInput from '@/components/common/PasswordInput.vue';
@@ -159,6 +160,13 @@ async function handleSubmit() {
       error.value = response.data.error || 'Failed to set password';
     }
   } catch (err: any) {
+    // Use enhanced error handling
+    const recovery = handleError(err, {
+      component: 'PasswordSetupView',
+      action: 'password_setup',
+      metadata: { token: token.value },
+    });
+
     error.value =
       err.response?.data?.error ||
       'Failed to set password. The link may have expired.';

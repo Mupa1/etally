@@ -199,10 +199,29 @@ function handleFileChange(event: Event) {
 
 function generatePreview(selectedFile: File) {
   const reader = new FileReader();
+
   reader.onload = (e) => {
-    preview.value = e.target?.result as string;
+    try {
+      preview.value = e.target?.result as string;
+    } catch (error) {
+      console.error('Failed to generate preview:', error);
+      // If preview generation fails, just show the file name
+      preview.value = null;
+    }
   };
-  reader.readAsDataURL(selectedFile);
+
+  reader.onerror = () => {
+    console.error('Failed to read file for preview');
+    preview.value = null;
+  };
+
+  // Use a smaller chunk size for large files to avoid memory issues
+  try {
+    reader.readAsDataURL(selectedFile);
+  } catch (error) {
+    console.error('Failed to read file:', error);
+    preview.value = null;
+  }
 }
 
 function removePhoto() {

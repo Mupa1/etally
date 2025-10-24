@@ -74,6 +74,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { handleError } from '@/utils/errorHandler';
+import { validateFormInput, sanitizeInput } from '@/utils/security';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
 import PasswordInput from '@/components/common/PasswordInput.vue';
@@ -95,15 +97,36 @@ async function handleLogin() {
   submitting.value = true;
 
   try {
+    // Validate inputs
+    const identifierValidation = validateFormInput(
+      form.value.identifier,
+      'text'
+    );
+    if (!identifierValidation.isValid) {
+      error.value = identifierValidation.error || 'Invalid identifier';
+      return;
+    }
+
+    // Sanitize inputs
+    const sanitizedIdentifier = sanitizeInput(form.value.identifier);
+    const sanitizedPassword = sanitizeInput(form.value.password);
+
     // Login using existing auth store
     await authStore.login({
-      email: form.value.identifier,
-      password: form.value.password,
+      email: sanitizedIdentifier,
+      password: sanitizedPassword,
     });
 
     // Redirect to agent dashboard
     router.push('/agent/dashboard');
   } catch (err: any) {
+    // Use enhanced error handling
+    const recovery = handleError(err, {
+      component: 'ObserverLoginView',
+      action: 'login',
+      metadata: { identifier: form.value.identifier },
+    });
+
     error.value = err.response?.data?.error || 'Invalid credentials';
   } finally {
     submitting.value = false;

@@ -28,7 +28,15 @@ app.config.errorHandler = (err, instance, info) => {
 // Mount app
 app.mount('#app');
 
-// Register service worker for offline support (optional)
+// Register service worker for offline support
+import { registerServiceWorker } from '@/utils/serviceWorker';
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  navigator.serviceWorker.register('/sw.js');
+  registerServiceWorker().then((success) => {
+    if (success) {
+      console.log('Service Worker registered successfully');
+    } else {
+      console.log('Service Worker registration failed');
+    }
+  });
 }
