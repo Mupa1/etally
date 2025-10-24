@@ -123,11 +123,60 @@ const route = useRoute();
 const trackingNumber = ref(route.params.trackingNumber as string);
 const copied = ref(false);
 
-function copyTrackingNumber() {
-  navigator.clipboard.writeText(trackingNumber.value);
-  copied.value = true;
-  setTimeout(() => {
-    copied.value = false;
-  }, 2000);
+async function copyTrackingNumber() {
+  try {
+    // Try modern clipboard API first (requires HTTPS)
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(trackingNumber.value);
+      copied.value = true;
+      setTimeout(() => {
+        copied.value = false;
+      }, 2000);
+    } else {
+      // Fallback for older browsers or non-HTTPS contexts
+      fallbackCopyTextToClipboard(trackingNumber.value);
+    }
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+    // Fallback if modern API fails
+    fallbackCopyTextToClipboard(trackingNumber.value);
+  }
+}
+
+function fallbackCopyTextToClipboard(text: string) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+
+  // Avoid scrolling to bottom
+  textArea.style.top = '0';
+  textArea.style.left = '0';
+  textArea.style.position = 'fixed';
+  textArea.style.opacity = '0';
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      copied.value = true;
+      setTimeout(() => {
+        copied.value = false;
+      }, 2000);
+    } else {
+      // If both methods fail, show an error or alternative
+      alert(
+        'Unable to copy to clipboard. Please manually copy the tracking number.'
+      );
+    }
+  } catch (err) {
+    console.error('Fallback copy failed: ', err);
+    alert(
+      'Unable to copy to clipboard. Please manually copy the tracking number.'
+    );
+  }
+
+  document.body.removeChild(textArea);
 }
 </script>
