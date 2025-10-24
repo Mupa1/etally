@@ -625,7 +625,12 @@ const counties = ref<Array<{ id: string; code: string; name: string }>>([]);
 async function loadVotingAreaStatistics() {
   try {
     console.log('Fetching voting area statistics...');
-    const response = await api.get('/geographic/voting-stats');
+    const response = await api.get('/geographic/voting-stats', {
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    });
     console.log('Statistics response:', response.data);
 
     if (response.data.success && response.data.data) {

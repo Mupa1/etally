@@ -101,6 +101,24 @@ const routes: RouteRecordRaw[] = [
   },
   // Admin Routes
   {
+    path: '/admin/parties',
+    name: 'admin-parties',
+    component: () => import('@/views/admin/PartyManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
+    path: '/admin/parties/:id',
+    name: 'admin-party-detail',
+    component: () => import('@/views/admin/PartyDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('@/views/admin/UsersOverviewView.vue'),

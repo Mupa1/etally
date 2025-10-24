@@ -143,6 +143,12 @@ enum UserRegistrationStatus {
   rejected
 }
 
+enum PartyAffiliation {
+  main_party
+  friendly_party
+  competitor
+}
+
 // ==========================================
 // ABAC (Attribute-Based Access Control) ENUMS
 // ==========================================
@@ -412,11 +418,28 @@ model Candidate {
 }
 
 model PoliticalParty {
-  id        String  @id @default(uuid())
-  partyCode String  @unique
-  partyName String
-  acronym   String?
-  logoUrl   String?
+  id                 String  @id @default(uuid())
+  serialNumber       String? // S/No from registration
+  certificateNumber  String  @unique // Certificate Serial No.
+  partyName          String // Name of the Party
+  abbreviation       String? // Abbreviation/Acronym
+  certificateDate    String? // Certificate Date of Issue
+  symbol             String? // Party Symbol
+  colors             String? // Party Colors
+  postalAddress      String? // Postal Address of Party
+  headOfficeLocation String? // Location of Head Office of Party
+  slogan             String? // Party Slogan
+  changes            String? // Changes/Notes
+
+  // Visual identity
+  logoUrl      String? // Logo/Image URL
+  primaryColor String? // Hex color for UI
+
+  // Affiliation
+  affiliation PartyAffiliation? // Main party, Friendly party, or Competitor
+
+  // Status
+  isActive Boolean @default(true)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -425,7 +448,10 @@ model PoliticalParty {
   // Relations
   candidates Candidate[]
 
-  @@index([partyCode])
+  @@index([certificateNumber])
+  @@index([abbreviation])
+  @@index([isActive])
+  @@index([affiliation])
   @@map("political_parties")
 }
 

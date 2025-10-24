@@ -278,6 +278,7 @@ import {
   AnalyticsIcon,
   AuditIcon,
   LocationIcon,
+  PartyIcon,
 } from '@/components/icons';
 
 // Navigation item type
@@ -353,6 +354,41 @@ const navigationItems = computed<NavigationItem[]>(() => [
 const adminItems = computed<NavigationItem[]>(() => {
   const items: NavigationItem[] = [];
 
+  // Settings menu with submenu
+  items.push({
+    name: 'settings-menu',
+    label: 'Settings',
+    icon: SettingsIcon,
+    children: [
+      {
+        name: 'voting-areas',
+        label: 'Voting Areas',
+        path: '/settings/voting-areas',
+        icon: LocationIcon,
+      },
+      {
+        name: 'db-settings',
+        label: 'DB Settings',
+        path: '/settings/database',
+        icon: SettingsIcon,
+      },
+      {
+        name: 'configurations',
+        label: 'Configurations',
+        path: '/settings/configurations',
+        icon: SettingsIcon,
+      },
+    ],
+  });
+
+  // Party Management menu
+  items.push({
+    name: 'party-management',
+    label: 'Party Management',
+    path: '/admin/parties',
+    icon: PartyIcon,
+  });
+
   // Super Admin only items
   if (authStore.userRole === 'super_admin') {
     items.push({
@@ -393,33 +429,6 @@ const adminItems = computed<NavigationItem[]>(() => {
       ],
     });
   }
-
-  // Settings menu with submenu
-  items.push({
-    name: 'settings-menu',
-    label: 'Settings',
-    icon: SettingsIcon,
-    children: [
-      {
-        name: 'voting-areas',
-        label: 'Voting Areas',
-        path: '/settings/voting-areas',
-        icon: LocationIcon,
-      },
-      {
-        name: 'db-settings',
-        label: 'DB Settings',
-        path: '/settings/database',
-        icon: SettingsIcon,
-      },
-      {
-        name: 'configurations',
-        label: 'Configurations',
-        path: '/settings/configurations',
-        icon: SettingsIcon,
-      },
-    ],
-  });
 
   return items;
 });
