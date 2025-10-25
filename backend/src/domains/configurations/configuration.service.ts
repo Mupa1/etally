@@ -6,6 +6,7 @@
 import PrismaService from '@/infrastructure/database/prisma.service';
 import { NotFoundError, ValidationError } from '@/shared/types/errors';
 import { ConfigurationType } from '@prisma/client';
+import { encrypt, decrypt, isEncrypted } from '@/shared/utils/encryption.util';
 
 interface ICreateConfigurationData {
   key: string;
@@ -43,10 +44,32 @@ class ConfigurationService {
   }
 
   /**
+   * Check if a configuration key contains "password"
+   */
+  private isPasswordField(key: string): boolean {
+    return key.toLowerCase().includes('password');
+  }
+
+  /**
    * Parse configuration value based on type
    */
-  private parseValue(value: string | null, type: ConfigurationType): any {
+  private parseValue(
+    value: string | null,
+    type: ConfigurationType,
+    key: string
+  ): any {
     if (value === null || value === undefined) return null;
+
+    // Decrypt password fields
+    if (this.isPasswordField(key) && isEncrypted(value)) {
+      try {
+        value = decrypt(value);
+      } catch (error) {
+        console.error('Failed to decrypt password field:', error);
+        // Return masked value if decryption fails
+        return '***ENCRYPTED***';
+      }
+    }
 
     switch (type) {
       case 'number':
@@ -72,20 +95,45 @@ class ConfigurationService {
   /**
    * Stringify configuration value for storage
    */
-  private stringifyValue(value: any, type: ConfigurationType): string | null {
+  private stringifyValue(
+    value: any,
+    type: ConfigurationType,
+    key: string
+  ): string | null {
     if (value === null || value === undefined) return null;
+
+    let stringValue: string;
 
     switch (type) {
       case 'number':
-        return String(value);
+        stringValue = String(value);
+        break;
       case 'boolean':
-        return String(value);
+        stringValue = String(value);
+        break;
       case 'json':
-        return JSON.stringify(value);
+        stringValue = JSON.stringify(value);
+        break;
       case 'string':
       default:
-        return String(value);
+        stringValue = String(value);
+        break;
     }
+
+    // Encrypt password fields
+    if (this.isPasswordField(key)) {
+      // Only encrypt if not already encrypted
+      if (!isEncrypted(stringValue)) {
+        try {
+          stringValue = encrypt(stringValue);
+        } catch (error) {
+          console.error('Failed to encrypt password field:', error);
+          throw new ValidationError('Failed to encrypt password value');
+        }
+      }
+    }
+
+    return stringValue;
   }
 
   /**
@@ -103,14 +151,16 @@ class ConfigurationService {
       );
     }
 
-    // Validate value if provided
-    if (data.value) {
-      this.parseValue(data.value, data.type);
+    // Validate value if provided and stringify for storage
+    const createData: any = { ...data };
+    if (data.value !== undefined) {
+      this.parseValue(data.value, data.type, data.key);
+      createData.value = this.stringifyValue(data.value, data.type, data.key);
     }
 
     const configuration = await this.prisma.configuration.create({
       data: {
-        ...data,
+        ...createData,
         lastModified: new Date(),
         modifiedBy: userId,
       },
@@ -118,7 +168,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 
@@ -155,7 +209,7 @@ class ConfigurationService {
 
     return configurations.map((config) => ({
       ...config,
-      value: this.parseValue(config.value, config.type),
+      value: this.parseValue(config.value, config.type, config.key),
     }));
   }
 
@@ -173,7 +227,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 
@@ -191,7 +249,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 
@@ -206,7 +268,7 @@ class ConfigurationService {
 
     return configurations.map((config) => ({
       ...config,
-      value: this.parseValue(config.value, config.type),
+      value: this.parseValue(config.value, config.type, config.key),
     }));
   }
 
@@ -232,9 +294,9 @@ class ConfigurationService {
 
     if (data.value !== undefined) {
       // Validate the value first
-      this.parseValue(data.value, type);
+      this.parseValue(data.value, type, existing.key);
       // Stringify the value for storage
-      updateData.value = this.stringifyValue(data.value, type);
+      updateData.value = this.stringifyValue(data.value, type, existing.key);
     }
 
     const configuration = await this.prisma.configuration.update({
@@ -248,7 +310,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 
@@ -265,8 +331,8 @@ class ConfigurationService {
     }
 
     // Validate and stringify value
-    this.parseValue(value, existing.type);
-    const stringValue = this.stringifyValue(value, existing.type);
+    this.parseValue(value, existing.type, existing.key);
+    const stringValue = this.stringifyValue(value, existing.type, existing.key);
 
     const configuration = await this.prisma.configuration.update({
       where: { key },
@@ -280,7 +346,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 
@@ -384,7 +454,11 @@ class ConfigurationService {
 
     return {
       ...configuration,
-      value: this.parseValue(configuration.value, configuration.type),
+      value: this.parseValue(
+        configuration.value,
+        configuration.type,
+        configuration.key
+      ),
     };
   }
 }
