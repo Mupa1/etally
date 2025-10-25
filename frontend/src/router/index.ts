@@ -99,6 +99,15 @@ const routes: RouteRecordRaw[] = [
       requiresRole: ['super_admin'],
     },
   },
+  {
+    path: '/settings/configurations/:id',
+    name: 'settings-configuration-detail',
+    component: () => import('@/views/settings/ConfigurationDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
   // Admin Routes
   {
     path: '/admin/parties',

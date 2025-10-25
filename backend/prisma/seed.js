@@ -154,6 +154,14 @@ async function main() {
     console.log('✓ Public viewer policy already exists');
   }
 
+  // Seed configurations
+  try {
+    const { seedConfigurations } = require('./seeds/configurations.seed.ts');
+    await seedConfigurations();
+  } catch (error) {
+    console.error('❌ Failed to seed configurations:', error);
+  }
+
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Initial Credentials:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -170,8 +178,17 @@ async function main() {
   console.log('  • Election Day Hours Restriction (disabled)');
   console.log('  • Public Viewer Read-Only Access (active)');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n📧 System Configurations:');
+  console.log('  • Email service settings configured');
+  console.log('  • Security and authentication settings');
+  console.log('  • Storage and rate limiting configurations');
+  console.log('  • Database and notification settings');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(
     '\n⚠️  IMPORTANT: Change these passwords immediately after first login!'
+  );
+  console.log(
+    '⚠️  IMPORTANT: Configure SMTP credentials in System Configurations to enable email service!'
   );
 }
 

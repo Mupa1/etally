@@ -226,16 +226,21 @@ class ConfigurationService {
       throw new NotFoundError('Configuration', id);
     }
 
-    // Validate value if provided
+    // Validate value if provided and stringify it for storage
     const type = data.type || existing.type;
+    const updateData: any = { ...data };
+
     if (data.value !== undefined) {
+      // Validate the value first
       this.parseValue(data.value, type);
+      // Stringify the value for storage
+      updateData.value = this.stringifyValue(data.value, type);
     }
 
     const configuration = await this.prisma.configuration.update({
       where: { id },
       data: {
-        ...data,
+        ...updateData,
         lastModified: new Date(),
         modifiedBy: userId,
       },

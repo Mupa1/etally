@@ -27,7 +27,7 @@ export const createConfigurationSchema = z.object({
 export const updateConfigurationSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
-  value: z.string().optional(),
+  value: z.any().optional(), // Accept any type as value can be string, number, boolean, or JSON
   type: z.nativeEnum(ConfigurationType).optional(),
   category: z.string().min(1).max(100).optional(),
   isRequired: z.boolean().optional(),
@@ -44,7 +44,7 @@ export const configurationFiltersSchema = z.object({
   isRequired: z
     .string()
     .optional()
-    .transform((val) => val === 'true'),
+    .transform((val) => (val === undefined ? undefined : val === 'true')),
   search: z.string().optional(),
 });
 
