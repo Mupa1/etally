@@ -10,7 +10,7 @@
 
   <aside
     :class="[
-      'fixed top-0 left-0 h-screen bg-white border-r border-gray-200 transition-all duration-300',
+      'fixed top-0 left-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 flex flex-col',
       // Mobile: Hidden by default (-translate-x-full), full width when open
       'w-64 sm:w-20 lg:w-64',
       '-translate-x-full sm:translate-x-0',
@@ -73,7 +73,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="p-4 space-y-1 overflow-y-auto h-[calc(100vh-180px)]">
+    <nav class="flex flex-col p-4 space-y-1 overflow-y-auto flex-1">
       <template v-for="item in navigationItems" :key="item.name">
         <router-link :to="item.path" v-slot="{ isActive }" custom>
           <a
@@ -210,15 +210,112 @@
           </div>
         </template>
       </div>
+
+      <!-- Settings Section (Bottom of nav, above User Menu) -->
+      <div class="mt-auto pt-2">
+        <div class="border-t border-gray-200 mb-2"></div>
+        <!-- Settings menu with submenu -->
+        <button
+          @click="toggleMenu('settings-menu')"
+          :class="[
+            'flex items-center w-full px-3 py-2.5 rounded-lg transition-all duration-200 touch-manipulation min-h-[44px]',
+            'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
+            isCollapsed ? 'justify-center' : 'space-x-3',
+          ]"
+          :title="isCollapsed ? 'Settings' : undefined"
+        >
+          <SettingsIcon class="w-5 h-5 flex-shrink-0" />
+          <span
+            v-if="!isCollapsed || isMobileMenuOpen"
+            class="font-medium flex-1 text-left"
+            >Settings</span
+          >
+          <svg
+            v-if="!isCollapsed || isMobileMenuOpen"
+            class="w-4 h-4 transition-transform"
+            :class="{ 'rotate-180': isMenuExpanded('settings-menu') }"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+
+        <!-- Settings submenu items -->
+        <Transition name="expand">
+          <div
+            v-if="
+              isMenuExpanded('settings-menu') &&
+              (!isCollapsed || isMobileMenuOpen)
+            "
+            class="ml-8 mt-1 space-y-1"
+          >
+            <router-link
+              to="/settings/voting-areas"
+              v-slot="{ isActive }"
+              custom
+            >
+              <a
+                href="/settings/voting-areas"
+                @click.prevent="handleNavClick('/settings/voting-areas')"
+                :class="[
+                  'flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                ]"
+              >
+                <span>Voting Areas</span>
+              </a>
+            </router-link>
+            <router-link to="/settings/database" v-slot="{ isActive }" custom>
+              <a
+                href="/settings/database"
+                @click.prevent="handleNavClick('/settings/database')"
+                :class="[
+                  'flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                ]"
+              >
+                <span>DB Settings</span>
+              </a>
+            </router-link>
+            <router-link
+              to="/settings/configurations"
+              v-slot="{ isActive }"
+              custom
+            >
+              <a
+                href="/settings/configurations"
+                @click.prevent="handleNavClick('/settings/configurations')"
+                :class="[
+                  'flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm',
+                  isActive
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                ]"
+              >
+                <span>Configurations</span>
+              </a>
+            </router-link>
+          </div>
+        </Transition>
+      </div>
     </nav>
 
     <!-- User Menu -->
-    <div
-      class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white"
-    >
+    <div class="border-t border-gray-200 bg-white">
       <div
         :class="[
-          'flex items-center',
+          'flex items-center p-4',
           isCollapsed && !isMobileMenuOpen ? 'justify-center' : 'space-x-3',
         ]"
       >
@@ -354,31 +451,12 @@ const navigationItems = computed<NavigationItem[]>(() => [
 const adminItems = computed<NavigationItem[]>(() => {
   const items: NavigationItem[] = [];
 
-  // Settings menu with submenu
+  // Communication menu
   items.push({
-    name: 'settings-menu',
-    label: 'Settings',
-    icon: SettingsIcon,
-    children: [
-      {
-        name: 'voting-areas',
-        label: 'Voting Areas',
-        path: '/settings/voting-areas',
-        icon: LocationIcon,
-      },
-      {
-        name: 'db-settings',
-        label: 'DB Settings',
-        path: '/settings/database',
-        icon: SettingsIcon,
-      },
-      {
-        name: 'configurations',
-        label: 'Configurations',
-        path: '/settings/configurations',
-        icon: SettingsIcon,
-      },
-    ],
+    name: 'communication',
+    label: 'Communication',
+    path: '/communication',
+    icon: UsersIcon, // Using UsersIcon as placeholder - can be changed later
   });
 
   // Party Management menu
