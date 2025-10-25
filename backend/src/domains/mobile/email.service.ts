@@ -1,12 +1,13 @@
 /**
  * Email Service for Observer Notifications
- * Uses SMTP configurations from database
+ * Uses SMTP configurations from database and email templates
  */
 
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import PrismaService from '@/infrastructure/database/prisma.service';
 import { decrypt, isEncrypted } from '@/shared/utils/encryption.util';
+import { EmailTemplateType } from '@prisma/client';
 
 interface EmailConfig {
   smtpHost: string;
@@ -34,6 +35,44 @@ export class EmailService {
   }
 
   /**
+   * Get and render email template with variables
+   */
+  private async renderEmailTemplate(
+    templateType: EmailTemplateType,
+    variables: Record<string, string>
+  ): Promise<{ subject: string; body: string }> {
+    try {
+      const template = await this.prisma.emailTemplate.findUnique({
+        where: { templateType },
+      });
+
+      if (!template) {
+        throw new Error(`Email template not found: ${templateType}`);
+      }
+
+      if (!template.isActive) {
+        throw new Error(`Email template is inactive: ${templateType}`);
+      }
+
+      // Replace variables in subject and body
+      let subject = template.subject;
+      let body = template.body;
+
+      // Replace all {{variable}} placeholders
+      Object.keys(variables).forEach((key) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        subject = subject.replace(regex, variables[key]);
+        body = body.replace(regex, variables[key]);
+      });
+
+      return { subject, body };
+    } catch (error) {
+      console.error(`Failed to render email template ${templateType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Send registration confirmation email
    */
   async sendRegistrationConfirmation(
@@ -41,22 +80,16 @@ export class EmailService {
     firstName: string,
     trackingNumber: string
   ): Promise<void> {
-    const subject = 'Observer Registration Received';
-    const html = `
-      <h2>Hello ${firstName},</h2>
-      <p>Thank you for registering as a field observer.</p>
-      <p>Your application has been received and is currently under review.</p>
-      
-      <p><strong>Application Tracking Number:</strong> ${trackingNumber}</p>
-      <p>You can track your application status at:</p>
-      <p><a href="${this.appUrl}/agent/track/${trackingNumber}">Track Application</a></p>
-      
-      <p>You will receive another email when your application is reviewed (typically within 24-48 hours).</p>
-      
-      <p>Best regards,<br>Election Management Team</p>
-    `;
+    const { subject, body } = await this.renderEmailTemplate(
+      'registration_confirmation',
+      {
+        firstName,
+        trackingNumber,
+        appUrl: this.appUrl,
+      }
+    );
 
-    await this.sendEmail(email, subject, html);
+    await this.sendEmail(email, subject, body);
   }
 
   /**
@@ -67,54 +100,30 @@ export class EmailService {
     firstName: string,
     setupToken: string
   ): Promise<void> {
-    const subject = 'Observer Application Approved - Set Your Password';
     const setupUrl = `${this.appUrl}/agent/setup-password?token=${setupToken}`;
 
-    const html = `
-      <h2>Congratulations ${firstName}!</h2>
-      <p>Your observer application has been approved.</p>
-      
-      <p>To complete your registration, please set up your password by clicking the link below:</p>
-      <p><a href="${setupUrl}">Set Up Password</a></p>
-      
-      <p><strong>Important:</strong> This link will expire in 48 hours.</p>
-      
-      <p>After setting your password, you can login to the observer portal and start submitting election results.</p>
-      
-      <p>Best regards,<br>Election Management Team</p>
-    `;
+    const { subject, body } = await this.renderEmailTemplate('password_setup', {
+      firstName,
+      setupUrl,
+      appUrl: this.appUrl,
+    });
 
-    await this.sendEmail(email, subject, html);
+    await this.sendEmail(email, subject, body);
   }
 
   /**
    * Send welcome email after password setup
    */
   async sendWelcomeEmail(email: string, firstName: string): Promise<void> {
-    const subject = 'Welcome to Field Observer Portal';
     const loginUrl = `${this.appUrl}/agent/login`;
 
-    const html = `
-      <h2>Welcome ${firstName}!</h2>
-      <p>Your field observer account is now active.</p>
-      
-      <p>You can now login to the observer portal:</p>
-      <p><a href="${loginUrl}">Login to Observer Portal</a></p>
-      
-      <p>Once logged in, you will:</p>
-      <ul>
-        <li>See your assigned polling stations</li>
-        <li>Submit election results</li>
-        <li>Upload Form 34A photos</li>
-        <li>Track your submissions</li>
-      </ul>
-      
-      <p>The mobile app works offline, so you can submit results even without internet connection.</p>
-      
-      <p>Best regards,<br>Election Management Team</p>
-    `;
+    const { subject, body } = await this.renderEmailTemplate('welcome', {
+      firstName,
+      loginUrl,
+      appUrl: this.appUrl,
+    });
 
-    await this.sendEmail(email, subject, html);
+    await this.sendEmail(email, subject, body);
   }
 
   /**
@@ -125,22 +134,13 @@ export class EmailService {
     firstName: string,
     rejectionReason: string
   ): Promise<void> {
-    const subject = 'Observer Application Status Update';
+    const { subject, body } = await this.renderEmailTemplate('rejection', {
+      firstName,
+      rejectionReason,
+      appUrl: this.appUrl,
+    });
 
-    const html = `
-      <h2>Hello ${firstName},</h2>
-      <p>Thank you for your interest in becoming a field observer.</p>
-      
-      <p>After careful review, we are unable to approve your application at this time.</p>
-      
-      <p><strong>Reason:</strong> ${rejectionReason}</p>
-      
-      <p>If you believe this is an error or have questions, please contact our support team.</p>
-      
-      <p>Best regards,<br>Election Management Team</p>
-    `;
-
-    await this.sendEmail(email, subject, html);
+    await this.sendEmail(email, subject, body);
   }
 
   /**
@@ -151,21 +151,16 @@ export class EmailService {
     firstName: string,
     notes: string
   ): Promise<void> {
-    const subject = 'Observer Application - Additional Information Required';
+    const { subject, body } = await this.renderEmailTemplate(
+      'clarification_request',
+      {
+        firstName,
+        notes,
+        appUrl: this.appUrl,
+      }
+    );
 
-    const html = `
-      <h2>Hello ${firstName},</h2>
-      <p>We are reviewing your observer application and need some clarification:</p>
-      
-      <p><strong>Notes:</strong></p>
-      <p>${notes}</p>
-      
-      <p>Please contact our support team to provide the requested information.</p>
-      
-      <p>Best regards,<br>Election Management Team</p>
-    `;
-
-    await this.sendEmail(email, subject, html);
+    await this.sendEmail(email, subject, body);
   }
 
   /**
