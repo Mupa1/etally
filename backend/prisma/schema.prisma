@@ -462,6 +462,25 @@ model Configuration {
   @@map("configurations")
 }
 
+model EmailTemplate {
+  id           String            @id @default(uuid())
+  name         String
+  subject      String
+  body         String
+  description  String?
+  templateType EmailTemplateType @unique
+  variables    Json?
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  @@index([templateType])
+  @@index([isActive])
+  @@map("email_templates")
+}
+
 model UserGeographicScope {
   id             String         @id @default(uuid())
   userId         String
@@ -781,4 +800,12 @@ enum ConfigurationType {
   number
   boolean
   json
+}
+
+enum EmailTemplateType {
+  registration_confirmation
+  password_setup
+  welcome
+  rejection
+  clarification_request
 }

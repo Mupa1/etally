@@ -82,6 +82,24 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/communication/templates',
+    name: 'communication-templates',
+    component: () => import('@/views/EmailTemplatesView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/communication/templates/:id/edit',
+    name: 'communication-template-edit',
+    component: () => import('@/views/EmailTemplateEditView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),

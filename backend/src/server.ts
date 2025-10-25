@@ -33,6 +33,7 @@ import { createObserverRoutes } from '@/domains/mobile/observer.routes';
 import { ObserverService } from '@/domains/mobile/observer.service';
 import { ObserverMinIOService } from '@/domains/mobile/minio.service';
 import { EmailService } from '@/domains/mobile/email.service';
+import emailTemplateRoutes from '@/domains/communication/email-template.routes';
 
 // Server configuration
 const app: Application = express();
@@ -106,6 +107,7 @@ app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, aud
 app.use('/api/v1/observers/mobile', observerMobileRoutes); // Mobile PWA observer routes
 app.use('/api/v1/admin/observers', observerAdminRoutes); // Admin observer management
 app.use('/api/v1/admin/observer-applications', observerApplicationsRoutes); // Observer applications management
+app.use('/api/v1/communication/templates', emailTemplateRoutes); // Email template management
 
 // Agent routes (public registration endpoints)
 app.use('/api/agent', createObserverRoutes(observerService));
