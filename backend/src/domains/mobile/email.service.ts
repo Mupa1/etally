@@ -6,6 +6,7 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import PrismaService from '@/infrastructure/database/prisma.service';
+import { decrypt, isEncrypted } from '@/shared/utils/encryption.util';
 
 interface EmailConfig {
   smtpHost: string;
@@ -193,12 +194,23 @@ export class EmailService {
       // Parse configurations
       const configMap = new Map(configs.map((c) => [c.key, c.value]));
 
+      // Get and decrypt SMTP password if encrypted
+      let smtpPassword = configMap.get('smtp_password') || '';
+      if (smtpPassword && isEncrypted(smtpPassword)) {
+        try {
+          smtpPassword = decrypt(smtpPassword);
+        } catch (error) {
+          console.error('Failed to decrypt SMTP password:', error);
+          throw new Error('Failed to decrypt SMTP password');
+        }
+      }
+
       const emailConfig: EmailConfig = {
         smtpHost: configMap.get('smtp_host') || 'localhost',
         smtpPort: parseInt(configMap.get('smtp_port') || '587'),
         smtpSecure: configMap.get('smtp_secure') === 'true',
         smtpUsername: configMap.get('smtp_username') || '',
-        smtpPassword: configMap.get('smtp_password') || '',
+        smtpPassword,
         emailFromAddress:
           configMap.get('email_from_address') || 'noreply@etally.com',
         emailFromName:
