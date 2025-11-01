@@ -5,6 +5,7 @@
 
 import { PrismaClient, ObserverStatus, Prisma } from '@prisma/client';
 import { ValidationError, NotFoundError } from '@/shared/types/errors';
+import { ObserverMinIOService } from './minio.service';
 
 // Types for admin operations
 export interface ObserverFilters {
@@ -73,7 +74,10 @@ export interface ObserverAnalytics {
 }
 
 export class ObserverAdminService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private minioService?: ObserverMinIOService
+  ) {}
 
   /**
    * Get all observers with filtering and pagination
@@ -219,6 +223,53 @@ export class ObserverAdminService {
       throw new NotFoundError('Observer', id);
     }
 
+    // Generate presigned URLs for images if MinIO service is available
+    if (this.minioService) {
+      const observerWithUrls = { ...observer };
+      
+      if (observer.profilePhotoUrl) {
+        try {
+          observerWithUrls.profilePhotoUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            observer.profilePhotoUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting profile photo URL for ${observer.profilePhotoUrl}:`, error.message);
+          // Set to null if file doesn't exist rather than breaking the response
+          observerWithUrls.profilePhotoUrl = null;
+        }
+      }
+      
+      if (observer.nationalIdFrontUrl) {
+        try {
+          observerWithUrls.nationalIdFrontUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            observer.nationalIdFrontUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting national ID front URL for ${observer.nationalIdFrontUrl}:`, error.message);
+          observerWithUrls.nationalIdFrontUrl = null;
+        }
+      }
+      
+      if (observer.nationalIdBackUrl) {
+        try {
+          observerWithUrls.nationalIdBackUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            observer.nationalIdBackUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting national ID back URL for ${observer.nationalIdBackUrl}:`, error.message);
+          observerWithUrls.nationalIdBackUrl = null;
+        }
+      }
+      
+      return observerWithUrls;
+    }
+
     return observer;
   }
 
@@ -230,7 +281,14 @@ export class ObserverAdminService {
     data: ObserverUpdateData,
     reviewerId: string
   ) {
-    const observer = await this.getObserverById(id);
+    // Get observer directly from DB (not the enriched version with presigned URLs)
+    const observer = await this.prisma.observerRegistration.findUnique({
+      where: { id },
+    });
+
+    if (!observer) {
+      throw new NotFoundError('Observer', id);
+    }
 
     // Validate email uniqueness if being updated
     if (data.email && data.email !== observer.email) {
@@ -269,6 +327,52 @@ export class ObserverAdminService {
       },
     });
 
+    // Generate presigned URLs for images if MinIO service is available
+    if (this.minioService) {
+      const observerWithUrls = { ...updatedObserver };
+      
+      if (updatedObserver.profilePhotoUrl) {
+        try {
+          observerWithUrls.profilePhotoUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            updatedObserver.profilePhotoUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting profile photo URL for ${updatedObserver.profilePhotoUrl}:`, error.message);
+          observerWithUrls.profilePhotoUrl = null;
+        }
+      }
+      
+      if (updatedObserver.nationalIdFrontUrl) {
+        try {
+          observerWithUrls.nationalIdFrontUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            updatedObserver.nationalIdFrontUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting national ID front URL for ${updatedObserver.nationalIdFrontUrl}:`, error.message);
+          observerWithUrls.nationalIdFrontUrl = null;
+        }
+      }
+      
+      if (updatedObserver.nationalIdBackUrl) {
+        try {
+          observerWithUrls.nationalIdBackUrl = await this.minioService.getPresignedUrl(
+            'observer-documents',
+            updatedObserver.nationalIdBackUrl,
+            7 * 24 * 3600 // 7 days expiry
+          );
+        } catch (error: any) {
+          console.error(`Error getting national ID back URL for ${updatedObserver.nationalIdBackUrl}:`, error.message);
+          observerWithUrls.nationalIdBackUrl = null;
+        }
+      }
+      
+      return observerWithUrls;
+    }
+
     return updatedObserver;
   }
 
@@ -276,7 +380,14 @@ export class ObserverAdminService {
    * Delete observer (soft delete by changing status)
    */
   async deleteObserver(id: string, reviewerId: string) {
-    await this.getObserverById(id);
+    // Verify observer exists
+    const observer = await this.prisma.observerRegistration.findUnique({
+      where: { id },
+    });
+
+    if (!observer) {
+      throw new NotFoundError('Observer', id);
+    }
 
     // Soft delete by changing status to inactive
     const updatedObserver = await this.prisma.observerRegistration.update({

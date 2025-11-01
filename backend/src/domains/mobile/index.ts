@@ -22,7 +22,7 @@ const minioService = new ObserverMinIOService();
 
 // Create observer services
 const observerService = new ObserverService(prisma, minioService, emailService);
-const observerAdminService = new ObserverAdminService(prisma);
+const observerAdminService = new ObserverAdminService(prisma, minioService);
 
 // Create controllers
 const observerController = new ObserverController(observerService);

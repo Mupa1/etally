@@ -38,8 +38,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             },
             "description": "Check if API server is running and healthy"
           },
@@ -52,8 +56,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api",
-              "host": ["{{baseUrl}}"],
-              "path": ["api"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api"
+              ]
             },
             "description": "Get API version and information"
           },
@@ -106,8 +114,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
             "description": "Register a new user in the system"
           },
@@ -149,8 +164,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Login with email and password to get access tokens"
           },
@@ -192,8 +214,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "profile"
+              ]
             },
             "description": "Get current logged-in user's profile"
           },
@@ -229,8 +258,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
             },
             "description": "Get a new access token using refresh token"
           },
@@ -262,8 +298,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "change-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "change-password"
+              ]
             },
             "description": "Change current user's password"
           },
@@ -285,8 +328,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
             },
             "description": "Logout user and invalidate refresh token"
           },
@@ -317,8 +367,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Should return 400 - Validation Error"
           },
@@ -340,8 +397,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
             "description": "Should return 400 - Password requirements not met"
           },
@@ -363,8 +427,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
             "description": "Should return 409 - Email already registered"
           },
@@ -377,8 +448,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "profile"
+              ]
             },
             "description": "Should return 401 - No authorization token provided"
           },
@@ -396,8 +474,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "profile"
+              ]
             },
             "description": "Should return 401 - Invalid or expired token"
           },
@@ -419,8 +504,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
             },
             "description": "Should return 401 - Invalid email or password"
           },
@@ -448,8 +540,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/agent/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "register"
+              ]
             },
             "description": "Public agent registration - no auth required"
           },
@@ -462,8 +560,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/agent/track/OBS-2025-123456",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "track", "OBS-2025-123456"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "track",
+                "OBS-2025-123456"
+              ]
             },
             "description": "Track application status by tracking number - no auth required"
           },
@@ -485,8 +590,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/agent/setup-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "setup-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "setup-password"
+              ]
             },
             "description": "Set password for approved agent - uses secure token from email"
           },
@@ -514,7 +625,9 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/agent/register/OBS-2025-123456/upload-document",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "agent",
@@ -540,8 +653,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/agent/geographic/counties",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "geographic", "counties"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "geographic",
+                "counties"
+              ]
             },
             "description": "Get all counties - rate limited (30/15min)"
           },
@@ -554,8 +674,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/agent/geographic/constituencies?countyId=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "geographic", "constituencies"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "geographic",
+                "constituencies"
+              ],
               "query": [
                 {
                   "key": "countyId",
@@ -574,8 +701,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/agent/geographic/wards?constituencyId=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "geographic", "wards"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "geographic",
+                "wards"
+              ],
               "query": [
                 {
                   "key": "constituencyId",
@@ -594,8 +728,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/agent/geographic/polling-stations?wardId=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "agent", "geographic", "polling-stations"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "agent",
+                "geographic",
+                "polling-stations"
+              ],
               "query": [
                 {
                   "key": "wardId",
@@ -630,8 +771,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers?status=approved&search=john&page=1&limit=20&sortBy=name&sortOrder=asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -686,8 +834,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                "stats"
+              ]
             },
             "description": "Get comprehensive observer statistics - requires super_admin or election_manager"
           },
@@ -710,8 +866,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/analytics?days=30",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", "analytics"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                "analytics"
+              ],
               "query": [
                 {
                   "key": "days",
@@ -741,8 +905,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/dashboard",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", "dashboard"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                "dashboard"
+              ]
             },
             "description": "Get combined dashboard data (stats + recent + analytics) - requires super_admin or election_manager"
           },
@@ -765,8 +937,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/export?status=approved&format=csv",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", "export"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                "export"
+              ],
               "query": [
                 {
                   "key": "status",
@@ -801,8 +981,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                ":id"
+              ]
             },
             "description": "Get detailed information about a specific observer - requires super_admin or election_manager"
           },
@@ -834,8 +1022,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                ":id"
+              ]
             },
             "description": "Update observer information - requires super_admin or election_manager"
           },
@@ -858,8 +1054,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                ":id"
+              ]
             },
             "description": "Soft delete observer by changing status to inactive - requires super_admin only"
           },
@@ -891,12 +1095,53 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/observers/bulk-update",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "admin", "observers", "bulk-update"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                "bulk-update"
+              ]
             },
             "description": "Update multiple observers' status at once - requires super_admin or election_manager"
           },
           "response": []
+        },
+        {
+          "name": "Get Observer Image URL",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observers/:id/images/:imagePath",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observers",
+                ":id",
+                "images",
+                ":imagePath"
+              ]
+            },
+            "description": "Get presigned URL for observer image"
+          }
         }
       ],
       "description": "Admin endpoints for comprehensive observer management and analytics"
@@ -921,8 +1166,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "users"
+              ]
             },
             "description": "Get list of all users - requires super_admin"
           },
@@ -954,8 +1206,17 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/users/:userId/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "users", ":userId", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "users",
+                ":userId",
+                "status"
+              ]
             },
             "description": "Activate/deactivate user account - requires super_admin"
           },
@@ -987,8 +1248,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/first-login-password-change",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "first-login-password-change"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "first-login-password-change"
+              ]
             },
             "description": "Change password on first login for initial super admin"
           },
@@ -1026,8 +1294,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/bulk-upload",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "bulk-upload"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "bulk-upload"
+              ]
             },
             "description": "Bulk upload geographic data - requires super_admin"
           },
@@ -1050,8 +1325,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "stats"
+              ]
             },
             "description": "Get basic geographic statistics"
           },
@@ -1074,8 +1356,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/voting-stats?countyId=&constituencyId=&wardId=&isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "voting-stats"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "voting-stats"
+              ],
               "query": [
                 {
                   "key": "countyId",
@@ -1116,8 +1405,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/hierarchy?level=county&page=1&limit=100",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "hierarchy"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "hierarchy"
+              ],
               "query": [
                 {
                   "key": "level",
@@ -1154,8 +1450,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/search?search=&page=1&limit=20&sortBy=name&sortOrder=asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "search"
+              ],
               "query": [
                 {
                   "key": "search",
@@ -1200,8 +1503,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/counties?isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "counties"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "counties"
+              ],
               "query": [
                 {
                   "key": "isActive",
@@ -1230,8 +1540,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/constituencies?countyId=&isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "constituencies"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "constituencies"
+              ],
               "query": [
                 {
                   "key": "countyId",
@@ -1264,8 +1581,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/wards?constituencyId=&isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "wards"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "wards"
+              ],
               "query": [
                 {
                   "key": "constituencyId",
@@ -1298,8 +1622,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/geographic/polling-stations?wardId=&isActive=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "geographic", "polling-stations"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "polling-stations"
+              ],
               "query": [
                 {
                   "key": "wardId",
@@ -1314,6 +1645,36 @@
             "description": "Get polling stations with hierarchy information"
           },
           "response": []
+        },
+        {
+          "name": "Delete All Geographic Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/geographic/delete-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "geographic",
+                "delete-all"
+              ]
+            },
+            "description": "Delete all voting areas data - IRREVERSIBLE - super_admin only"
+          }
         }
       ],
       "description": "Geographic data management endpoints (authenticated)"
@@ -1338,8 +1699,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections",
+                "stats"
+              ]
             },
             "description": "Get election statistics filtered by user's geographic scope"
           },
@@ -1371,8 +1739,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections"
+              ]
             },
             "description": "Create a new election - requires 'create' permission"
           },
@@ -1395,8 +1769,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections"
+              ]
             },
             "description": "List all elections filtered by user's geographic scope"
           },
@@ -1419,8 +1799,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections",
+                ":id"
+              ]
             },
             "description": "Get election details by ID"
           },
@@ -1452,8 +1839,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections",
+                ":id"
+              ]
             },
             "description": "Update an election - requires 'update' permission"
           },
@@ -1476,8 +1870,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections",
+                ":id"
+              ]
             },
             "description": "Delete an election - requires 'delete' permission"
           },
@@ -1500,8 +1901,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/elections/:id/approve",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "elections", ":id", "approve"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "elections",
+                ":id",
+                "approve"
+              ]
             },
             "description": "Approve an election - requires 'approve' permission"
           },
@@ -1539,8 +1948,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies"
+              ]
             },
             "description": "Create a new ABAC policy - requires super_admin"
           },
@@ -1563,8 +1978,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies?isActive=true&resourceType=&role=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies"
+              ],
               "query": [
                 {
                   "key": "isActive",
@@ -1601,8 +2022,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                ":id"
+              ]
             },
             "description": "Get policy by ID"
           },
@@ -1634,8 +2062,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                ":id"
+              ]
             },
             "description": "Update policy"
           },
@@ -1658,8 +2093,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                ":id"
+              ]
             },
             "description": "Delete policy"
           },
@@ -1691,8 +2133,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/policies/:id/toggle",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "policies", ":id", "toggle"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "policies",
+                ":id",
+                "toggle"
+              ]
             },
             "description": "Enable/disable policy"
           },
@@ -1730,8 +2180,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/:userId/scopes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":userId", "scopes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":userId",
+                "scopes"
+              ]
             },
             "description": "Assign geographic scope to user"
           },
@@ -1754,8 +2212,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/:userId/scopes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":userId", "scopes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":userId",
+                "scopes"
+              ]
             },
             "description": "Get user's geographic scopes"
           },
@@ -1778,8 +2244,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/scopes/:scopeId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "scopes", ":scopeId"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scopes",
+                ":scopeId"
+              ]
             },
             "description": "Remove geographic scope"
           },
@@ -1802,8 +2275,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/scopes/users?countyId=&constituencyId=&wardId=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "scopes", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scopes",
+                "users"
+              ],
               "query": [
                 {
                   "key": "countyId",
@@ -1855,8 +2335,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/:userId/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":userId", "permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":userId",
+                "permissions"
+              ]
             },
             "description": "Grant permission to user"
           },
@@ -1879,8 +2367,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/:userId/permissions?includeExpired=false",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":userId", "permissions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":userId",
+                "permissions"
+              ],
               "query": [
                 {
                   "key": "includeExpired",
@@ -1909,8 +2405,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/permissions/:permissionId",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", ":permissionId"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                ":permissionId"
+              ]
             },
             "description": "Revoke permission"
           },
@@ -1933,8 +2436,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/permissions/cleanup",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "cleanup"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "cleanup"
+              ]
             },
             "description": "Revoke all expired permissions (maintenance)"
           },
@@ -1963,8 +2473,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/permissions/audit?userId=&resourceType=&granted=&startDate=&endDate=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "audit"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "audit"
+              ],
               "query": [
                 {
                   "key": "userId",
@@ -2009,8 +2526,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/:userId/permissions/stats?days=30",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", ":userId", "permissions", "stats"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                ":userId",
+                "permissions",
+                "stats"
+              ],
               "query": [
                 {
                   "key": "days",
@@ -2039,8 +2565,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/permissions/stats?days=30",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "permissions", "stats"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "permissions",
+                "stats"
+              ],
               "query": [
                 {
                   "key": "days",
@@ -2075,8 +2608,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations"
+              ]
             },
             "description": "Get all system configurations - requires super_admin"
           },
@@ -2108,8 +2647,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/bulk",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", "bulk"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                "bulk"
+              ]
             },
             "description": "Bulk create multiple configurations - requires super_admin"
           },
@@ -2132,8 +2678,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/category/email",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", "category", "email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                "category",
+                "email"
+              ]
             },
             "description": "Get configurations for specific category (email, security, general, etc.)"
           },
@@ -2156,8 +2710,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/key/smtp_host",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", "key", "smtp_host"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                "key",
+                "smtp_host"
+              ]
             },
             "description": "Get specific configuration by key"
           },
@@ -2189,8 +2751,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations"
+              ]
             },
             "description": "Create new configuration - requires super_admin"
           },
@@ -2213,8 +2781,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                ":id"
+              ]
             },
             "description": "Get specific configuration by ID"
           },
@@ -2246,8 +2821,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                ":id"
+              ]
             },
             "description": "Update configuration by ID"
           },
@@ -2279,8 +2861,16 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/key/smtp_host",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", "key", "smtp_host"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                "key",
+                "smtp_host"
+              ]
             },
             "description": "Update configuration value by key - quick update"
           },
@@ -2303,8 +2893,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/:id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", ":id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                ":id"
+              ]
             },
             "description": "Delete configuration - cannot delete required configs"
           },
@@ -2327,8 +2924,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/:id/reset",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", ":id", "reset"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                ":id",
+                "reset"
+              ]
             },
             "description": "Reset configuration to default value - requires super_admin"
           },
@@ -2351,8 +2956,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/configurations/categories/list",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "configurations", "categories", "list"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "configurations",
+                "categories",
+                "list"
+              ]
             },
             "description": "Get all configuration categories with counts"
           },
@@ -2360,6 +2973,986 @@
         }
       ],
       "description": "System configuration management - requires super_admin"
+    },
+    {
+      "name": "Mobile PWA - Observer Routes",
+      "item": [
+        {
+          "name": "Get Observer Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/observers/mobile/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "observers",
+                "mobile",
+                "profile"
+              ]
+            },
+            "description": "Get observer profile - requires field_observer role"
+          }
+        },
+        {
+          "name": "Update Observer Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+254712345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/observers/mobile/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "observers",
+                "mobile",
+                "profile"
+              ]
+            },
+            "description": "Update observer profile - requires field_observer role"
+          }
+        },
+        {
+          "name": "Get Observer Assignments",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/observers/mobile/assignments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "observers",
+                "mobile",
+                "assignments"
+              ]
+            },
+            "description": "Get observer assignments - requires field_observer role"
+          }
+        },
+        {
+          "name": "Get Observer Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/observers/mobile/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "observers",
+                "mobile",
+                "status"
+              ]
+            },
+            "description": "Get observer status and registration info - requires field_observer role"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Observer Applications Management",
+      "item": [
+        {
+          "name": "List Applications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications"
+              ]
+            },
+            "description": "List all applications with filtering"
+          }
+        },
+        {
+          "name": "Get Application Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/statistics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                "statistics"
+              ]
+            },
+            "description": "Get application statistics"
+          }
+        },
+        {
+          "name": "Get Application by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                ":id"
+              ]
+            },
+            "description": "Get application details by ID"
+          }
+        },
+        {
+          "name": "Review Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"reviewNotes\": \"Verified documents\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/:id/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                ":id",
+                "review"
+              ]
+            },
+            "description": "Review and approve/reject application"
+          }
+        },
+        {
+          "name": "Bulk Approve",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicationIds\": [\"uuid-1\", \"uuid-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/bulk-approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                "bulk-approve"
+              ]
+            },
+            "description": "Bulk approve applications"
+          }
+        },
+        {
+          "name": "Bulk Reject",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicationIds\": [\"uuid-1\", \"uuid-2\"],\n  \"rejectionReason\": \"Incomplete documentation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/bulk-reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                "bulk-reject"
+              ]
+            },
+            "description": "Bulk reject applications"
+          }
+        },
+        {
+          "name": "Export Applications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                "export"
+              ]
+            },
+            "description": "Export applications to CSV"
+          }
+        },
+        {
+          "name": "Delete Application",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/observer-applications/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "observer-applications",
+                ":id"
+              ]
+            },
+            "description": "Delete application - super_admin only"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Email Templates",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates"
+              ]
+            },
+            "description": "Get all email templates - no auth required"
+          }
+        },
+        {
+          "name": "Get Template by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates",
+                ":id"
+              ]
+            },
+            "description": "Get template by ID - no auth required"
+          }
+        },
+        {
+          "name": "Get Template by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates/type/:type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates",
+                "type",
+                ":type"
+              ]
+            },
+            "description": "Get template by type - no auth required"
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Welcome Email\",\n  \"subject\": \"Welcome to eTally\",\n  \"body\": \"<p>Hello {{name}}</p>\",\n  \"type\": \"welcome\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates"
+              ]
+            },
+            "description": "Create new template - requires super_admin"
+          }
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Welcome Email\",\n  \"subject\": \"Updated Subject\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates",
+                ":id"
+              ]
+            },
+            "description": "Update template - requires super_admin"
+          }
+        },
+        {
+          "name": "Delete Template",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates",
+                ":id"
+              ]
+            },
+            "description": "Delete template - requires super_admin"
+          }
+        },
+        {
+          "name": "Render Template",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"uuid\",\n  \"variables\": {\n    \"name\": \"John Doe\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/communication/templates/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "communication",
+                "templates",
+                "render"
+              ]
+            },
+            "description": "Render template preview - requires super_admin"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Party Management",
+      "item": [
+        {
+          "name": "List All Parties",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties"
+              ]
+            },
+            "description": "Get all parties - authenticated"
+          }
+        },
+        {
+          "name": "Create Party",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"certificateNumber\": \"CERT-001\",\n  \"partyName\": \"Example Party\",\n  \"abbreviation\": \"EP\",\n  \"primaryColor\": \"#FF0000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties"
+              ]
+            },
+            "description": "Create new party - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Get Party by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                ":id"
+              ]
+            },
+            "description": "Get party by ID - authenticated"
+          }
+        },
+        {
+          "name": "Update Party",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partyName\": \"Updated Party Name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                ":id"
+              ]
+            },
+            "description": "Update party - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Delete Party",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                ":id"
+              ]
+            },
+            "description": "Delete party - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Upload Party Logo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "logo",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/:id/logo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                ":id",
+                "logo"
+              ]
+            },
+            "description": "Upload party logo - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Get Party Logo",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/:id/logo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                ":id",
+                "logo"
+              ]
+            },
+            "description": "Get party logo URL - authenticated"
+          }
+        },
+        {
+          "name": "Get Party Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/statistics/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                "statistics",
+                "summary"
+              ]
+            },
+            "description": "Get party statistics - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Upload Parties CSV",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                "upload"
+              ]
+            },
+            "description": "Upload parties from CSV - requires super_admin or election_manager"
+          }
+        },
+        {
+          "name": "Download Parties CSV",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/parties/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "parties",
+                "download"
+              ]
+            },
+            "description": "Download all parties as CSV - requires super_admin or election_manager"
+          }
+        }
+      ]
     }
   ],
   "auth": {

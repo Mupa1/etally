@@ -75,6 +75,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip MinIO presigned URLs (they have auth parameters that can't be cached)
+  // MinIO runs on port 9000 and should not be intercepted by the service worker
+  if (url.port === '9000') {
+    return;
+  }
+
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));

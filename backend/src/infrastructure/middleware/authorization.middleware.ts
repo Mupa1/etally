@@ -40,11 +40,11 @@ class AuthorizationMiddleware {
    */
   requirePermission(resourceType: ResourceType, action: PermissionAction) {
     const self = this;
-    return async function (
+    return async (
       req: Request,
       _res: Response,
       next: NextFunction
-    ): Promise<void> {
+    ): Promise<void> => {
       try {
         if (!req.user) {
           throw new AuthenticationError('User not authenticated');

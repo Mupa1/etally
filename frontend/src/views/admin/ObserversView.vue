@@ -185,11 +185,14 @@
           <DropdownItem @click="viewObserver(item.id)">
             View Details
           </DropdownItem>
-          <DropdownItem @click="editObserver(item.id)">
-            Edit Observer
+          <DropdownItem @click="assignStation(item.id)">
+            Assign Station
           </DropdownItem>
-          <DropdownItem @click="deleteObserver(item.id)" variant="danger">
-            Delete Observer
+          <DropdownItem
+            v-if="item.status !== 'active'"
+            @click="activateObserver(item.id)"
+          >
+            Activate
           </DropdownItem>
         </Dropdown>
       </template>
@@ -206,9 +209,9 @@ import SearchBar from '@/components/common/SearchBar.vue';
 import Select from '@/components/common/Select.vue';
 import Table from '@/components/common/Table.vue';
 import type { TableColumn } from '@/components/common/Table.vue';
+import Button from '@/components/common/Button.vue';
 import Dropdown from '@/components/common/Dropdown.vue';
 import DropdownItem from '@/components/common/DropdownItem.vue';
-import Button from '@/components/common/Button.vue';
 import Badge from '@/components/common/Badge.vue';
 import Avatar from '@/components/common/Avatar.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
@@ -409,20 +412,27 @@ const viewObserver = (id: string) => {
   router.push(`/admin/observers/${id}`);
 };
 
-const editObserver = (id: string) => {
-  router.push(`/admin/observers/${id}/edit`);
+const assignStation = async (id: string) => {
+  // TODO: Implement station assignment
+  alert(`Assign station to observer ${id}`);
 };
 
-const deleteObserver = async (id: string) => {
-  if (confirm('Are you sure you want to delete this observer?')) {
-    try {
-      await api.delete(`/admin/observers/${id}`);
-      // Refresh the data after deletion
-      await loadObservers();
-    } catch (err: any) {
-      console.error('Error deleting observer:', err);
-      error.value = err.response?.data?.message || 'Failed to delete observer';
-    }
+const activateObserver = async (id: string) => {
+  if (!confirm('Are you sure you want to activate this observer?')) {
+    return;
+  }
+
+  try {
+    // TODO: Implement observer activation via API
+    await api.put(`/admin/observers/${id}`, {
+      status: 'active',
+    });
+
+    // Refresh the observers list
+    await loadObservers();
+  } catch (err: any) {
+    console.error('Error activating observer:', err);
+    error.value = err.response?.data?.message || 'Failed to activate observer';
   }
 };
 
