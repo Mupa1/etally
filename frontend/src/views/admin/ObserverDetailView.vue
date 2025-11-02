@@ -463,11 +463,13 @@ import Badge from '@/components/common/Badge.vue';
 import Avatar from '@/components/common/Avatar.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import Alert from '@/components/common/Alert.vue';
+import { useToast } from '@/composables/useToast';
 import FormField from '@/components/common/FormField.vue';
 import Modal from '@/components/common/Modal.vue';
 
 const router = useRouter();
 const route = useRoute();
+const toast = useToast();
 
 interface Observer {
   id: string;
@@ -666,10 +668,12 @@ const handleApprove = async () => {
     });
 
     await loadObserver();
-    alert('Observer approved successfully');
+    toast.success('Observer approved successfully');
   } catch (err: any) {
-    error.value =
+    const errorMessage =
       err.response?.data?.message || 'Failed to approve observer';
+    error.value = errorMessage;
+    toast.error(errorMessage);
     console.error('Error approving observer:', err);
   } finally {
     actionLoading.value = false;
@@ -691,10 +695,12 @@ const handleRequestInfo = async () => {
     showRequestInfoModal.value = false;
     requestInfoData.value.notes = '';
     await loadObserver();
-    alert('Information request sent successfully');
+    toast.success('Information request sent successfully');
   } catch (err: any) {
-    error.value =
+    const errorMessage =
       err.response?.data?.message || 'Failed to send information request';
+    error.value = errorMessage;
+    toast.error(errorMessage);
     console.error('Error requesting information:', err);
   } finally {
     actionLoading.value = false;
@@ -717,10 +723,12 @@ const handleReject = async () => {
     showRejectModal.value = false;
     rejectData.value.rejectionReason = '';
     await loadObserver();
-    alert('Observer rejected successfully');
+    toast.success('Observer rejected successfully');
   } catch (err: any) {
-    error.value =
+    const errorMessage =
       err.response?.data?.message || 'Failed to reject observer';
+    error.value = errorMessage;
+    toast.error(errorMessage);
     console.error('Error rejecting observer:', err);
   } finally {
     actionLoading.value = false;
@@ -748,10 +756,12 @@ const handleBlacklist = async () => {
     });
 
     await loadObserver();
-    alert('Observer blacklisted successfully');
+    toast.success('Observer blacklisted successfully');
   } catch (err: any) {
-    error.value =
+    const errorMessage =
       err.response?.data?.message || 'Failed to blacklist observer';
+    error.value = errorMessage;
+    toast.error(errorMessage);
     console.error('Error blacklisting observer:', err);
   } finally {
     actionLoading.value = false;

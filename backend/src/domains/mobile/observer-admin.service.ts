@@ -6,6 +6,8 @@
 import { PrismaClient, ObserverStatus, Prisma } from '@prisma/client';
 import { ValidationError, NotFoundError } from '@/shared/types/errors';
 import { ObserverMinIOService } from './minio.service';
+import { EmailService } from './email.service';
+import * as crypto from 'crypto';
 
 // Types for admin operations
 export interface ObserverFilters {
@@ -76,7 +78,8 @@ export interface ObserverAnalytics {
 export class ObserverAdminService {
   constructor(
     private prisma: PrismaClient,
-    private minioService?: ObserverMinIOService
+    private minioService?: ObserverMinIOService,
+    private emailService?: EmailService
   ) {}
 
   /**
@@ -321,6 +324,96 @@ export class ObserverAdminService {
       updateData.status = data.status;
     }
 
+    // Check if status is actually changing
+    const statusChanged = data.status !== undefined && data.status !== observer.status;
+    
+    // If status is being changed to approved, handle user creation and email
+    const isApproving = data.status === 'approved' && observer.status !== 'approved';
+    const isRequestingInfo = data.status === 'more_information_requested' && observer.status !== 'more_information_requested';
+    
+    console.log(`📧 Status change check:`, {
+      hasStatusInData: data.status !== undefined,
+      newStatus: data.status,
+      currentStatus: observer.status,
+      statusChanged,
+      isApproving,
+      isRequestingInfo,
+      emailServiceAvailable: !!this.emailService,
+    });
+    let userToEmail = null;
+    let setupToken = null;
+    
+    if (isApproving) {
+      console.log(`📧 Starting approval flow for observer ${observer.id}...`);
+      let user;
+      
+      if (observer.userId) {
+        console.log(`📧 Observer already has userId: ${observer.userId}, fetching user...`);
+        // User already exists, just get it
+        user = await this.prisma.user.findUnique({
+          where: { id: observer.userId },
+        });
+        
+        if (!user) {
+          console.error(`✗ User not found: ${observer.userId}`);
+          throw new NotFoundError('User', observer.userId);
+        }
+        console.log(`✓ User found: ${user.email}`);
+      } else {
+        console.log(`📧 Creating new user account for approved observer...`);
+        // Create user account for approved observer
+        user = await this.prisma.user.create({
+          data: {
+            nationalId: observer.nationalId,
+            email: observer.email,
+            phoneNumber: observer.phoneNumber,
+            firstName: observer.firstName,
+            lastName: observer.lastName,
+            role: 'field_observer',
+            isActive: false, // Will activate after password setup
+            passwordHash: '', // Will be set during password setup
+          },
+        });
+        console.log(`✓ User created: ${user.id} (${user.email})`);
+
+        // Link observer to user
+        updateData.user = { connect: { id: user.id } };
+      }
+
+      // Check if user already has an unused password setup token
+      console.log(`📧 Checking for existing password setup token for user ${user.id}...`);
+      const existingToken = await this.prisma.passwordSetupToken.findFirst({
+        where: {
+          userId: user.id,
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!existingToken) {
+        console.log(`📧 No valid token found, generating new password setup token...`);
+        // Generate new password setup token
+        setupToken = crypto.randomBytes(32).toString('hex');
+        const expiry = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+        await this.prisma.passwordSetupToken.create({
+          data: {
+            token: setupToken,
+            userId: user.id,
+            expiresAt: expiry,
+          },
+        });
+        console.log(`✓ Password setup token created: ${setupToken.substring(0, 8)}...`);
+      } else {
+        console.log(`✓ Using existing password setup token`);
+        setupToken = existingToken.token;
+      }
+
+      userToEmail = user;
+      console.log(`📧 Approval flow completed. User ready for email: ${user.email}`);
+    }
+
     // If status is being changed, add review information
     if (data.status && data.status !== observer.status) {
       updateData.reviewDate = new Date();
@@ -345,7 +438,85 @@ export class ObserverAdminService {
       },
     });
 
-    // Generate presigned URLs for images if MinIO service is available
+    // Send password setup email if observer was just approved (BEFORE MinIO URL generation)
+    console.log(`📧 Checking if approval email should be sent:`, {
+      isApproving,
+      hasUser: !!userToEmail,
+      hasToken: !!setupToken,
+      hasEmailService: !!this.emailService,
+    });
+    
+    if (isApproving && userToEmail && setupToken) {
+      if (!this.emailService) {
+        console.error('⚠ Email service is not available. Cannot send password setup email.');
+      } else {
+        console.log(`📧 Attempting to send password setup email to ${userToEmail.email}...`);
+        console.log(`📧 User details:`, {
+          email: userToEmail.email,
+          firstName: userToEmail.firstName,
+          hasToken: !!setupToken,
+          tokenLength: setupToken?.length,
+        });
+        
+        // Send email (non-blocking - don't fail approval if email fails)
+        // Use the same pattern as registration emails for consistency
+        try {
+          console.log(`📧 Calling sendPasswordSetupEmail for ${userToEmail.email}...`);
+          await this.emailService.sendPasswordSetupEmail(
+            userToEmail.email,
+            userToEmail.firstName,
+            setupToken
+          );
+          console.log(`✓ Password setup email sent successfully to ${userToEmail.email}`);
+        } catch (emailError: any) {
+          console.error('✗ Failed to send password setup email:', {
+            email: userToEmail.email,
+            error: emailError.message,
+            stack: emailError.stack,
+            name: emailError.name,
+          });
+          // Continue with approval - email failure should not block observer approval
+        }
+      }
+    } else if (isApproving) {
+      console.warn('⚠ Cannot send approval email - missing requirements:', {
+        hasUser: !!userToEmail,
+        hasToken: !!setupToken,
+        hasEmailService: !!this.emailService,
+        observerStatus: observer.status,
+        newStatus: data.status,
+        userToEmailDetails: userToEmail ? {
+          id: userToEmail.id,
+          email: userToEmail.email,
+        } : null,
+        setupTokenPreview: setupToken ? `${setupToken.substring(0, 8)}...` : null,
+      });
+    }
+
+    // Send clarification request email if status changed to more_information_requested
+    if (isRequestingInfo && this.emailService && updatedObserver) {
+      try {
+        console.log(`📧 Attempting to send clarification request email to ${updatedObserver.email}...`);
+        await this.emailService.sendClarificationRequest(
+          updatedObserver.email,
+          updatedObserver.firstName,
+          data.reviewNotes || 'Please provide the requested information.'
+        );
+        console.log(`✓ Clarification request email sent successfully to ${updatedObserver.email}`);
+      } catch (emailError: any) {
+        console.error('✗ Failed to send clarification request email:', {
+          email: updatedObserver.email,
+          error: emailError.message,
+          stack: emailError.stack,
+          name: emailError.name,
+        });
+        // Continue - email failure should not block status update
+      }
+    } else if (statusChanged && data.status === 'more_information_requested' && !isRequestingInfo) {
+      console.log(`📧 Status is more_information_requested but isRequestingInfo is false. This might mean status didn't actually change.`);
+    }
+
+    // Generate presigned URLs for images if MinIO service is available (AFTER sending emails)
     if (this.minioService) {
       const observerWithUrls = { ...updatedObserver };
       

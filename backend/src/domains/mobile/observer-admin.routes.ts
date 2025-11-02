@@ -11,11 +11,13 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate, requireRoles } from '@/domains/auth/auth.middleware';
 import { requirePermission } from '@/infrastructure/middleware/authorization.middleware';
 import { ObserverMinIOService } from './minio.service';
+import { EmailService } from './email.service';
 
 const router = Router();
 const prisma = new PrismaClient();
 const minioService = new ObserverMinIOService();
-const observerAdminService = new ObserverAdminService(prisma, minioService);
+const emailService = new EmailService();
+const observerAdminService = new ObserverAdminService(prisma, minioService, emailService);
 const observerAdminController = new ObserverAdminController(
   observerAdminService
 );

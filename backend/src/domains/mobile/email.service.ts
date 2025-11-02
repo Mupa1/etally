@@ -42,17 +42,22 @@ export class EmailService {
     variables: Record<string, string>
   ): Promise<{ subject: string; body: string }> {
     try {
+      console.log(`📧 Looking for email template: ${templateType}`);
       const template = await this.prisma.emailTemplate.findUnique({
         where: { templateType },
       });
 
       if (!template) {
+        console.error(`✗ Email template not found: ${templateType}`);
         throw new Error(`Email template not found: ${templateType}`);
       }
 
       if (!template.isActive) {
+        console.error(`✗ Email template is inactive: ${templateType}`);
         throw new Error(`Email template is inactive: ${templateType}`);
       }
+
+      console.log(`✓ Email template found and active: ${templateType}`);
 
       // Replace variables in subject and body
       let subject = template.subject;
@@ -100,15 +105,31 @@ export class EmailService {
     firstName: string,
     setupToken: string
   ): Promise<void> {
-    const setupUrl = `${this.appUrl}/agent/setup-password?token=${setupToken}`;
+    console.log(`📧 sendPasswordSetupEmail called for ${email}`);
+    
+    try {
+      const setupUrl = `${this.appUrl}/agent/setup-password?token=${setupToken}`;
+      console.log(`📧 Setup URL generated: ${setupUrl}`);
 
-    const { subject, body } = await this.renderEmailTemplate('password_setup', {
-      firstName,
-      setupUrl,
-      appUrl: this.appUrl,
-    });
+      console.log(`📧 Rendering email template 'password_setup'...`);
+      const { subject, body } = await this.renderEmailTemplate('password_setup', {
+        firstName,
+        setupUrl,
+        appUrl: this.appUrl,
+      });
+      console.log(`📧 Email template rendered successfully. Subject: ${subject}`);
 
-    await this.sendEmail(email, subject, body);
+      console.log(`📧 Sending email to ${email}...`);
+      await this.sendEmail(email, subject, body);
+      console.log(`✓ Email successfully sent to ${email}`);
+    } catch (error: any) {
+      console.error(`✗ Error in sendPasswordSetupEmail:`, {
+        email,
+        error: error.message,
+        stack: error.stack,
+      });
+      throw error;
+    }
   }
 
   /**
@@ -181,10 +202,13 @@ export class EmailService {
       });
 
       if (configs.length === 0) {
+        console.error('✗ No email configurations found in database. Please configure SMTP settings.');
         throw new Error(
           'Email configurations not found. Please configure SMTP settings.'
         );
       }
+      
+      console.log(`✓ Found ${configs.length} email configuration(s)`);
 
       // Parse configurations
       const configMap = new Map(configs.map((c) => [c.key, c.value]));
@@ -200,10 +224,23 @@ export class EmailService {
         }
       }
 
+      const smtpSecureRaw = configMap.get('smtp_secure');
+      const smtpSecure = smtpSecureRaw === 'true' || smtpSecureRaw === '1';
+      const smtpPort = parseInt(configMap.get('smtp_port') || '587');
+      
+      console.log(`📧 SMTP Configuration:`, {
+        host: configMap.get('smtp_host'),
+        port: smtpPort,
+        secure: smtpSecure,
+        secureRaw: smtpSecureRaw,
+        username: configMap.get('smtp_username'),
+        from: configMap.get('email_from_address'),
+      });
+
       const emailConfig: EmailConfig = {
         smtpHost: configMap.get('smtp_host') || 'localhost',
-        smtpPort: parseInt(configMap.get('smtp_port') || '587'),
-        smtpSecure: configMap.get('smtp_secure') === 'true',
+        smtpPort,
+        smtpSecure,
         smtpUsername: configMap.get('smtp_username') || '',
         smtpPassword,
         emailFromAddress:
@@ -234,25 +271,39 @@ export class EmailService {
 
     // Create new transporter if configuration changed
     if (!this.transporter) {
-      this.transporter = nodemailer.createTransport({
+      // For Gmail on port 465, we need secure: true
+      // For Gmail on port 587, we need secure: false and requireTLS: true
+      const transportOptions: any = {
         host: config.smtpHost,
         port: config.smtpPort,
-        secure: config.smtpSecure,
+        secure: config.smtpSecure, // true for port 465 (SSL), false for port 587 (TLS)
         auth: {
           user: config.smtpUsername,
           pass: config.smtpPassword,
         },
         connectionTimeout: config.emailTimeout * 1000,
-      });
+      };
+
+      // For port 587 with TLS, we need requireTLS even if secure is false
+      if (config.smtpPort === 587 && !config.smtpSecure) {
+        transportOptions.requireTLS = true;
+      }
+
+      this.transporter = nodemailer.createTransport(transportOptions);
 
       // Verify connection
       try {
+        console.log(`📧 Verifying SMTP connection to ${config.smtpHost}:${config.smtpPort}...`);
         await this.transporter.verify();
-        console.log('✓ SMTP connection verified');
-      } catch (error) {
-        console.error('SMTP connection failed:', error);
+        console.log('✓ SMTP connection verified successfully');
+      } catch (error: any) {
+        console.error('✗ SMTP connection verification failed:', {
+          host: config.smtpHost,
+          port: config.smtpPort,
+          error: error.message,
+        });
         this.transporter = null;
-        throw new Error('Failed to connect to SMTP server');
+        throw new Error(`Failed to connect to SMTP server: ${error.message}`);
       }
     }
 

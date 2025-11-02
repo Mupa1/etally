@@ -1,12 +1,14 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
     <RouterView />
+    <Toast />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import Toast from '@/components/common/Toast.vue';
 
 const authStore = useAuthStore();
 
