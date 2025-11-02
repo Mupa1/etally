@@ -8,6 +8,7 @@ import { z } from 'zod';
 // Observer status enum validation
 const observerStatusSchema = z.enum([
   'pending_review',
+  'more_information_requested',
   'approved',
   'active',
   'rejected',

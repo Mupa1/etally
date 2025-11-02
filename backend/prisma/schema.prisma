@@ -727,6 +727,7 @@ enum NotificationPriority {
 
 enum ObserverStatus {
   pending_review
+  more_information_requested
   approved
   active
   rejected

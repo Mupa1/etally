@@ -17,6 +17,7 @@ const observerFiltersSchema = z.object({
   status: z
     .enum([
       'pending_review',
+      'more_information_requested',
       'approved',
       'active',
       'rejected',
@@ -28,6 +29,7 @@ const observerFiltersSchema = z.object({
   registrationStatus: z
     .enum([
       'pending_review',
+      'more_information_requested',
       'approved',
       'active',
       'rejected',
@@ -52,6 +54,7 @@ const observerUpdateSchema = z.object({
   status: z
     .enum([
       'pending_review',
+      'more_information_requested',
       'approved',
       'active',
       'rejected',
@@ -68,6 +71,7 @@ const bulkUpdateSchema = z.object({
   observerIds: z.array(z.string().uuid()).min(1).max(100),
   status: z.enum([
     'pending_review',
+    'more_information_requested',
     'approved',
     'active',
     'rejected',
@@ -153,7 +157,7 @@ export class ObserverAdminController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const reviewerId = (req as any).user?.id;
+      const reviewerId = req.user?.userId;
 
       if (!id) {
         throw new ValidationError('Observer ID is required');
@@ -203,7 +207,7 @@ export class ObserverAdminController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
-      const reviewerId = (req as any).user?.id;
+      const reviewerId = req.user?.userId;
 
       if (!id) {
         throw new ValidationError('Observer ID is required');
@@ -238,7 +242,7 @@ export class ObserverAdminController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const reviewerId = (req as any).user?.id;
+      const reviewerId = req.user?.userId;
 
       if (!reviewerId) {
         throw new ValidationError('Reviewer ID is required');

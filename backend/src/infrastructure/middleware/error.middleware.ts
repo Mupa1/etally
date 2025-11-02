@@ -177,6 +177,10 @@ export const errorHandler = (
 
   if (isDevelopment) {
     response.stack = error.stack;
+    response.details = {
+      name: error.name,
+      message: error.message,
+    };
   }
 
   res.status(500).json(response);

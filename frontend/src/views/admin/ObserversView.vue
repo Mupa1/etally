@@ -300,6 +300,7 @@ interface SelectOption {
 const statusOptions = computed(() => [
   { value: '', label: 'All Statuses' },
   { value: 'pending_review', label: 'Pending Review' },
+  { value: 'more_information_requested', label: 'More Information Requested' },
   { value: 'approved', label: 'Approved' },
   { value: 'active', label: 'Active' },
   { value: 'rejected', label: 'Rejected' },
@@ -412,6 +413,7 @@ const getStatusBadgeVariant = (
     'primary' | 'secondary' | 'success' | 'warning' | 'danger'
   > = {
     pending_review: 'warning',
+    more_information_requested: 'warning',
     approved: 'success',
     active: 'primary',
     rejected: 'danger',

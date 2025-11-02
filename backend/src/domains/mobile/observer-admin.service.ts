@@ -281,14 +281,15 @@ export class ObserverAdminService {
     data: ObserverUpdateData,
     reviewerId: string
   ) {
-    // Get observer directly from DB (not the enriched version with presigned URLs)
-    const observer = await this.prisma.observerRegistration.findUnique({
-      where: { id },
-    });
+    try {
+      // Get observer directly from DB (not the enriched version with presigned URLs)
+      const observer = await this.prisma.observerRegistration.findUnique({
+        where: { id },
+      });
 
-    if (!observer) {
-      throw new NotFoundError('Observer', id);
-    }
+      if (!observer) {
+        throw new NotFoundError('Observer', id);
+      }
 
     // Validate email uniqueness if being updated
     if (data.email && data.email !== observer.email) {
@@ -301,14 +302,31 @@ export class ObserverAdminService {
       }
     }
 
+    // Build update data object
     const updateData: Prisma.ObserverRegistrationUpdateInput = {
-      ...data,
       updatedAt: new Date(),
     };
+    
+    // Set individual fields explicitly to ensure proper typing
+    if (data.firstName !== undefined) updateData.firstName = data.firstName;
+    if (data.lastName !== undefined) updateData.lastName = data.lastName;
+    if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.reviewNotes !== undefined) updateData.reviewNotes = data.reviewNotes;
+    if (data.rejectionReason !== undefined) updateData.rejectionReason = data.rejectionReason;
+    
+    // Handle status update with proper enum type
+    if (data.status !== undefined) {
+      // Use Prisma enum directly to ensure type safety
+      updateData.status = data.status;
+    }
 
     // If status is being changed, add review information
     if (data.status && data.status !== observer.status) {
       updateData.reviewDate = new Date();
+      
+      // Connect reviewer (Prisma will handle reviewedBy automatically)
+      // Don't verify existence - let Prisma throw if user doesn't exist
       updateData.reviewer = { connect: { id: reviewerId } };
     }
 
@@ -374,6 +392,16 @@ export class ObserverAdminService {
     }
 
     return updatedObserver;
+    } catch (error: any) {
+      console.error('Error in updateObserver:', {
+        error: error.message,
+        stack: error.stack,
+        id,
+        status: data.status,
+        reviewerId,
+      });
+      throw error;
+    }
   }
 
   /**

@@ -128,6 +128,8 @@ export class ObserverService {
     const statusMessages: Record<ObserverStatus, string> = {
       pending_review:
         'Your application is under review. You will be notified via email once reviewed.',
+      more_information_requested:
+        'We need more information to complete your application review. Please check your email for details.',
       approved:
         'Your application has been approved! Check your email for password setup link.',
       active: 'Your account is active. You can login to the observer portal.',
