@@ -250,6 +250,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, layout: 'mobile' },
   },
   {
+    path: '/agent/application/:trackingNumber',
+    name: 'observer-application-edit',
+    component: () => import('@/views/mobile/ObserverApplicationEditView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
     path: '/agent/setup-password',
     name: 'observer-password-setup',
     component: () => import('@/views/mobile/PasswordSetupView.vue'),

@@ -81,6 +81,87 @@ export class ObserverController {
   };
 
   /**
+   * GET /api/agent/application/:trackingNumber
+   * Get full application details by tracking number
+   */
+  getApplicationDetails = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { trackingNumber } = req.params;
+
+      // Validate tracking number format
+      TrackingNumberSchema.parse({ trackingNumber });
+
+      const application =
+        await this.observerService.getApplicationByTrackingNumber(
+          trackingNumber
+        );
+
+      res.status(200).json({
+        success: true,
+        data: application,
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid tracking number format',
+        });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  /**
+   * PUT /api/agent/application/:trackingNumber
+   * Update application details by tracking number
+   * Only allowed when status is 'more_information_requested'
+   */
+  updateApplication = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { trackingNumber } = req.params;
+
+      // Validate tracking number format
+      TrackingNumberSchema.parse({ trackingNumber });
+
+      // Validate update data (partial registration schema)
+      const updateData = ObserverRegistrationSchema.partial().parse(req.body);
+
+      const updated =
+        await this.observerService.updateApplicationByTrackingNumber(
+          trackingNumber,
+          updateData
+        );
+
+      res.status(200).json({
+        success: true,
+        message: 'Application updated successfully',
+        data: updated,
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          success: false,
+          errors: error.errors.map((e) => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        });
+        return;
+      }
+      next(error);
+    }
+  };
+
+  /**
    * POST /api/agent/setup-password
    * Set password for approved observer
    */

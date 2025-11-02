@@ -135,6 +135,34 @@
             <Button variant="primary" full-width> New Application </Button>
           </router-link>
         </div>
+
+        <!-- View & Update Application Button (only when more information is requested) -->
+        <div v-if="application?.status === 'more_information_requested'" class="mt-4">
+          <router-link
+            :to="`/agent/application/${application.trackingNumber}`"
+            class="block"
+          >
+            <Button variant="primary" full-width>
+              <svg
+                class="w-5 h-5 mr-2 inline"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              View & Update Application
+            </Button>
+          </router-link>
+          <p class="text-sm text-gray-600 mt-2 text-center">
+            Update your application information as requested by the reviewer
+          </p>
+        </div>
       </FormCard>
 
       <!-- Error Display -->
@@ -163,6 +191,7 @@ const error = ref('');
 // Status display mapping
 const statusLabels: Record<string, string> = {
   pending_review: 'Under Review',
+  more_information_requested: 'More Information Requested',
   approved: 'Approved',
   active: 'Active',
   rejected: 'Rejected',
@@ -175,6 +204,7 @@ const statusVariants: Record<
   'warning' | 'success' | 'primary' | 'danger' | 'secondary' | 'gray'
 > = {
   pending_review: 'warning',
+  more_information_requested: 'warning',
   approved: 'success',
   active: 'primary',
   rejected: 'danger',

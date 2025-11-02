@@ -152,6 +152,156 @@ export class ObserverService {
   }
 
   /**
+   * Get full application details by tracking number (for viewing/editing)
+   */
+  async getApplicationByTrackingNumber(trackingNumber: string) {
+    const application = await this.prisma.observerRegistration.findUnique({
+      where: { trackingNumber },
+      include: {
+        preferredCounty: {
+          select: { id: true, name: true },
+        },
+        preferredConstituency: {
+          select: { id: true, name: true },
+        },
+        preferredWard: {
+          select: { id: true, name: true },
+        },
+        preferredStation: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    return {
+      id: application.id,
+      trackingNumber: application.trackingNumber,
+      firstName: application.firstName,
+      lastName: application.lastName,
+      nationalId: application.nationalId,
+      dateOfBirth: application.dateOfBirth.toISOString(),
+      phoneNumber: application.phoneNumber,
+      email: application.email,
+      preferredCountyId: application.preferredCountyId,
+      preferredConstituencyId: application.preferredConstituencyId,
+      preferredWardId: application.preferredWardId,
+      preferredStationId: application.preferredStationId,
+      preferredCounty: application.preferredCounty,
+      preferredConstituency: application.preferredConstituency,
+      preferredWard: application.preferredWard,
+      preferredStation: application.preferredStation,
+      status: application.status,
+      reviewNotes: application.reviewNotes,
+      submissionDate: application.submissionDate.toISOString(),
+      reviewDate: application.reviewDate?.toISOString(),
+    };
+  }
+
+  /**
+   * Update application details by tracking number
+   * Only allowed when status is 'more_information_requested'
+   */
+  async updateApplicationByTrackingNumber(
+    trackingNumber: string,
+    updateData: Partial<ObserverRegistrationDTO>
+  ) {
+    // Get current application to check status
+    const application = await this.prisma.observerRegistration.findUnique({
+      where: { trackingNumber },
+    });
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    // Only allow updates when more information is requested
+    if (application.status !== 'more_information_requested') {
+      throw new Error(
+        'Application can only be updated when more information is requested'
+      );
+    }
+
+    // Prepare update data
+    const dataToUpdate: any = {};
+
+    if (updateData.firstName !== undefined) {
+      dataToUpdate.firstName = updateData.firstName;
+    }
+    if (updateData.lastName !== undefined) {
+      dataToUpdate.lastName = updateData.lastName;
+    }
+    if (updateData.phoneNumber !== undefined) {
+      dataToUpdate.phoneNumber = updateData.phoneNumber;
+    }
+    if (updateData.email !== undefined) {
+      dataToUpdate.email = updateData.email;
+    }
+    if (updateData.dateOfBirth !== undefined) {
+      dataToUpdate.dateOfBirth = new Date(updateData.dateOfBirth);
+    }
+    if (updateData.preferredCountyId !== undefined) {
+      dataToUpdate.preferredCountyId = updateData.preferredCountyId || null;
+    }
+    if (updateData.preferredConstituencyId !== undefined) {
+      dataToUpdate.preferredConstituencyId =
+        updateData.preferredConstituencyId || null;
+    }
+    if (updateData.preferredWardId !== undefined) {
+      dataToUpdate.preferredWardId = updateData.preferredWardId || null;
+    }
+    if (updateData.preferredStationId !== undefined) {
+      dataToUpdate.preferredStationId = updateData.preferredStationId || null;
+    }
+
+    // Update application
+    const updated = await this.prisma.observerRegistration.update({
+      where: { trackingNumber },
+      data: dataToUpdate,
+      include: {
+        preferredCounty: {
+          select: { id: true, name: true },
+        },
+        preferredConstituency: {
+          select: { id: true, name: true },
+        },
+        preferredWard: {
+          select: { id: true, name: true },
+        },
+        preferredStation: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    return {
+      id: updated.id,
+      trackingNumber: updated.trackingNumber,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      nationalId: updated.nationalId,
+      dateOfBirth: updated.dateOfBirth.toISOString(),
+      phoneNumber: updated.phoneNumber,
+      email: updated.email,
+      preferredCountyId: updated.preferredCountyId,
+      preferredConstituencyId: updated.preferredConstituencyId,
+      preferredWardId: updated.preferredWardId,
+      preferredStationId: updated.preferredStationId,
+      preferredCounty: updated.preferredCounty,
+      preferredConstituency: updated.preferredConstituency,
+      preferredWard: updated.preferredWard,
+      preferredStation: updated.preferredStation,
+      status: updated.status,
+      reviewNotes: updated.reviewNotes,
+      submissionDate: updated.submissionDate.toISOString(),
+      reviewDate: updated.reviewDate?.toISOString(),
+    };
+  }
+
+  /**
    * Get all observer applications for admin review
    */
   async getApplications(filters?: {

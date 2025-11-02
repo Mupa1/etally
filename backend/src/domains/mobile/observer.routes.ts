@@ -65,6 +65,35 @@ export function createObserverRoutes(observerService: ObserverService): Router {
   );
 
   /**
+   * GET /api/agent/application/:trackingNumber
+   * Get full application details by tracking number
+   * Rate limit: 20 requests per 15 minutes
+   */
+  router.get(
+    '/application/:trackingNumber',
+    rateLimiter({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 20,
+    }),
+    controller.getApplicationDetails
+  );
+
+  /**
+   * PUT /api/agent/application/:trackingNumber
+   * Update application details by tracking number
+   * Only allowed when status is 'more_information_requested'
+   * Rate limit: 5 updates per hour
+   */
+  router.put(
+    '/application/:trackingNumber',
+    rateLimiter({
+      windowMs: 60 * 60 * 1000, // 1 hour
+      max: 5,
+    }),
+    controller.updateApplication
+  );
+
+  /**
    * POST /api/agent/setup-password
    * Set password for approved observer
    * Rate limit: 3 attempts per token
