@@ -508,7 +508,8 @@ export class ObserverService {
       await this.emailService.sendClarificationRequest(
         application.email,
         application.firstName,
-        notes
+        notes,
+        application.trackingNumber
       );
     } catch (emailError: any) {
       console.error(

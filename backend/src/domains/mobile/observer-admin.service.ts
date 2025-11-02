@@ -329,7 +329,12 @@ export class ObserverAdminService {
     
     // If status is being changed to approved, handle user creation and email
     const isApproving = data.status === 'approved' && observer.status !== 'approved';
-    const isRequestingInfo = data.status === 'more_information_requested' && observer.status !== 'more_information_requested';
+    
+    // Request info: either status is changing to more_information_requested OR 
+    // status is already more_information_requested and reviewNotes are being updated
+    const isRequestingInfo = 
+      (data.status === 'more_information_requested' && observer.status !== 'more_information_requested') ||
+      (data.status === 'more_information_requested' && observer.status === 'more_information_requested' && data.reviewNotes);
     
     console.log(`📧 Status change check:`, {
       hasStatusInData: data.status !== undefined,
@@ -493,27 +498,42 @@ export class ObserverAdminService {
       });
     }
 
-    // Send clarification request email if status changed to more_information_requested
-    if (isRequestingInfo && this.emailService && updatedObserver) {
+    // Send clarification request email if requesting more information
+    // This includes: status changing to more_information_requested OR 
+    // status already more_information_requested with new review notes
+    const shouldSendInfoRequestEmail = 
+      data.status === 'more_information_requested' && 
+      this.emailService && 
+      updatedObserver &&
+      (observer.status !== 'more_information_requested' || data.reviewNotes);
+    
+    if (shouldSendInfoRequestEmail && updatedObserver) {
       try {
-        console.log(`📧 Attempting to send clarification request email to ${updatedObserver.email}...`);
-        await this.emailService.sendClarificationRequest(
-          updatedObserver.email,
-          updatedObserver.firstName,
-          data.reviewNotes || 'Please provide the requested information.'
+        // TypeScript guard: we know updatedObserver exists here due to the condition above
+        const observerData = updatedObserver;
+        const notes = data.reviewNotes || observerData.reviewNotes || 'Please provide the requested information.';
+        console.log(`📧 Attempting to send clarification request email to ${observerData.email}...`);
+        console.log(`📧 Email details:`, {
+          email: observerData.email,
+          trackingNumber: observerData.trackingNumber,
+          hasNotes: !!notes,
+        });
+        await this.emailService!.sendClarificationRequest(
+          observerData.email,
+          observerData.firstName,
+          notes,
+          observerData.trackingNumber
         );
-        console.log(`✓ Clarification request email sent successfully to ${updatedObserver.email}`);
+        console.log(`✓ Clarification request email sent successfully to ${observerData.email}`);
       } catch (emailError: any) {
         console.error('✗ Failed to send clarification request email:', {
-          email: updatedObserver.email,
+          email: updatedObserver?.email || 'unknown',
           error: emailError.message,
           stack: emailError.stack,
           name: emailError.name,
         });
         // Continue - email failure should not block status update
       }
-    } else if (statusChanged && data.status === 'more_information_requested' && !isRequestingInfo) {
-      console.log(`📧 Status is more_information_requested but isRequestingInfo is false. This might mean status didn't actually change.`);
     }
 
     // Generate presigned URLs for images if MinIO service is available (AFTER sending emails)

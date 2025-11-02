@@ -105,7 +105,11 @@ async function seedEmailTemplates() {
 <p><strong>Notes:</strong></p>
 <p>{{notes}}</p>
 
-<p>Please contact our support team to provide the requested information.</p>
+<p><strong>Application Tracking Number:</strong> {{trackingNumber}}</p>
+<p>You can track your application status and provide the requested information at:</p>
+<p><a href="{{trackingUrl}}">Track Application</a></p>
+
+<p>Please visit the link above to view your application details and provide the requested information.</p>
 
 <p>Best regards,<br>Election Management Team</p>`,
       description: 'Sent to observers when additional information is needed',
@@ -113,6 +117,9 @@ async function seedEmailTemplates() {
       variables: {
         firstName: 'Observer first name',
         notes: 'Clarification notes',
+        trackingNumber: 'Application tracking number',
+        trackingUrl: 'Application tracking URL',
+        appUrl: 'Application base URL',
       },
     },
   ];

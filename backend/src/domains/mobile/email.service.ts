@@ -170,13 +170,20 @@ export class EmailService {
   async sendClarificationRequest(
     email: string,
     firstName: string,
-    notes: string
+    notes: string,
+    trackingNumber?: string
   ): Promise<void> {
+    const trackingUrl = trackingNumber
+      ? `${this.appUrl}/agent/track/${trackingNumber}`
+      : null;
+
     const { subject, body } = await this.renderEmailTemplate(
       'clarification_request',
       {
         firstName,
         notes,
+        trackingNumber: trackingNumber || 'N/A',
+        trackingUrl: trackingUrl || `${this.appUrl}/agent/track`,
         appUrl: this.appUrl,
       }
     );

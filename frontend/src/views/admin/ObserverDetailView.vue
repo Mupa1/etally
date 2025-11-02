@@ -418,6 +418,28 @@
       </template>
     </Modal>
 
+    <!-- Approve Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showApproveConfirmModal"
+      title="Approve Observer"
+      message="Are you sure you want to approve this observer? They will receive an email to set up their password."
+      variant="primary"
+      confirmLabel="Approve"
+      cancelLabel="Cancel"
+      @confirm="confirmApprove"
+    />
+
+    <!-- Blacklist Confirmation Dialog -->
+    <ConfirmDialog
+      v-model="showBlacklistConfirmModal"
+      title="Blacklist Observer"
+      message="Are you sure you want to blacklist this observer? This will permanently mark them as ineligible."
+      variant="danger"
+      confirmLabel="Blacklist"
+      cancelLabel="Cancel"
+      @confirm="confirmBlacklist"
+    />
+
     <!-- Reject Modal -->
     <Modal v-model="showRejectModal" title="Reject Observer" size="md">
       <div class="space-y-4">
@@ -466,6 +488,7 @@ import Alert from '@/components/common/Alert.vue';
 import { useToast } from '@/composables/useToast';
 import FormField from '@/components/common/FormField.vue';
 import Modal from '@/components/common/Modal.vue';
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -516,6 +539,8 @@ const imageUrls = ref<Record<string, string>>({});
 // Modal states
 const showRequestInfoModal = ref(false);
 const showRejectModal = ref(false);
+const showApproveConfirmModal = ref(false);
+const showBlacklistConfirmModal = ref(false);
 
 // Form data
 const requestInfoData = ref({
@@ -647,17 +672,14 @@ const loadHistory = async () => {
   }
 };
 
-const handleApprove = async () => {
+const handleApprove = () => {
+  showApproveConfirmModal.value = true;
+};
+
+const confirmApprove = async () => {
   if (!observer.value) return;
 
-  if (
-    !confirm(
-      'Are you sure you want to approve this observer? They will receive an email to set up their password.'
-    )
-  ) {
-    return;
-  }
-
+  showApproveConfirmModal.value = false;
   actionLoading.value = true;
   error.value = null;
 
@@ -735,17 +757,14 @@ const handleReject = async () => {
   }
 };
 
-const handleBlacklist = async () => {
+const handleBlacklist = () => {
+  showBlacklistConfirmModal.value = true;
+};
+
+const confirmBlacklist = async () => {
   if (!observer.value) return;
 
-  if (
-    !confirm(
-      'Are you sure you want to blacklist this observer? This will permanently mark them as ineligible.'
-    )
-  ) {
-    return;
-  }
-
+  showBlacklistConfirmModal.value = false;
   actionLoading.value = true;
   error.value = null;
 
