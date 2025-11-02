@@ -35,33 +35,36 @@
 
     <!-- Search and Filters -->
     <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
-      <!-- Mobile: Stack all filters vertically -->
-      <div class="space-y-4 md:space-y-0">
-        <!-- Search - Full width on mobile, half on desktop -->
-        <div class="w-full">
-          <SearchBar
-            v-model="searchQuery"
-            placeholder="Search by name, email, phone, or ID..."
-          />
-        </div>
+      <div class="space-y-4">
+        <!-- Search, Status, and View Mode in same row -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <!-- Search - Takes most of the space -->
+          <div class="md:col-span-6">
+            <SearchBar
+              v-model="searchQuery"
+              placeholder="Search by name, email, phone, or ID..."
+            />
+          </div>
 
-        <!-- Filters Grid - Stack on mobile, grid on desktop -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <!-- Status Filter -->
-          <Select
-            v-model="statusFilter"
-            label="Status"
-            placeholder="All Statuses"
-            :options="statusOptions"
-          />
+          <div class="md:col-span-3">
+            <Select
+              v-model="statusFilter"
+              label="Status"
+              placeholder="All Statuses"
+              :options="statusOptions"
+            />
+          </div>
 
-          <!-- View Toggle Filter -->
-          <Select
-            v-model="viewMode"
-            label="View Mode"
-            placeholder="Select View"
-            :options="viewModeOptions"
-          />
+          <!-- View Mode Filter -->
+          <div class="md:col-span-3">
+            <Select
+              v-model="viewMode"
+              label="View Mode"
+              placeholder="Select View"
+              :options="viewModeOptions"
+            />
+          </div>
         </div>
 
         <!-- Actions - Full width on mobile, right-aligned on desktop -->
@@ -178,23 +181,14 @@
 
       <!-- Actions Column -->
       <template #cell-actions="{ item }">
-        <Dropdown
-          button-label="Actions"
-          button-class="px-3 py-2 text-xs sm:text-sm min-h-[44px] sm:min-h-[36px]"
+        <Button
+          variant="secondary"
+          size="sm"
+          @click="viewObserver(item.id)"
+          class="w-full sm:w-auto"
         >
-          <DropdownItem @click="viewObserver(item.id)">
-            View Details
-          </DropdownItem>
-          <DropdownItem @click="assignStation(item.id)">
-            Assign Station
-          </DropdownItem>
-          <DropdownItem
-            v-if="item.status !== 'active'"
-            @click="activateObserver(item.id)"
-          >
-            Activate
-          </DropdownItem>
-        </Dropdown>
+          View
+        </Button>
       </template>
     </Table>
   </MainLayout>
@@ -210,8 +204,6 @@ import Select from '@/components/common/Select.vue';
 import Table from '@/components/common/Table.vue';
 import type { TableColumn } from '@/components/common/Table.vue';
 import Button from '@/components/common/Button.vue';
-import Dropdown from '@/components/common/Dropdown.vue';
-import DropdownItem from '@/components/common/DropdownItem.vue';
 import Badge from '@/components/common/Badge.vue';
 import Avatar from '@/components/common/Avatar.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
@@ -410,30 +402,6 @@ const handlePerPageChange = (newPerPage: number) => {
 
 const viewObserver = (id: string) => {
   router.push(`/admin/observers/${id}`);
-};
-
-const assignStation = async (id: string) => {
-  // TODO: Implement station assignment
-  alert(`Assign station to observer ${id}`);
-};
-
-const activateObserver = async (id: string) => {
-  if (!confirm('Are you sure you want to activate this observer?')) {
-    return;
-  }
-
-  try {
-    // TODO: Implement observer activation via API
-    await api.put(`/admin/observers/${id}`, {
-      status: 'active',
-    });
-
-    // Refresh the observers list
-    await loadObservers();
-  } catch (err: any) {
-    console.error('Error activating observer:', err);
-    error.value = err.response?.data?.message || 'Failed to activate observer';
-  }
 };
 
 const getStatusBadgeVariant = (
