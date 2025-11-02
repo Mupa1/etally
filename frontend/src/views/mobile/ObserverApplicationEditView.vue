@@ -132,10 +132,7 @@
 
           <!-- Submit Button -->
           <div class="mt-8 flex gap-3">
-            <router-link
-              :to="`/agent/track/${trackingNumber}`"
-              class="flex-1"
-            >
+            <router-link :to="`/agent/track/${trackingNumber}`" class="flex-1">
               <Button variant="secondary" full-width> Cancel </Button>
             </router-link>
             <Button
@@ -209,9 +206,12 @@ async function loadApplication() {
   error.value = '';
 
   try {
-    const response = await api.get(`/agent/application/${trackingNumber.value}`, {
-      baseURL: '/api',
-    });
+    const response = await api.get(
+      `/agent/application/${trackingNumber.value}`,
+      {
+        baseURL: '/api',
+      }
+    );
 
     if (response.data.success) {
       application.value = response.data.data;
@@ -227,7 +227,8 @@ async function loadApplication() {
         phoneNumber: application.value.phoneNumber || '',
         email: application.value.email || '',
         preferredCountyId: application.value.preferredCountyId || '',
-        preferredConstituencyId: application.value.preferredConstituencyId || '',
+        preferredConstituencyId:
+          application.value.preferredConstituencyId || '',
         preferredWardId: application.value.preferredWardId || '',
         preferredStationId: application.value.preferredStationId || '',
       };
@@ -293,7 +294,7 @@ async function handleSubmit() {
 
     if (response.data.success) {
       toast.success('Application updated successfully!');
-      
+
       // Redirect back to tracking page after a short delay
       setTimeout(() => {
         router.push(`/agent/track/${trackingNumber.value}`);
@@ -330,4 +331,3 @@ onMounted(() => {
   }
 });
 </script>
-
