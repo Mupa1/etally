@@ -12,7 +12,7 @@ export interface Toast {
 
 class ToastStore {
   toasts = ref<Toast[]>([]);
-  private defaultDuration = 5000; // 5 seconds
+  private defaultDuration = 3000; // 3 seconds
 
   show(toast: Omit<Toast, 'id'>) {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
