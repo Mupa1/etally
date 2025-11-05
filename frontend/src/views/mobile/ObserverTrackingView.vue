@@ -175,6 +175,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '@/utils/api';
+import { getAgentApiBaseUrl } from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
 import Alert from '@/components/common/Alert.vue';
 import Badge from '@/components/common/Badge.vue';
@@ -253,7 +254,7 @@ async function fetchApplicationStatus(number: string) {
 
   try {
     const response = await api.get(`/agent/track/${number}`, {
-      baseURL: '/api',
+      baseURL: getAgentApiBaseUrl(),
     });
     application.value = response.data;
   } catch (err: any) {

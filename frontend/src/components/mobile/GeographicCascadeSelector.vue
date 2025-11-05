@@ -95,7 +95,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import api from '@/utils/api';
+import api, { getAgentApiBaseUrl } from '@/utils/api';
 import FormField from './FormField.vue';
 
 interface Geographic {
@@ -172,7 +172,7 @@ const selectedStation = computed(() => {
   try {
     // Use full URL to bypass baseURL (agent endpoints are at /api/agent, not /api/v1)
     const response = await api.get('/agent/geographic/counties', {
-      baseURL: '/api',
+      baseURL: getAgentApiBaseUrl(),
     });
     if (response.data.success) {
       counties.value = response.data.data;
@@ -229,7 +229,7 @@ async function handleCountyChange(value: string) {
     const response = await api.get(
       `/agent/geographic/constituencies?countyId=${value}`,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
     if (response.data.success) {
@@ -260,7 +260,7 @@ async function handleConstituencyChange(value: string) {
     const response = await api.get(
       `/agent/geographic/wards?constituencyId=${value}`,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
     if (response.data.success) {
@@ -288,7 +288,7 @@ async function handleWardChange(value: string) {
     const response = await api.get(
       `/agent/geographic/polling-stations?wardId=${value}`,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
     if (response.data.success) {

@@ -37,7 +37,7 @@ import emailTemplateRoutes from '@/domains/communication/email-template.routes';
 
 // Server configuration
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ==========================================
@@ -48,9 +48,42 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 app.use(helmet());
 
 // CORS configuration
+// Allow requests from localhost and LAN IP addresses
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+  'http://localhost:80',
+  'http://localhost:5173',
+  'http://192.168.178.72',
+  'http://192.168.178.72:80',
+  'http://192.168.178.72:5173',
+];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:80'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // In development, allow any local network IP
+      if (NODE_ENV === 'development') {
+        // Allow localhost and private IP ranges
+        if (
+          origin.startsWith('http://localhost') ||
+          origin.startsWith('http://127.0.0.1') ||
+          origin.match(/^http:\/\/192\.168\.\d+\.\d+/) ||
+          origin.match(/^http:\/\/10\.\d+\.\d+\.\d+/) ||
+          origin.match(/^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+/)
+        ) {
+          return callback(null, true);
+        }
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
@@ -143,7 +176,8 @@ const startServer = async () => {
       console.warn('⚠️  Redis connection failed, continuing without cache');
     }
 
-    app.listen(PORT, () => {
+    // Bind to 0.0.0.0 to accept connections from all network interfaces
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
@@ -151,12 +185,14 @@ const startServer = async () => {
 ║                                                           ║
 ║   Environment: ${NODE_ENV.padEnd(43)}║
 ║   Port:        ${PORT.toString().padEnd(43)}║
+║   Host:        0.0.0.0 (all interfaces)                  ║
 ║   Status:      Running ✓                                 ║
 ║   Database:    Connected ✓                               ║
 ║   Redis:       ${(redisHealthy ? 'Connected ✓' : 'Disconnected ⚠️').padEnd(47)}║
 ║                                                           ║
 ║   API Docs:    http://localhost:${PORT}/api             ║
 ║   Health:      http://localhost:${PORT}/health          ║
+║   LAN Access:  http://192.168.178.72:${PORT}/api        ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
       `);

@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import api from '@/utils/api';
+import api, { getAgentApiBaseUrl } from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
 import { useToast } from '@/composables/useToast';
 import Alert from '@/components/common/Alert.vue';
@@ -161,7 +161,7 @@ async function handleSubmit() {
         confirmPassword: form.value.confirmPassword,
       },
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
 

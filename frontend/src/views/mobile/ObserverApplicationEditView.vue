@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 py-8 px-4">
     <div class="max-w-2xl mx-auto">
       <!-- Back Link -->
-      <div class="mb-4">
+      <div class="mb-4" v-if="trackingNumber">
         <router-link
           :to="`/agent/track/${trackingNumber}`"
           class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
@@ -156,7 +156,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import api from '@/utils/api';
+import api, { getAgentApiBaseUrl } from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
 import { useToast } from '@/composables/useToast';
 import Alert from '@/components/common/Alert.vue';
@@ -209,7 +209,7 @@ async function loadApplication() {
     const response = await api.get(
       `/agent/application/${trackingNumber.value}`,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
 
@@ -288,7 +288,7 @@ async function handleSubmit() {
       `/agent/application/${trackingNumber.value}`,
       updateData,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
       }
     );
 

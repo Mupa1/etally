@@ -81,6 +81,8 @@ import Button from '@/components/common/Button.vue';
 import PasswordInput from '@/components/common/PasswordInput.vue';
 import FormField from '@/components/mobile/FormField.vue';
 
+// Note: Observer login uses /api/v1/auth/login, not /api/agent
+
 const router = useRouter();
 const authStore = useAuthStore();
 

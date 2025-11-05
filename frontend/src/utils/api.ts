@@ -44,9 +44,69 @@ function generateUUID(): string {
   });
 }
 
+// Determine API base URL
+// In browser, use relative paths or detect from current hostname
+function getApiBaseUrl(): string {
+  // If VITE_API_URL is set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // If running in browser, detect hostname and port
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const currentPort = window.location.port;
+    
+    // Default backend port
+    const backendPort = '3000';
+    
+    // Build API URL based on current hostname
+    // Always use backend port (3000) regardless of frontend port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:${backendPort}/api/v1`;
+    } else {
+      // For LAN IP or domain, use same hostname but backend port 3000
+      return `${protocol}//${hostname}:${backendPort}/api/v1`;
+    }
+  }
+  
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3000/api/v1';
+}
+
+// Get base URL for agent API routes (/api/agent)
+export function getAgentApiBaseUrl(): string {
+  // If VITE_API_URL is set, use it but remove /v1 if present
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace('/api/v1', '/api');
+  }
+  
+  // If running in browser, detect hostname and port
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // Default backend port
+    const backendPort = '3000';
+    
+    // Build API URL based on current hostname
+    // Always use backend port (3000) regardless of frontend port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:${backendPort}/api`;
+    } else {
+      // For LAN IP or domain, use same hostname but backend port 3000
+      return `${protocol}//${hostname}:${backendPort}/api`;
+    }
+  }
+  
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3000/api';
+}
+
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

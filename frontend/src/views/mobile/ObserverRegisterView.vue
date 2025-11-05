@@ -236,7 +236,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '@/utils/api';
+import api, { getAgentApiBaseUrl } from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
 import {
   validateFormInput,
@@ -482,7 +482,7 @@ async function submitRegistration() {
     console.log('Submitting registration:', registrationData);
 
     const response = await api.post('/agent/register', registrationData, {
-      baseURL: '/api',
+      baseURL: getAgentApiBaseUrl(),
     });
 
     console.log('Registration response:', response.data);
@@ -569,7 +569,7 @@ async function uploadDocuments(trackingNumber: string) {
           `/agent/register/${trackingNumber}/upload-document`,
           formData,
           {
-            baseURL: '/api',
+            baseURL: getAgentApiBaseUrl(),
             headers: { 'Content-Type': 'multipart/form-data' },
           }
         );
