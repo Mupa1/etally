@@ -234,12 +234,27 @@ export class ErrorHandler {
    */
   private isNetworkError(error: any): boolean {
     const message = error?.message || error?.toString() || '';
+    const errorCode = error?.code || '';
+    
+    // Axios network error codes
+    const networkErrorCodes = [
+      'ECONNREFUSED',
+      'ERR_NETWORK',
+      'ERR_INTERNET_DISCONNECTED',
+      'ETIMEDOUT',
+      'ENOTFOUND',
+      'ECONNABORTED',
+    ];
+    
     return (
       message.includes('Network Error') ||
       message.includes('fetch') ||
       message.includes('timeout') ||
       message.includes('connection') ||
-      error?.code === 'NETWORK_ERROR'
+      message.includes('Failed to fetch') ||
+      error?.code === 'NETWORK_ERROR' ||
+      networkErrorCodes.includes(errorCode) ||
+      !error?.response // No response means network error
     );
   }
 

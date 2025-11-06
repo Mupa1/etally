@@ -70,14 +70,15 @@ app.use(
       
       // In development, allow any local network IP
       if (NODE_ENV === 'development') {
-        // Allow localhost and private IP ranges
+        // Allow localhost and private IP ranges (with or without ports)
         if (
           origin.startsWith('http://localhost') ||
           origin.startsWith('http://127.0.0.1') ||
-          origin.match(/^http:\/\/192\.168\.\d+\.\d+/) ||
-          origin.match(/^http:\/\/10\.\d+\.\d+\.\d+/) ||
-          origin.match(/^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+/)
+          origin.match(/^http:\/\/192\.168\.\d+\.\d+(:\d+)?/) ||
+          origin.match(/^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?/) ||
+          origin.match(/^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?/)
         ) {
+          console.log(`[CORS] Allowing origin in development: ${origin}`);
           return callback(null, true);
         }
       }

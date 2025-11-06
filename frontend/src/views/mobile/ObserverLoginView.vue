@@ -41,6 +41,20 @@
           </Button>
         </form>
 
+        <!-- Connection Status -->
+        <Alert
+          v-if="connectionStatus === 'checking'"
+          variant="info"
+          message="Checking server connection..."
+          class="mt-4"
+        />
+        <Alert
+          v-if="connectionStatus === 'failed'"
+          variant="danger"
+          :message="`Unable to connect to server. Please verify the backend is running and accessible at ${backendUrl || 'http://192.168.178.72:3000'}. Check firewall settings if needed.`"
+          class="mt-4"
+        />
+
         <!-- Error Display -->
         <Alert v-if="error" variant="danger" :message="error" class="mt-4" />
 
@@ -71,11 +85,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { handleError } from '@/utils/errorHandler';
 import { validateFormInput, sanitizeInput } from '@/utils/security';
+import api from '@/utils/api';
+import { getApiBaseUrl } from '@/utils/api';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
 import PasswordInput from '@/components/common/PasswordInput.vue';
@@ -88,10 +104,38 @@ const authStore = useAuthStore();
 
 const submitting = ref(false);
 const error = ref('');
+const connectionStatus = ref<'checking' | 'connected' | 'failed' | null>(null);
 
 const form = ref({
   identifier: '',
   password: '',
+});
+
+// Computed property for API base URL to ensure it's reactive
+const apiBaseUrl = computed(() => getApiBaseUrl());
+const backendUrl = computed(() => apiBaseUrl.value.replace('/api/v1', ''));
+
+// Test backend connectivity on mount
+onMounted(async () => {
+  connectionStatus.value = 'checking';
+  try {
+    const currentApiUrl = getApiBaseUrl();
+    const currentBackendUrl = currentApiUrl.replace('/api/v1', '');
+    const healthUrl = `${currentBackendUrl}/health`;
+
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.ok) {
+      connectionStatus.value = 'connected';
+    } else {
+      connectionStatus.value = 'failed';
+    }
+  } catch (err: any) {
+    connectionStatus.value = 'failed';
+  }
 });
 
 async function handleLogin() {
@@ -129,7 +173,18 @@ async function handleLogin() {
       metadata: { identifier: form.value.identifier },
     });
 
-    error.value = err.response?.data?.error || 'Invalid credentials';
+    // Extract error message with better network error handling
+    if (!err.response) {
+      // Network error - connection failed
+      const apiBaseUrl = getApiBaseUrl();
+      const fullUrl = err.config ? `${apiBaseUrl}${err.config.url}` : 'unknown';
+      error.value = `Unable to connect to server at ${fullUrl}. Please check your network connection and verify the backend server is running.`;
+    } else {
+      error.value =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Invalid credentials';
+    }
   } finally {
     submitting.value = false;
   }

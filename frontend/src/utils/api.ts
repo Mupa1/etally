@@ -46,8 +46,8 @@ function generateUUID(): string {
 
 // Determine API base URL
 // In browser, use relative paths or detect from current hostname
-function getApiBaseUrl(): string {
-  // If VITE_API_URL is set, use it
+export function getApiBaseUrl(): string {
+  // If VITE_API_URL is set, use it (highest priority)
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
@@ -56,9 +56,6 @@ function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
-    const currentPort = window.location.port;
-    
-    // Default backend port
     const backendPort = '3000';
     
     // Build API URL based on current hostname
@@ -86,8 +83,6 @@ export function getAgentApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
-    
-    // Default backend port
     const backendPort = '3000';
     
     // Build API URL based on current hostname
@@ -104,18 +99,24 @@ export function getAgentApiBaseUrl(): string {
   return 'http://localhost:3000/api';
 }
 
-// Create axios instance
+// Create axios instance with dynamic baseURL
+// We'll set the baseURL in the request interceptor to ensure it uses the current hostname
 const api: AxiosInstance = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: '', // Will be set dynamically per request
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Set dynamic baseURL and add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Set baseURL dynamically based on current hostname (important for mobile/LAN access)
+    if (!config.baseURL || config.baseURL === '') {
+      config.baseURL = getApiBaseUrl();
+    }
+    
     const authStore = useAuthStore();
 
     if (authStore.accessToken) {
@@ -178,6 +179,11 @@ api.interceptors.response.use(
         authStore.clearAuth();
         router.push({ name: 'login', query: { expired: 'true' } });
       }
+    }
+
+    // Handle network/connection errors
+    if (!error.response) {
+      console.error('API Network Error:', error.message);
     }
 
     // Handle other errors
