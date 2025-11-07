@@ -223,7 +223,15 @@ class AuthorizationMiddleware {
 // Export singleton instance
 const authorizationMiddleware = new AuthorizationMiddleware();
 
-export const { requirePermission, optionalPermission, canUser } =
-  authorizationMiddleware;
+export const requirePermission = authorizationMiddleware.requirePermission.bind(
+  authorizationMiddleware
+);
+
+export const optionalPermission =
+  authorizationMiddleware.optionalPermission.bind(authorizationMiddleware);
+
+export const canUser = authorizationMiddleware.canUser.bind(
+  authorizationMiddleware
+);
 
 export default authorizationMiddleware;

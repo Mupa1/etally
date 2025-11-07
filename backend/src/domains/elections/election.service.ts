@@ -114,8 +114,11 @@ class ElectionService {
     role: UserRole,
     filters: IElectionFilters = {}
   ) {
-    // Get user's geographic scopes
-    const userScopes = await this.getUserScopes(userId);
+    // Get user's geographic scopes only if needed
+    let userScopes: any[] = [];
+    if (role !== 'super_admin' && role !== 'election_manager') {
+      userScopes = await this.getUserScopes(userId);
+    }
 
     // Build where clause with ABAC filtering
     const where: any = {
@@ -503,7 +506,10 @@ class ElectionService {
    * ABAC: Filtered by user's geographic scope
    */
   async getElectionStats(userId: string, role: UserRole) {
-    const userScopes = await this.getUserScopes(userId);
+    let userScopes: any[] = [];
+    if (role !== 'super_admin' && role !== 'election_manager') {
+      userScopes = await this.getUserScopes(userId);
+    }
 
     // Build scope filter
     const where: any = { deletedAt: null };
