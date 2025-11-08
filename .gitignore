@@ -213,7 +213,6 @@ grafana_data/
 .pnp.*
 
 # npm
-package-lock.json
 npm-debug.log
 
 # pnpm
