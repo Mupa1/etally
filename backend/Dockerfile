@@ -13,8 +13,9 @@ WORKDIR /app
 # Install dependencies for native modules
 RUN apk add --no-cache python3 make g++
 
-# Copy package files
-COPY backend/package*.json ./
+# Copy package files explicitly (ensures lockfile is present)
+COPY backend/package.json ./package.json
+COPY backend/package-lock.json ./package-lock.json
 COPY backend/prisma ./prisma/
 
 # Install all dependencies
