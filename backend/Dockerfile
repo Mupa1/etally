@@ -56,9 +56,12 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 # Install runtime dependencies and build tools for native modules
-# openssl-dev provides libssl.so.3; install OpenSSL 1.1 compatibility libraries from Alpine 3.18
+# openssl-dev provides libssl.so.3; install OpenSSL 1.1 compatibility libraries from Alpine 3.18 (community repo)
 RUN apk add --no-cache dumb-init curl python3 make g++ openssl-dev && \
-    apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.18/main openssl1.1-compat
+    apk add --no-cache \
+      --repository=https://dl-cdn.alpinelinux.org/alpine/v3.18/main \
+      --repository=https://dl-cdn.alpinelinux.org/alpine/v3.18/community \
+      openssl1.1-compat
 
 # Copy package files first
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
