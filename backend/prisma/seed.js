@@ -92,33 +92,33 @@ async function main() {
 
   const defaultPolicies = [
     {
-      name: 'Election Day Hours Restriction',
-      description:
-        'Restrict result submissions to election day hours (6 AM - 5 PM)',
-      effect: 'allow',
-      priority: 10,
-      roles: ['field_observer', 'election_manager'],
-      resourceType: 'election_result',
-      actions: ['submit', 'create'],
-      conditions: {
-        note: 'This is a sample policy. Update timeRange when actual election is scheduled',
-        requiresActiveElection: true,
-      },
+        name: 'Election Day Hours Restriction',
+        description:
+          'Restrict result submissions to election day hours (6 AM - 5 PM)',
+        effect: 'allow',
+        priority: 10,
+        roles: ['field_observer', 'election_manager'],
+        resourceType: 'election_result',
+        actions: ['submit', 'create'],
+        conditions: {
+          note: 'This is a sample policy. Update timeRange when actual election is scheduled',
+          requiresActiveElection: true,
+        },
       isActive: false, // Disabled by default until real schedule is set
       statusMessage: 'sample access policy',
     },
     {
-      name: 'Public Viewer Read-Only Access',
-      description: 'Public viewers can only read confirmed election results',
-      effect: 'allow',
-      priority: 5,
-      roles: ['public_viewer'],
-      resourceType: 'election_result',
-      actions: ['read'],
-      conditions: {
-        resultStatus: ['confirmed', 'verified'],
-      },
-      isActive: true,
+        name: 'Public Viewer Read-Only Access',
+        description: 'Public viewers can only read confirmed election results',
+        effect: 'allow',
+        priority: 5,
+        roles: ['public_viewer'],
+        resourceType: 'election_result',
+        actions: ['read'],
+        conditions: {
+          resultStatus: ['confirmed', 'verified'],
+        },
+        isActive: true,
       statusMessage: 'public viewer policy',
     },
   ];
