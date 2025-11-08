@@ -3,8 +3,6 @@
  * Global test configuration and utilities
  */
 
-import { PrismaClient } from '@prisma/client';
-
 // Mock Prisma for unit tests
 jest.mock('@/infrastructure/database/prisma.service');
 jest.mock('@/infrastructure/cache/redis.service');

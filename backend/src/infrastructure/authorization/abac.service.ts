@@ -31,7 +31,10 @@ class ABACService {
   async checkAccess(context: IAccessContext): Promise<IPolicyEvaluationResult> {
     const startTime = Date.now();
 
+    const policyTrail: string[] = [];
+
     try {
+
       // 1. Check explicit user permissions first (highest priority)
       const userPermission = await this.checkUserPermission(context);
       if (userPermission !== null) {
@@ -39,70 +42,100 @@ class ABACService {
           context,
           userPermission,
           'user_permission_override',
-          startTime
+          startTime,
+          ['user_permission_override']
         );
       }
 
       // 2. Check RBAC - base role permissions
       const rbacResult = await this.checkRBAC(context);
+      if (rbacResult.appliedPolicies?.length) {
+        policyTrail.push(...rbacResult.appliedPolicies);
+      }
       if (!rbacResult.granted) {
         return this.logAndReturn(
           context,
           false,
           rbacResult.reason || 'rbac_denied',
-          startTime
+          startTime,
+          [...(rbacResult.appliedPolicies || []), rbacResult.reason || 'rbac_denied']
         );
       }
 
       // 3. Check geographic scope restrictions
       const geoResult = await this.checkGeographicScope(context);
+      if (geoResult.appliedPolicies?.length) {
+        policyTrail.push(...geoResult.appliedPolicies);
+      }
       if (!geoResult.granted) {
         return this.logAndReturn(
           context,
           false,
           geoResult.reason || 'geo_scope_denied',
-          startTime
+          startTime,
+          [...policyTrail, geoResult.reason || 'geo_scope_denied']
         );
       }
 
       // 4. Check resource ownership
       const ownershipResult = await this.checkOwnership(context);
+      if (ownershipResult.appliedPolicies?.length) {
+        policyTrail.push(...ownershipResult.appliedPolicies);
+      }
       if (!ownershipResult.granted) {
         return this.logAndReturn(
           context,
           false,
           ownershipResult.reason || 'ownership_denied',
-          startTime
+          startTime,
+          [...policyTrail, ownershipResult.reason || 'ownership_denied']
         );
       }
 
       // 5. Evaluate dynamic policies
       const policyResult = await this.evaluatePolicies(context);
+      if (policyResult.appliedPolicies?.length) {
+        policyTrail.push(...policyResult.appliedPolicies);
+      }
       if (!policyResult.granted) {
         return this.logAndReturn(
           context,
           false,
           policyResult.reason || 'policy_denied',
-          startTime
+          startTime,
+          [...policyTrail, policyResult.reason || 'policy_denied']
         );
       }
 
       // 6. Check time-based restrictions
       const timeResult = await this.checkTimeRestrictions(context);
+      if (timeResult.appliedPolicies?.length) {
+        policyTrail.push(...timeResult.appliedPolicies);
+      }
       if (!timeResult.granted) {
         return this.logAndReturn(
           context,
           false,
           timeResult.reason || 'time_restricted',
-          startTime
+          startTime,
+          [...policyTrail, timeResult.reason || 'time_restricted']
         );
       }
 
       // All checks passed
-      return this.logAndReturn(context, true, 'access_granted', startTime);
+      return this.logAndReturn(
+        context,
+        true,
+        'access_granted',
+        startTime,
+        [...policyTrail, 'access_granted']
+      );
     } catch (error) {
       console.error('ABAC check error:', error);
-      return this.logAndReturn(context, false, 'evaluation_error', startTime);
+      return this.logAndReturn(context, false, 'evaluation_error', startTime, [
+        ...policyTrail,
+        'evaluation_error',
+      ]);
     }
   }
 
@@ -192,16 +225,18 @@ class ABACService {
         user: ['read', 'update'],
         polling_station: ['read', 'update'],
         audit_log: ['read', 'export'],
+      observer: ['read', 'update', 'export'],
       },
 
       field_observer: {
         election: ['read'],
         election_contest: ['read'],
         candidate: ['read'],
-        election_result: ['create', 'read', 'submit'],
+        election_result: ['create', 'read', 'update', 'submit'],
         incident: ['create', 'read'],
         polling_station: ['read'],
         audit_log: [],
+      observer: [],
         user: [],
       },
 
@@ -213,6 +248,7 @@ class ABACService {
         incident: [],
         polling_station: [],
         audit_log: [],
+      observer: [],
         user: [],
       },
     };
@@ -683,7 +719,8 @@ class ABACService {
     context: IAccessContext,
     granted: boolean,
     reason: string,
-    startTime: number
+    startTime: number,
+    policies: string[] = []
   ): Promise<IPolicyEvaluationResult> {
     const evaluationTimeMs = Date.now() - startTime;
 
@@ -710,7 +747,7 @@ class ABACService {
     return {
       granted,
       reason: granted ? undefined : reason,
-      appliedPolicies: [reason],
+      appliedPolicies: policies.length ? policies : [reason],
       evaluationTimeMs,
     };
   }

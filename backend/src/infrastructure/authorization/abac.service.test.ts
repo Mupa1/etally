@@ -12,30 +12,42 @@ import { IAccessContext } from '@/shared/interfaces/abac.interface';
 jest.mock('@/infrastructure/database/prisma.service');
 jest.mock('@/infrastructure/cache/redis.service');
 
+const PrismaServiceMock = PrismaService as jest.Mocked<typeof PrismaService>;
+const RedisServiceMock = RedisService as jest.Mocked<typeof RedisService>;
+
 describe('ABACService', () => {
   let abacService: ABACService;
-  let mockPrisma: jest.Mocked<PrismaService>;
-  let mockRedis: jest.Mocked<RedisService>;
+  let mockPrisma: any;
+  let mockRedis: any;
 
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
 
+    mockRedis = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(undefined),
+      del: jest.fn().mockResolvedValue(undefined),
+      invalidatePattern: jest.fn().mockResolvedValue(undefined),
+    };
+    RedisServiceMock.getInstance.mockReturnValue(mockRedis);
+
+    mockPrisma = {
+      userPermission: { findFirst: jest.fn().mockResolvedValue(null) },
+      userGeographicScope: { findMany: jest.fn().mockResolvedValue([]) },
+      accessPolicy: { findMany: jest.fn().mockResolvedValue([]) },
+      permissionCheck: {
+        create: jest.fn().mockResolvedValue({}),
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+        groupBy: jest.fn().mockResolvedValue([]),
+      },
+      $transaction: jest.fn(async (callback: any) => callback(mockPrisma)),
+    };
+    PrismaServiceMock.getInstance.mockReturnValue(mockPrisma);
+
     // Create service instance
     abacService = new ABACService();
-
-    // Get mock instances
-    mockPrisma = PrismaService.getInstance() as jest.Mocked<PrismaService>;
-    mockRedis = RedisService.getInstance() as jest.Mocked<RedisService>;
-
-    // Setup default mock behaviors
-    mockRedis.get.mockResolvedValue(null);
-    mockRedis.set.mockResolvedValue(undefined);
-    mockRedis.del.mockResolvedValue(undefined);
-    mockRedis.invalidatePattern.mockResolvedValue(undefined);
-    mockPrisma.permissionCheck = {
-      create: jest.fn().mockResolvedValue({}),
-    } as any;
   });
 
   describe('Super Admin Access', () => {
@@ -154,6 +166,47 @@ describe('ABACService', () => {
       const result = await abacService.checkAccess(context);
 
       expect(result.granted).toBe(true);
+    });
+
+    it('should allow election_manager to read observer data', async () => {
+      const context: IAccessContext = {
+        userId: 'manager-123',
+        role: 'election_manager',
+        resourceType: 'observer',
+        action: 'read',
+      };
+
+      mockPrisma.userPermission = {
+        findFirst: jest.fn().mockResolvedValue(null),
+      } as any;
+      mockPrisma.userGeographicScope = {
+        findMany: jest.fn().mockResolvedValue([]),
+      } as any;
+      mockPrisma.accessPolicy = {
+        findMany: jest.fn().mockResolvedValue([]),
+      } as any;
+
+      const result = await abacService.checkAccess(context);
+
+      expect(result.granted).toBe(true);
+    });
+
+    it('should deny field_observer from reading observer data', async () => {
+      const context: IAccessContext = {
+        userId: 'observer-123',
+        role: 'field_observer',
+        resourceType: 'observer',
+        action: 'read',
+      };
+
+      mockPrisma.userPermission = {
+        findFirst: jest.fn().mockResolvedValue(null),
+      } as any;
+
+      const result = await abacService.checkAccess(context);
+
+      expect(result.granted).toBe(false);
+      expect(result.reason).toContain('not allowed');
     });
   });
 
@@ -412,7 +465,7 @@ describe('ABACService', () => {
       const result = await abacService.checkAccess(context);
 
       expect(result.granted).toBe(true);
-      expect(result.reason).toContain('user_permission');
+      expect(result.appliedPolicies).toContain('user_permission_override');
     });
 
     it('should deny access when user has explicit deny permission', async () => {
