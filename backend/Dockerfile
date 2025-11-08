@@ -72,7 +72,7 @@ RUN npm ci --only=production --ignore-scripts && \
 # Copy prisma and generate client
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 # Generate Prisma client for linux-musl-arm64-openssl-3.0.x (Alpine Linux with OpenSSL 3)
-ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-arm64-openssl-3.0.x
+ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
 RUN npx prisma generate
 
 # Copy built application
