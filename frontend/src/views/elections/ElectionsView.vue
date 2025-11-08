@@ -5,18 +5,16 @@
   >
     <div class="space-y-6">
       <!-- Header with Create Button -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Elections</h1>
           <p class="text-sm text-gray-600 mt-1">
             View and manage all elections in the system
           </p>
         </div>
-        <Button
-          variant="primary"
-          @click="goToCreate"
-          class="w-full sm:w-auto"
-        >
+        <Button variant="primary" @click="goToCreate" class="w-full sm:w-auto">
           <svg
             class="w-5 h-5 mr-2"
             fill="none"
@@ -36,51 +34,48 @@
 
       <!-- Filters -->
       <div class="card">
-        <div class="flex flex-col sm:flex-row gap-4">
-          <div class="flex-1">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Search
-            </label>
-            <input
+        <div class="space-y-4 md:space-y-0">
+          <div class="w-full">
+            <SearchBar
               v-model="searchQuery"
-              type="text"
-              placeholder="Search by code, title..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              @input="handleSearch"
+              placeholder="Search by code, title or description..."
+              :debounce="300"
+              @search="handleSearch"
+              @clear="handleClearSearch"
             />
           </div>
-          <div class="sm:w-48">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Select
               v-model="selectedStatus"
-              @change="loadElections"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div class="sm:w-48">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Type
-            </label>
-            <select
+              label="Status"
+              placeholder="All Statuses"
+              :options="statusOptions"
+            />
+
+            <Select
               v-model="selectedType"
-              @change="loadElections"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              label="Type"
+              placeholder="All Types"
+              :options="typeOptions"
+            />
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <Button
+              variant="secondary"
+              @click="resetFilters"
+              class="w-full sm:w-auto"
             >
-              <option value="">All Types</option>
-              <option value="general_election">General Election</option>
-              <option value="by_election">By-Election</option>
-              <option value="referendum">Referendum</option>
-              <option value="re_run_election">Re-Run Election</option>
-            </select>
+              Reset Filters
+            </Button>
+            <Button
+              variant="primary"
+              @click="applyFilters"
+              class="w-full sm:w-auto"
+            >
+              Apply Filters
+            </Button>
           </div>
         </div>
       </div>
@@ -95,7 +90,7 @@
       <!-- Empty State -->
       <div v-else-if="!loading && elections.length === 0" class="card">
         <EmptyState
-          icon="elections"
+          icon="folder"
           title="No elections found"
           :description="
             searchQuery || selectedStatus || selectedType
@@ -115,7 +110,9 @@
           class="card hover:shadow-lg transition-shadow cursor-pointer"
           @click="goToDetail(election.id)"
         >
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-lg font-semibold text-gray-900">
@@ -131,7 +128,9 @@
                   size="sm"
                 />
               </div>
-              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+              <div
+                class="flex flex-wrap items-center gap-4 text-sm text-gray-600"
+              >
                 <div class="flex items-center">
                   <svg
                     class="w-4 h-4 mr-1.5"
@@ -222,6 +221,8 @@ import Badge from '@/components/common/Badge.vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import Alert from '@/components/common/Alert.vue';
+import SearchBar from '@/components/common/SearchBar.vue';
+import Select from '@/components/common/Select.vue';
 
 const router = useRouter();
 const toast = useToast();
@@ -230,8 +231,35 @@ const elections = ref<any[]>([]);
 const loading = ref(false);
 const error = ref('');
 const searchQuery = ref('');
-const selectedStatus = ref('active'); // Default to active elections
-const selectedType = ref('');
+const selectedStatus = ref<StatusOptionValue | ''>('');
+const selectedType = ref<ElectionTypeOptionValue | ''>('');
+
+type StatusOptionValue =
+  | 'draft'
+  | 'scheduled'
+  | 'active'
+  | 'completed'
+  | 'cancelled';
+type ElectionTypeOptionValue =
+  | 'general_election'
+  | 'by_election'
+  | 'referendum'
+  | 're_run_election';
+
+const statusOptions: Array<{ value: StatusOptionValue; label: string }> = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'scheduled', label: 'Scheduled' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+const typeOptions: Array<{ value: ElectionTypeOptionValue; label: string }> = [
+  { value: 'general_election', label: 'General Election' },
+  { value: 'by_election', label: 'By-Election' },
+  { value: 'referendum', label: 'Referendum' },
+  { value: 're_run_election', label: 'Re-Run Election' },
+];
 
 onMounted(() => {
   loadElections();
@@ -243,11 +271,11 @@ async function loadElections() {
 
   try {
     const params: any = {};
-    
+
     if (selectedStatus.value) {
       params.status = selectedStatus.value;
     }
-    
+
     if (selectedType.value) {
       params.electionType = selectedType.value;
     }
@@ -255,7 +283,7 @@ async function loadElections() {
     const response = await api.get('/elections', { params });
 
     let data = response.data.data || [];
-    
+
     // Filter by search query if provided
     if (searchQuery.value.trim()) {
       const query = searchQuery.value.toLowerCase().trim();
@@ -281,12 +309,18 @@ async function loadElections() {
   }
 }
 
-function handleSearch() {
-  // Debounce search - reload after user stops typing
-  clearTimeout((handleSearch as any).timeout);
-  (handleSearch as any).timeout = setTimeout(() => {
-    loadElections();
-  }, 300);
+function handleSearch(value: string) {
+  searchQuery.value = value;
+  loadElections();
+}
+
+function handleClearSearch() {
+  searchQuery.value = '';
+  loadElections();
+}
+
+function applyFilters() {
+  loadElections();
 }
 
 function goToCreate() {
@@ -295,6 +329,13 @@ function goToCreate() {
 
 function goToDetail(id: string) {
   router.push(`/elections/${id}`);
+}
+
+function resetFilters() {
+  searchQuery.value = '';
+  selectedStatus.value = '';
+  selectedType.value = '';
+  loadElections();
 }
 
 function formatDate(date: string | Date): string {
@@ -318,8 +359,17 @@ function formatStatus(status: string): string {
   return statusMap[status] || status;
 }
 
-function getStatusVariant(status: string): string {
-  const variantMap: Record<string, string> = {
+type BadgeVariant =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'info'
+  | 'gray';
+
+function getStatusVariant(status: string): BadgeVariant {
+  const variantMap: Record<string, BadgeVariant> = {
     draft: 'gray',
     scheduled: 'info',
     active: 'success',

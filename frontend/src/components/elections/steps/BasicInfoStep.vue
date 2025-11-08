@@ -62,7 +62,7 @@
           required
         />
         <p class="text-xs text-gray-500 mt-1">
-          Must be at least 60 days in the future
+          Must be in the future
         </p>
         <p v-if="errors.electionDate" class="text-xs text-red-500 mt-1">
           {{ errors.electionDate }}
@@ -132,7 +132,7 @@ function getTitlePlaceholder(): string {
 
 function getMinDate(): string {
   const date = new Date();
-  date.setDate(date.getDate() + 60); // Minimum 60 days
+  date.setDate(date.getDate() + 1); // Must be after today
   return date.toISOString().split('T')[0];
 }
 

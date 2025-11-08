@@ -51,29 +51,25 @@
             @update:model-value="handleFormUpdate"
           />
 
-          <!-- Step 4: Contest Setup -->
-          <ContestSetupStep
+          <!-- Step 4: Contests & Geographic Scope -->
+          <ContestAndScopeStep
             v-if="currentStep === 3"
             v-model:contests="formData.contests"
             v-model:referendumQuestions="formData.referendumQuestions"
-            :election-type="formData.electionType"
-            @update:model-value="handleFormUpdate"
-          />
-
-          <!-- Step 5: Geographic Scope -->
-          <GeographicScopeStep
-            v-if="currentStep === 4"
+            v-model:scopeLevel="formData.scopeLevel"
             v-model:countyId="formData.countyId"
+            v-model:countyName="formData.countyName"
             v-model:constituencyId="formData.constituencyId"
+            v-model:constituencyName="formData.constituencyName"
             v-model:wardId="formData.wardId"
+            v-model:wardName="formData.wardName"
             :election-type="formData.electionType"
-            :contests="formData.contests"
             @update:model-value="handleFormUpdate"
           />
 
-          <!-- Step 6: Review & Create -->
+          <!-- Step 5: Review & Create -->
           <ReviewStep
-            v-if="currentStep === 5"
+            v-if="currentStep === 4"
             :form-data="formData"
             :election-type="formData.electionType"
           />
@@ -98,8 +94,7 @@ import Alert from '@/components/common/Alert.vue';
 import ElectionTypeStep from '@/components/elections/steps/ElectionTypeStep.vue';
 import BasicInfoStep from '@/components/elections/steps/BasicInfoStep.vue';
 import TimelineStep from '@/components/elections/steps/TimelineStep.vue';
-import ContestSetupStep from '@/components/elections/steps/ContestSetupStep.vue';
-import GeographicScopeStep from '@/components/elections/steps/GeographicScopeStep.vue';
+import ContestAndScopeStep from '@/components/elections/steps/ContestAndScopeStep.vue';
 import ReviewStep from '@/components/elections/steps/ReviewStep.vue';
 
 const router = useRouter();
@@ -114,8 +109,7 @@ const wizardSteps: WizardStep[] = [
   { label: 'Type', key: 'type' },
   { label: 'Basic Info', key: 'basic' },
   { label: 'Timeline', key: 'timeline' },
-  { label: 'Contests', key: 'contests' },
-  { label: 'Scope', key: 'scope' },
+  { label: 'Contests & Scope', key: 'contests_scope' },
   { label: 'Review', key: 'review' },
 ];
 
@@ -138,9 +132,13 @@ const formData = ref({
   resultsPublishDate: null as Date | null,
   contests: [] as any[],
   referendumQuestions: [] as any[],
+  scopeLevel: '' as string,
   countyId: null as string | null,
   constituencyId: null as string | null,
   wardId: null as string | null,
+  countyName: null as string | null,
+  constituencyName: null as string | null,
+  wardName: null as string | null,
 });
 
 function handleFormUpdate() {
@@ -216,7 +214,7 @@ function validateStep(stepIndex: number): boolean {
       // Basic validation - can be enhanced
       return true;
 
-    case 3: // Contests
+    case 3: // Contests & Scope
       if (formData.value.electionType === 'referendum') {
         if (
           !formData.value.referendumQuestions ||
@@ -225,27 +223,55 @@ function validateStep(stepIndex: number): boolean {
           error.value = 'At least one referendum question is required';
           return false;
         }
-      } else {
+      } else if (formData.value.electionType !== 'general_election') {
         if (!formData.value.contests || formData.value.contests.length === 0) {
           error.value = 'At least one contest is required';
           return false;
         }
       }
-      return true;
 
-    case 4: // Geographic scope
-      // Validation depends on election type
-      if (formData.value.electionType === 'by_election') {
-        // By-election needs specific geographic area
-        if (
-          !formData.value.countyId &&
-          !formData.value.constituencyId &&
-          !formData.value.wardId
-        ) {
-          error.value = 'Please select a geographic area for the by-election';
-          return false;
-        }
+      // Scope validation
+      if (
+        formData.value.electionType === 'general_election' ||
+        formData.value.electionType === 'referendum'
+      ) {
+        // Force nationwide coverage for general elections and referendums
+        formData.value.scopeLevel = 'nationwide';
+        formData.value.countyId = null;
+        formData.value.constituencyId = null;
+        formData.value.wardId = null;
+        formData.value.countyName = null;
+        formData.value.constituencyName = null;
+        formData.value.wardName = null;
+        return true;
       }
+
+      if (!formData.value.scopeLevel) {
+        error.value = 'Please select a coverage level';
+        return false;
+      }
+
+      if (formData.value.scopeLevel === 'county' && !formData.value.countyId) {
+        error.value = 'Please select a county';
+        return false;
+      }
+
+      if (
+        formData.value.scopeLevel === 'constituency' &&
+        !formData.value.constituencyId
+      ) {
+        error.value = 'Please select a constituency';
+        return false;
+      }
+
+      if (
+        formData.value.scopeLevel === 'county_assembly' &&
+        !formData.value.wardId
+      ) {
+        error.value = 'Please select a ward';
+        return false;
+      }
+
       return true;
 
     default:
@@ -259,7 +285,7 @@ async function handleCreateElection(data: any) {
 
   try {
     // Final validation
-    if (!validateStep(5)) {
+    if (!validateStep(4)) {
       submitting.value = false;
       return;
     }
@@ -282,6 +308,19 @@ async function handleCreateElection(data: any) {
       tallyingEndDate: formData.value.tallyingEndDate || undefined,
       resultsPublishDate: formData.value.resultsPublishDate || undefined,
     };
+
+    if (formData.value.scopeLevel) {
+      payload.scopeLevel = formData.value.scopeLevel;
+    }
+    if (formData.value.countyId) {
+      payload.countyId = formData.value.countyId;
+    }
+    if (formData.value.constituencyId) {
+      payload.constituencyId = formData.value.constituencyId;
+    }
+    if (formData.value.wardId) {
+      payload.wardId = formData.value.wardId;
+    }
 
     // Add re-run specific field
     if (formData.value.electionType === 're_run_election') {

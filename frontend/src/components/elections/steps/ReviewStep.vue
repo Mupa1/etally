@@ -113,16 +113,20 @@
       </div>
 
       <!-- Geographic Scope -->
-      <div>
+      <div class="border-b pb-4">
         <h3 class="text-lg font-semibold text-gray-800 mb-3">Geographic Scope</h3>
-        <div v-if="electionType === 'general_election' || electionType === 'referendum'" class="text-sm text-gray-600">
-          <p>National coverage (all areas)</p>
-        </div>
-        <div v-else-if="electionType === 'by_election'" class="text-sm text-gray-600">
-          <p v-if="formData.countyId || formData.constituencyId || formData.wardId">
-            Selected area will be displayed here
+        <div class="space-y-2 text-sm text-gray-900">
+          <div>
+            <span class="text-gray-500">Coverage Level:</span>
+            <span class="ml-2 font-medium">{{ scopeSummary.levelLabel }}</span>
+          </div>
+          <div v-if="scopeSummary.detail">
+            <span class="text-gray-500">Area:</span>
+            <span class="ml-2">{{ scopeSummary.detail }}</span>
+          </div>
+          <p v-if="scopeSummary.note" class="text-xs text-gray-500">
+            {{ scopeSummary.note }}
           </p>
-          <p v-else class="text-orange-600">No geographic area selected</p>
         </div>
       </div>
 
@@ -172,6 +176,82 @@ function formatDate(date: Date | string | null): string {
   });
 }
 
+function formatScopeLevel(level: string | null | undefined): string {
+  const map: Record<string, string> = {
+    nationwide: 'Nationwide',
+    county: 'County-wide',
+    constituency: 'Constituency-wide',
+    county_assembly: 'County Assembly-wide',
+  };
+  return map[level || ''] || 'Not specified';
+}
+
+const scopeSummary = computed(() => {
+  const level = props.formData.scopeLevel || '';
+  const countyName = props.formData.countyName;
+  const constituencyName = props.formData.constituencyName;
+  const wardName = props.formData.wardName;
+
+  if (!level) {
+    return {
+      levelLabel: 'Not specified',
+      detail: null,
+      note: 'No coverage level selected. Update contests & scope step to specify coverage.',
+    };
+  }
+
+  if (level === 'nationwide') {
+    return {
+      levelLabel: 'Nationwide',
+      detail: 'Covers all polling areas nationally.',
+      note:
+        props.electionType === 'referendum'
+          ? 'Referendums are configured for nationwide coverage.'
+          : undefined,
+    };
+  }
+
+  if (level === 'county') {
+    return {
+      levelLabel: 'County-wide',
+      detail: countyName
+        ? `Covers ${countyName} County.`
+        : 'County not selected.',
+      note: undefined,
+    };
+  }
+
+  if (level === 'constituency') {
+    return {
+      levelLabel: 'Constituency-wide',
+      detail: constituencyName
+        ? `Covers ${constituencyName} Constituency.`
+        : 'Constituency not selected.',
+      note: countyName ? `County: ${countyName}` : undefined,
+    };
+  }
+
+  if (level === 'county_assembly') {
+    return {
+      levelLabel: 'County Assembly-wide (Ward-level)',
+      detail: wardName ? `Covers ${wardName} Ward.` : 'Ward not selected.',
+      note: constituencyName
+        ? `Constituency: ${constituencyName}${
+            countyName ? `, County: ${countyName}` : ''
+          }`
+        : countyName
+        ? `County: ${countyName}`
+        : undefined,
+    };
+  }
+
+  return {
+    levelLabel: formatScopeLevel(level),
+    detail: null,
+    note: undefined,
+  };
+});
+
 const validationErrors = computed(() => {
   const errors: string[] = [];
   
@@ -186,6 +266,41 @@ const validationErrors = computed(() => {
   } else if (props.electionType === 'by_election') {
     if (!props.formData.contests || props.formData.contests.length === 0) {
       errors.push('At least one contest is required');
+    }
+  } else if (
+    props.electionType !== 'general_election' &&
+    (!props.formData.contests || props.formData.contests.length === 0)
+  ) {
+    errors.push('At least one contest is required');
+  }
+
+  if (
+    props.electionType !== 'general_election' &&
+    props.electionType !== 'referendum'
+  ) {
+    if (!props.formData.scopeLevel) {
+      errors.push('Coverage level is required');
+    } else {
+      if (
+        props.formData.scopeLevel === 'county' &&
+        !props.formData.countyId
+      ) {
+        errors.push('County selection is required for county-wide coverage');
+      }
+      if (
+        props.formData.scopeLevel === 'constituency' &&
+        !props.formData.constituencyId
+      ) {
+        errors.push(
+          'Constituency selection is required for constituency-wide coverage'
+        );
+      }
+      if (
+        props.formData.scopeLevel === 'county_assembly' &&
+        !props.formData.wardId
+      ) {
+        errors.push('Ward selection is required for county assembly coverage');
+      }
     }
   }
   
