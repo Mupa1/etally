@@ -14,8 +14,8 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++
 
 # Copy package files
-COPY package*.json ./
-COPY ./prisma ./prisma/
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
 
 # Install all dependencies
 RUN npm ci
@@ -35,7 +35,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/prisma ./prisma
 
 # Copy source code
-COPY . .
+COPY backend/. .
 
 # Build TypeScript
 RUN npm run build
