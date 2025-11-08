@@ -56,8 +56,8 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 # Install runtime dependencies and build tools for native modules
-# openssl-dev provides libssl.so.3, openssl1.1-compat provides libssl.so.1.1 for Prisma fallback
-RUN apk add --no-cache dumb-init curl python3 make g++ openssl-dev openssl1.1-compat
+# openssl-dev provides libssl.so.3, openssl-libs-compat provides libssl.so.1.1 for Prisma fallback
+RUN apk add --no-cache dumb-init curl python3 make g++ openssl-dev openssl-libs-compat
 
 # Copy package files first
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
