@@ -90,68 +90,67 @@ async function main() {
     console.log('✓ National scope already exists for super admin');
   }
 
-  // Create sample access policy: Election hours only
-  const existingElectionPolicy = await prisma.accessPolicy.findFirst({
-    where: {
+  const defaultPolicies = [
+    {
       name: 'Election Day Hours Restriction',
-    },
-  });
-
-  if (!existingElectionPolicy) {
-    const electionHoursPolicy = await prisma.accessPolicy.create({
-      data: {
-        name: 'Election Day Hours Restriction',
-        description:
-          'Restrict result submissions to election day hours (6 AM - 5 PM)',
-        effect: 'allow',
-        priority: 10,
-        roles: ['field_observer', 'election_manager'],
-        resourceType: 'election_result',
-        actions: ['submit', 'create'],
-        conditions: {
-          note: 'This is a sample policy. Update timeRange when actual election is scheduled',
-          requiresActiveElection: true,
-        },
-        isActive: false, // Disabled by default
-        createdBy: adminUser.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      description:
+        'Restrict result submissions to election day hours (6 AM - 5 PM)',
+      effect: 'allow',
+      priority: 10,
+      roles: ['field_observer', 'election_manager'],
+      resourceType: 'election_result',
+      actions: ['submit', 'create'],
+      conditions: {
+        note: 'This is a sample policy. Update timeRange when actual election is scheduled',
+        requiresActiveElection: true,
       },
-    });
-    console.log('✓ Created sample access policy:', electionHoursPolicy.name);
-  } else {
-    console.log('✓ Election hours policy already exists');
-  }
-
-  // Create another policy: Read-only for public viewers
-  const existingPublicPolicy = await prisma.accessPolicy.findFirst({
-    where: {
+      isActive: false, // Disabled by default until real schedule is set
+      statusMessage: 'sample access policy',
+    },
+    {
       name: 'Public Viewer Read-Only Access',
+      description: 'Public viewers can only read confirmed election results',
+      effect: 'allow',
+      priority: 5,
+      roles: ['public_viewer'],
+      resourceType: 'election_result',
+      actions: ['read'],
+      conditions: {
+        resultStatus: ['confirmed', 'verified'],
+      },
+      isActive: true,
+      statusMessage: 'public viewer policy',
     },
-  });
+  ];
 
-  if (!existingPublicPolicy) {
-    const publicViewerPolicy = await prisma.accessPolicy.create({
+  for (const policy of defaultPolicies) {
+    const existingPolicy = await prisma.accessPolicy.findFirst({
+      where: { name: policy.name },
+    });
+
+    if (existingPolicy) {
+      console.log(`✓ ${policy.name} already exists`);
+      continue;
+    }
+
+    await prisma.accessPolicy.create({
       data: {
-        name: 'Public Viewer Read-Only Access',
-        description: 'Public viewers can only read confirmed election results',
-        effect: 'allow',
-        priority: 5,
-        roles: ['public_viewer'],
-        resourceType: 'election_result',
-        actions: ['read'],
-        conditions: {
-          resultStatus: ['confirmed', 'verified'],
-        },
-        isActive: true,
+        name: policy.name,
+        description: policy.description,
+        effect: policy.effect,
+        priority: policy.priority,
+        roles: policy.roles,
+        resourceType: policy.resourceType,
+        actions: policy.actions,
+        conditions: policy.conditions,
+        isActive: policy.isActive,
         createdBy: adminUser.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     });
-    console.log('✓ Created public viewer policy:', publicViewerPolicy.name);
-  } else {
-    console.log('✓ Public viewer policy already exists');
+
+    console.log(`✓ Created ${policy.statusMessage}: ${policy.name}`);
   }
 
   // Seed configurations
