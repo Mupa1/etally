@@ -12,6 +12,7 @@
 secrets/*.txt
 secrets/*.key
 secrets/*.pem
+secrets.*
 *.key
 *.pem
 *.p12
