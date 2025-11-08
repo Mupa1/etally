@@ -76,10 +76,202 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/communication',
+    name: 'communication',
+    component: () => import('@/views/CommunicationView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/communication/templates',
+    name: 'communication-templates',
+    component: () => import('@/views/EmailTemplatesView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/communication/templates/:id/edit',
+    name: 'communication-template-edit',
+    component: () => import('@/views/EmailTemplateEditView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
     meta: { requiresAuth: true },
+  },
+  {
+    path: '/settings/voting-areas',
+    name: 'settings-voting-areas',
+    component: () => import('@/views/settings/VotingAreasView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
+    path: '/settings/configurations',
+    name: 'settings-configurations',
+    component: () => import('@/views/settings/ConfigurationsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/settings/configurations/:id',
+    name: 'settings-configuration-detail',
+    component: () => import('@/views/settings/ConfigurationDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  // Admin Routes
+  {
+    path: '/admin/parties',
+    name: 'admin-parties',
+    component: () => import('@/views/admin/PartyManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
+    path: '/admin/parties/:id',
+    name: 'admin-party-detail',
+    component: () => import('@/views/admin/PartyDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/views/admin/UsersOverviewView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/observers',
+    name: 'admin-observers',
+    component: () => import('@/views/admin/ObserversView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/observers/:id',
+    name: 'admin-observer-detail',
+    component: () => import('@/views/admin/ObserverDetailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/policies',
+    name: 'admin-policies',
+    component: () => import('@/views/admin/PolicyManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/scopes',
+    name: 'admin-scopes',
+    component: () => import('@/views/admin/ScopeManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/permissions',
+    name: 'admin-permissions',
+    component: () => import('@/views/admin/PermissionManagementView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/audit',
+    name: 'admin-audit',
+    component: () => import('@/views/admin/AuditTrailView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/admin/analytics',
+    name: 'admin-analytics',
+    component: () => import('@/views/admin/PermissionAnalyticsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  // Agent/Observer Routes
+  {
+    path: '/agent',
+    name: 'agent-landing',
+    component: () => import('@/views/mobile/AgentLandingView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/register',
+    name: 'observer-register',
+    component: () => import('@/views/mobile/ObserverRegisterView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/success/:trackingNumber',
+    name: 'observer-registration-success',
+    component: () =>
+      import('@/views/mobile/ObserverRegistrationSuccessView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/track/:trackingNumber?',
+    name: 'observer-tracking',
+    component: () => import('@/views/mobile/ObserverTrackingView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/application/:trackingNumber',
+    name: 'observer-application-edit',
+    component: () => import('@/views/mobile/ObserverApplicationEditView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/setup-password',
+    name: 'observer-password-setup',
+    component: () => import('@/views/mobile/PasswordSetupView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/login',
+    name: 'observer-login',
+    component: () => import('@/views/mobile/ObserverLoginView.vue'),
+    meta: { requiresAuth: false, layout: 'mobile' },
+  },
+  {
+    path: '/agent/dashboard',
+    name: 'observer-dashboard',
+    component: () => import('@/views/mobile/ObserverDashboardView.vue'),
+    meta: { requiresAuth: true, requiresRole: ['field_observer'] },
   },
   {
     path: '/:pathMatch(.*)*',

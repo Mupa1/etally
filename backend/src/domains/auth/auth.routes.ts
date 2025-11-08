@@ -1,11 +1,16 @@
 /**
  * Authentication Routes
  * Defines HTTP routes for authentication endpoints
+ *
+ * NOTE: Uses hybrid RBAC + ABAC approach
+ * - RBAC: Basic role checking (existing)
+ * - ABAC: Fine-grained access control (new)
  */
 
 import { Router } from 'express';
 import AuthController from './auth.controller';
-import { authenticate, requireAdmin } from './auth.middleware';
+import { authenticate, requireSuperAdmin } from './auth.middleware';
+import { requirePermission } from '@/infrastructure/middleware/authorization.middleware';
 
 const router = Router();
 const authController = new AuthController();
@@ -14,8 +19,14 @@ const authController = new AuthController();
  * @route   POST /api/v1/auth/register
  * @desc    Register a new user (Admin only)
  * @access  Protected - Admin/Election Manager only
+ * @abac    Requires 'create' permission on 'user' resource
  */
-router.post('/register', authenticate, requireAdmin, authController.register);
+router.post(
+  '/register',
+  authenticate,
+  requirePermission('user', 'create'),
+  authController.register
+);
 
 /**
  * @route   POST /api/v1/auth/login
@@ -50,7 +61,11 @@ router.get('/profile', authenticate, authController.getProfile);
  * @desc    Change password on first login for initial super admin
  * @access  Protected
  */
-router.put('/first-login-password-change', authenticate, authController.firstLoginPasswordChange);
+router.put(
+  '/first-login-password-change',
+  authenticate,
+  authController.firstLoginPasswordChange
+);
 
 /**
  * @route   PUT /api/v1/auth/change-password
@@ -58,5 +73,24 @@ router.put('/first-login-password-change', authenticate, authController.firstLog
  * @access  Protected
  */
 router.put('/change-password', authenticate, authController.changePassword);
+
+/**
+ * @route   GET /api/v1/auth/users
+ * @desc    List all users
+ * @access  Protected - Admin only
+ */
+router.get('/users', authenticate, requireSuperAdmin, authController.listUsers);
+
+/**
+ * @route   PATCH /api/v1/auth/users/:userId/status
+ * @desc    Update user active status
+ * @access  Protected - Super Admin only
+ */
+router.patch(
+  '/users/:userId/status',
+  authenticate,
+  requireSuperAdmin,
+  authController.updateUserStatus
+);
 
 export default router;

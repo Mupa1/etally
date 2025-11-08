@@ -57,9 +57,7 @@ class AuthService {
    * @returns Created user (without password) and auth tokens
    * @throws ConflictError if email or national ID already exists
    */
-  async register(
-    registerData: IRegisterRequest
-  ): Promise<IAuthResponse> {
+  async register(registerData: IRegisterRequest): Promise<IAuthResponse> {
     // Check if email already exists
     const existingEmail = await this.prisma.user.findUnique({
       where: { email: registerData.email },
@@ -550,6 +548,57 @@ class AuthService {
     } catch (error) {
       throw new AuthenticationError('Invalid or expired token');
     }
+  }
+
+  /**
+   * List all users
+   * For admin user management
+   */
+  async listUsers() {
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        nationalId: true,
+        email: true,
+        phoneNumber: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        registrationStatus: true,
+        lastLogin: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return users;
+  }
+
+  /**
+   * Update user status (activate/deactivate)
+   */
+  async updateUserStatus(userId: string, isActive: boolean) {
+    // Don't allow deactivating super admin
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User', userId);
+    }
+
+    if (user.role === 'super_admin' && !isActive) {
+      throw new ValidationError('Cannot deactivate super admin');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+    });
   }
 }
 

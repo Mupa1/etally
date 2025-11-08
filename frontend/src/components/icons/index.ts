@@ -19,3 +19,7 @@ export { default as ChartIcon } from './ChartIcon.vue';
 export { default as LocationIcon } from './LocationIcon.vue';
 export { default as CloseIcon } from './CloseIcon.vue';
 export { default as MenuIcon } from './MenuIcon.vue';
+export { default as ShieldIcon } from './ShieldIcon.vue';
+export { default as AnalyticsIcon } from './AnalyticsIcon.vue';
+export { default as AuditIcon } from './AuditIcon.vue';
+export { default as PartyIcon } from './PartyIcon.vue';

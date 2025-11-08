@@ -12,9 +12,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: '0.0.0.0', // Listen on all interfaces to allow LAN access
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3000',
+        target: process.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:3000',
         changeOrigin: true,
         secure: false
       }

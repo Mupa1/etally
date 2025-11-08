@@ -29,18 +29,94 @@ export interface ApiError {
   details?: any;
 }
 
-// Create axios instance
+// Simple UUID v4 generator (fallback for environments without crypto.randomUUID)
+function generateUUID(): string {
+  // Try native crypto.randomUUID first (faster, more secure)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // Fallback: Generate UUID v4 manually
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+// Determine API base URL
+// In browser, use relative paths or detect from current hostname
+export function getApiBaseUrl(): string {
+  // If VITE_API_URL is set, use it (highest priority)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // If running in browser, detect hostname and port
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const backendPort = '3000';
+    
+    // Build API URL based on current hostname
+    // Always use backend port (3000) regardless of frontend port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:${backendPort}/api/v1`;
+    } else {
+      // For LAN IP or domain, use same hostname but backend port 3000
+      return `${protocol}//${hostname}:${backendPort}/api/v1`;
+    }
+  }
+  
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3000/api/v1';
+}
+
+// Get base URL for agent API routes (/api/agent)
+export function getAgentApiBaseUrl(): string {
+  // If VITE_API_URL is set, use it but remove /v1 if present
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace('/api/v1', '/api');
+  }
+  
+  // If running in browser, detect hostname and port
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const backendPort = '3000';
+    
+    // Build API URL based on current hostname
+    // Always use backend port (3000) regardless of frontend port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:${backendPort}/api`;
+    } else {
+      // For LAN IP or domain, use same hostname but backend port 3000
+      return `${protocol}//${hostname}:${backendPort}/api`;
+    }
+  }
+  
+  // Fallback for SSR or non-browser environments
+  return 'http://localhost:3000/api';
+}
+
+// Create axios instance with dynamic baseURL
+// We'll set the baseURL in the request interceptor to ensure it uses the current hostname
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  baseURL: '', // Will be set dynamically per request
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Set dynamic baseURL and add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Set baseURL dynamically based on current hostname (important for mobile/LAN access)
+    if (!config.baseURL || config.baseURL === '') {
+      config.baseURL = getApiBaseUrl();
+    }
+    
     const authStore = useAuthStore();
 
     if (authStore.accessToken) {
@@ -48,7 +124,7 @@ api.interceptors.request.use(
     }
 
     // Add request ID for tracing
-    config.headers['X-Request-ID'] = crypto.randomUUID();
+    config.headers['X-Request-ID'] = generateUUID();
 
     return config;
   },
@@ -69,6 +145,14 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest) {
       const authStore = useAuthStore();
 
+      // If the refresh endpoint itself failed, immediately logout (prevent infinite loop)
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        console.log('Refresh token invalid, logging out...');
+        authStore.clearAuth();
+        router.push({ name: 'login', query: { expired: 'true' } });
+        return Promise.reject(error);
+      }
+
       // Try to refresh token
       if (authStore.refreshToken && !(originalRequest as any)._retry) {
         (originalRequest as any)._retry = true;
@@ -83,16 +167,23 @@ api.interceptors.response.use(
 
           return api(originalRequest);
         } catch (refreshError) {
-          // Refresh failed, logout user
-          authStore.logout();
-          router.push({ name: 'login' });
+          // Refresh failed, logout user gracefully
+          console.log('Token refresh failed, logging out...');
+          authStore.clearAuth();
+          router.push({ name: 'login', query: { expired: 'true' } });
           return Promise.reject(refreshError);
         }
       } else {
         // No refresh token or already retried, logout
-        authStore.logout();
-        router.push({ name: 'login' });
+        console.log('No valid refresh token, logging out...');
+        authStore.clearAuth();
+        router.push({ name: 'login', query: { expired: 'true' } });
       }
+    }
+
+    // Handle network/connection errors
+    if (!error.response) {
+      console.error('API Network Error:', error.message);
     }
 
     // Handle other errors

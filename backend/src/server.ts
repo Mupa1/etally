@@ -21,10 +21,23 @@ import {
 
 // Routes
 import authRouter from '@/domains/auth/auth.routes';
+import electionRouter from '@/domains/elections/election.routes';
+import policyRouter from '@/domains/policies/policy.routes';
+import geographicRouter from '@/domains/geographic/geographic.routes';
+import configurationRouter from '@/domains/configurations/configuration.routes';
+import partyRouter from '@/domains/parties/party.routes';
+import observerMobileRoutes from '@/domains/mobile/observer-mobile.routes';
+import observerAdminRoutes from '@/domains/mobile/observer-admin.routes';
+import observerApplicationsRoutes from '@/domains/mobile/observer-applications.routes';
+import { createObserverRoutes } from '@/domains/mobile/observer.routes';
+import { ObserverService } from '@/domains/mobile/observer.service';
+import { ObserverMinIOService } from '@/domains/mobile/minio.service';
+import { EmailService } from '@/domains/mobile/email.service';
+import emailTemplateRoutes from '@/domains/communication/email-template.routes';
 
 // Server configuration
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ==========================================
@@ -35,9 +48,43 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 app.use(helmet());
 
 // CORS configuration
+// Allow requests from localhost and LAN IP addresses
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+  'http://localhost:80',
+  'http://localhost:5173',
+  'http://192.168.178.72',
+  'http://192.168.178.72:80',
+  'http://192.168.178.72:5173',
+];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:80'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // In development, allow any local network IP
+      if (NODE_ENV === 'development') {
+        // Allow localhost and private IP ranges (with or without ports)
+        if (
+          origin.startsWith('http://localhost') ||
+          origin.startsWith('http://127.0.0.1') ||
+          origin.match(/^http:\/\/192\.168\.\d+\.\d+(:\d+)?/) ||
+          origin.match(/^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?/) ||
+          origin.match(/^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?/)
+        ) {
+          console.log(`[CORS] Allowing origin in development: ${origin}`);
+          return callback(null, true);
+        }
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
@@ -75,11 +122,32 @@ app.get('/api', (_req, res) => {
   });
 });
 
+// Initialize observer services
+const observerMinIOService = new ObserverMinIOService();
+const emailService = new EmailService();
+const observerService = new ObserverService(
+  PrismaService.getInstance(),
+  observerMinIOService,
+  emailService
+);
+
 // API Routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/elections', electionRouter);
+app.use('/api/v1/geographic', geographicRouter); // Geographic data management
+app.use('/api/v1/configurations', configurationRouter); // System configuration management
+app.use('/api/v1/parties', partyRouter); // Political party management
+app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, audit)
+app.use('/api/v1/observers/mobile', observerMobileRoutes); // Mobile PWA observer routes
+app.use('/api/v1/admin/observers', observerAdminRoutes); // Admin observer management
+app.use('/api/v1/admin/observer-applications', observerApplicationsRoutes); // Observer applications management
+app.use('/api/v1/communication/templates', emailTemplateRoutes); // Email template management
+
+// Agent routes (public registration endpoints)
+app.use('/api/agent', createObserverRoutes(observerService));
 // TODO: Add more routes
-// app.use('/api/v1/elections', electionRouter);
 // app.use('/api/v1/results', resultRouter);
+// app.use('/api/v1/candidates', candidateRouter);
 // etc...
 
 // ==========================================
@@ -109,7 +177,8 @@ const startServer = async () => {
       console.warn('⚠️  Redis connection failed, continuing without cache');
     }
 
-    app.listen(PORT, () => {
+    // Bind to 0.0.0.0 to accept connections from all network interfaces
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
@@ -117,12 +186,14 @@ const startServer = async () => {
 ║                                                           ║
 ║   Environment: ${NODE_ENV.padEnd(43)}║
 ║   Port:        ${PORT.toString().padEnd(43)}║
+║   Host:        0.0.0.0 (all interfaces)                  ║
 ║   Status:      Running ✓                                 ║
 ║   Database:    Connected ✓                               ║
 ║   Redis:       ${(redisHealthy ? 'Connected ✓' : 'Disconnected ⚠️').padEnd(47)}║
 ║                                                           ║
 ║   API Docs:    http://localhost:${PORT}/api             ║
 ║   Health:      http://localhost:${PORT}/health          ║
+║   LAN Access:  http://192.168.178.72:${PORT}/api        ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
       `);

@@ -68,19 +68,127 @@ async function main() {
     role: managerUser.role,
   });
 
+  // Create geographic scopes for admin (national level)
+  const existingScope = await prisma.userGeographicScope.findFirst({
+    where: {
+      userId: adminUser.id,
+      scopeLevel: 'national',
+    },
+  });
+
+  if (!existingScope) {
+    await prisma.userGeographicScope.create({
+      data: {
+        userId: adminUser.id,
+        scopeLevel: 'national',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    console.log('✓ Assigned national scope to super admin');
+  } else {
+    console.log('✓ National scope already exists for super admin');
+  }
+
+  // Create sample access policy: Election hours only
+  const existingElectionPolicy = await prisma.accessPolicy.findFirst({
+    where: {
+      name: 'Election Day Hours Restriction',
+    },
+  });
+
+  if (!existingElectionPolicy) {
+    const electionHoursPolicy = await prisma.accessPolicy.create({
+      data: {
+        name: 'Election Day Hours Restriction',
+        description:
+          'Restrict result submissions to election day hours (6 AM - 5 PM)',
+        effect: 'allow',
+        priority: 10,
+        roles: ['field_observer', 'election_manager'],
+        resourceType: 'election_result',
+        actions: ['submit', 'create'],
+        conditions: {
+          note: 'This is a sample policy. Update timeRange when actual election is scheduled',
+          requiresActiveElection: true,
+        },
+        isActive: false, // Disabled by default
+        createdBy: adminUser.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    console.log('✓ Created sample access policy:', electionHoursPolicy.name);
+  } else {
+    console.log('✓ Election hours policy already exists');
+  }
+
+  // Create another policy: Read-only for public viewers
+  const existingPublicPolicy = await prisma.accessPolicy.findFirst({
+    where: {
+      name: 'Public Viewer Read-Only Access',
+    },
+  });
+
+  if (!existingPublicPolicy) {
+    const publicViewerPolicy = await prisma.accessPolicy.create({
+      data: {
+        name: 'Public Viewer Read-Only Access',
+        description: 'Public viewers can only read confirmed election results',
+        effect: 'allow',
+        priority: 5,
+        roles: ['public_viewer'],
+        resourceType: 'election_result',
+        actions: ['read'],
+        conditions: {
+          resultStatus: ['confirmed', 'verified'],
+        },
+        isActive: true,
+        createdBy: adminUser.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+    console.log('✓ Created public viewer policy:', publicViewerPolicy.name);
+  } else {
+    console.log('✓ Public viewer policy already exists');
+  }
+
+  // Seed configurations
+  try {
+    const { seedConfigurations } = require('./seeds/configurations.seed.ts');
+    await seedConfigurations();
+  } catch (error) {
+    console.error('❌ Failed to seed configurations:', error);
+  }
+
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Initial Credentials:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('Super Admin:');
   console.log('  Email:    admin@elections.ke');
   console.log('  Password: Admin@2024!Secure');
+  console.log('  Scope:    National (Full Access)');
   console.log('');
   console.log('Election Manager:');
   console.log('  Email:    manager@elections.ke');
   console.log('  Password: Manager@2024!Secure');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n📋 ABAC Policies Created:');
+  console.log('  • Election Day Hours Restriction (disabled)');
+  console.log('  • Public Viewer Read-Only Access (active)');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n📧 System Configurations:');
+  console.log('  • Email service settings configured');
+  console.log('  • Security and authentication settings');
+  console.log('  • Storage and rate limiting configurations');
+  console.log('  • Database and notification settings');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(
     '\n⚠️  IMPORTANT: Change these passwords immediately after first login!'
+  );
+  console.log(
+    '⚠️  IMPORTANT: Configure SMTP credentials in System Configurations to enable email service!'
   );
 }
 

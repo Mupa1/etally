@@ -5,6 +5,7 @@ Welcome to the eTally2 documentation hub. All project documentation is organized
 ## 📚 Table of Contents
 
 ### 🚀 Setup & Installation
+
 Getting started with eTally2 development environment.
 
 - [Backend Quickstart](setup/backend-quickstart.md) - Backend setup and configuration
@@ -14,41 +15,59 @@ Getting started with eTally2 development environment.
 - [Credentials](setup/credentials.md) - System credentials and access information
 
 ### 🧪 Testing
+
 Testing strategies and guides.
 
 - [Testing Guide](testing/testing-guide.md) - Comprehensive testing documentation
 
 ### 🔌 API Documentation
+
 API usage and integration guides.
 
 - [Postman Examples](api/postman-examples.md) - API testing with Postman
 
 ### 🏗️ Architecture
+
 System architecture and design documentation.
 
+- [Backend Implementation Review](architecture/backend-implementation-review.md) - Comprehensive backend analysis and status
+- **ABAC Implementation (100% Complete - Phases 1-6):**
+  - [ABAC Implementation Summary](architecture/abac-implementation-summary.md) - ⭐ Complete overview of ABAC system
+  - [Phase 1: Database Schema](architecture/abac-phase1-completion.md) - Foundation for RBAC + ABAC
+  - [Phase 2: Core Engine](architecture/abac-phase2-completion.md) - Authorization engine (500+ lines)
+  - [Phase 3: Middleware Integration](architecture/abac-phase3-completion.md) - Route protection
+  - [Phase 4: Domain Services](architecture/abac-phase4-completion.md) - Election domain with ABAC
+  - [Phase 5: Admin APIs](architecture/abac-phase5-completion.md) - Policy & permission management (17 endpoints)
+  - [Phase 6: Admin UI](architecture/abac-admin-ui-completion.md) - ✨ Complete admin interface (5 views, 1,915+ lines)
 - [Component Refactoring Summary](architecture/component-refactoring-summary.md) - Frontend component reusability improvements
 
 ### 🚢 Deployment
+
 Deployment guides and configurations.
 
 - [PgAdmin Setup](deployment/pgadmin-setup.md) - PostgreSQL administration setup
 
 ### 🎯 Domain Documentation
+
 Domain-specific implementation details.
 
 #### Authentication
+
 - [Auth Domain](domains/auth/auth-domain.md) - Authentication domain implementation
 
 #### Observer Registration
+
 - [Implementation](domains/observer-registration/implementation.md) - Observer registration implementation details
 - [Requirements](domains/observer-registration/requirements.md) - Observer registration functional requirements
 
 ### 💾 Database
+
 Database schemas, migrations, and status.
 
 - [Database Status](database/database-status.md) - Current database state and migration history
 
 ### 📋 Project Management
+
 Project planning, status, and technical considerations.
 
 - [Project Status](project/status.md) - Current project status and milestones
@@ -85,5 +104,4 @@ When updating existing documentation or adding new docs, please:
 
 ---
 
-*Last updated: October 12, 2025*
-
+_Last updated: October 12, 2025_

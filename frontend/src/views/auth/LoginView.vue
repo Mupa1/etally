@@ -13,10 +13,18 @@
       <div class="card">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Sign In</h2>
 
+        <!-- Session Expired Message -->
+        <Alert
+          v-if="isSessionExpired"
+          type="info"
+          message="Your session has expired. Please login again to continue."
+          class="mb-4"
+        />
+
         <!-- Error Message -->
         <Alert
           v-if="authStore.error"
-          variant="danger"
+          type="error"
           :message="authStore.error"
           class="mb-4"
         />
@@ -93,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import Alert from '@/components/common/Alert.vue';
@@ -113,6 +121,11 @@ const showPasswordChangeModal = ref(false);
 const passwordChangeModalRef = ref<InstanceType<
   typeof FirstLoginPasswordChangeModal
 > | null>(null);
+
+// Check if user was logged out due to expired session
+const isSessionExpired = computed(() => {
+  return router.currentRoute.value.query.expired === 'true';
+});
 
 async function handleLogin() {
   try {
