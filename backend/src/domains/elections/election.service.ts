@@ -11,21 +11,72 @@ import {
   ValidationError,
   AuthorizationError,
 } from '@/shared/types/errors';
-import { ElectionStatus, ElectionType, UserRole } from '@prisma/client';
+import {
+  ElectionScopeLevel,
+  ElectionStatus,
+  ElectionType,
+  ReferendumQuestionType,
+  UserRole,
+} from '@prisma/client';
+
+interface IContestInput {
+  positionName: string;
+  description?: string | null;
+  orderIndex?: number | null;
+}
+
+interface IReferendumQuestionInput {
+  questionText: string;
+  questionType?: ReferendumQuestionType;
+  orderIndex?: number | null;
+}
 
 interface ICreateElectionData {
   electionCode: string;
   title: string;
   electionType: ElectionType;
   electionDate: Date;
-  description?: string;
+  description?: string | null;
+  parentElectionId?: string | null;
+  nominationOpenDate?: Date | null;
+  nominationCloseDate?: Date | null;
+  partyListDeadline?: Date | null;
+  observerCallDate?: Date | null;
+  observerAppDeadline?: Date | null;
+  observerReviewDeadline?: Date | null;
+  tallyingStartDate?: Date | null;
+  tallyingEndDate?: Date | null;
+  resultsPublishDate?: Date | null;
+  scopeLevel?: ElectionScopeLevel | null;
+  countyId?: string | null;
+  constituencyId?: string | null;
+  wardId?: string | null;
+  contests?: IContestInput[];
+  referendumQuestions?: IReferendumQuestionInput[];
 }
 
 interface IUpdateElectionData {
   title?: string;
   electionDate?: Date;
-  description?: string;
+  description?: string | null;
   status?: ElectionStatus;
+  electionType?: ElectionType;
+  parentElectionId?: string | null;
+  nominationOpenDate?: Date | null;
+  nominationCloseDate?: Date | null;
+  partyListDeadline?: Date | null;
+  observerCallDate?: Date | null;
+  observerAppDeadline?: Date | null;
+  observerReviewDeadline?: Date | null;
+  tallyingStartDate?: Date | null;
+  tallyingEndDate?: Date | null;
+  resultsPublishDate?: Date | null;
+  scopeLevel?: ElectionScopeLevel | null;
+  countyId?: string | null;
+  constituencyId?: string | null;
+  wardId?: string | null;
+  contests?: IContestInput[];
+  referendumQuestions?: IReferendumQuestionInput[];
 }
 
 interface IElectionFilters {
@@ -35,6 +86,7 @@ interface IElectionFilters {
   endDate?: Date;
   countyId?: string;
   constituencyId?: string;
+  wardId?: string;
 }
 
 class ElectionService {
@@ -78,25 +130,68 @@ class ElectionService {
       );
     }
 
+    const {
+      contests,
+      referendumQuestions,
+      countyId,
+      constituencyId,
+      wardId,
+      scopeLevel,
+      parentElectionId,
+      nominationOpenDate,
+      nominationCloseDate,
+      partyListDeadline,
+      observerCallDate,
+      observerAppDeadline,
+      observerReviewDeadline,
+      tallyingStartDate,
+      tallyingEndDate,
+      resultsPublishDate,
+      ...baseData
+    } = data;
+
     // Create election
     const election = await this.prisma.election.create({
       data: {
-        ...data,
+        ...baseData,
+        parentElectionId: parentElectionId ?? null,
+        nominationOpenDate: nominationOpenDate ?? null,
+        nominationCloseDate: nominationCloseDate ?? null,
+        partyListDeadline: partyListDeadline ?? null,
+        observerCallDate: observerCallDate ?? null,
+        observerAppDeadline: observerAppDeadline ?? null,
+        observerReviewDeadline: observerReviewDeadline ?? null,
+        tallyingStartDate: tallyingStartDate ?? null,
+        tallyingEndDate: tallyingEndDate ?? null,
+        resultsPublishDate: resultsPublishDate ?? null,
+        scopeLevel: scopeLevel ?? null,
+        countyId: countyId ?? null,
+        constituencyId: constituencyId ?? null,
+        wardId: wardId ?? null,
         createdBy: userId,
         status: 'draft',
+        contests:
+          contests && contests.length > 0
+            ? {
+                create: contests.map((contest, index) => ({
+                  positionName: contest.positionName,
+                  description: contest.description || null,
+                  orderIndex: contest.orderIndex ?? index,
+                })),
+              }
+            : undefined,
+        referendumQuestions:
+          referendumQuestions && referendumQuestions.length > 0
+            ? {
+                create: referendumQuestions.map((question, index) => ({
+                  questionText: question.questionText,
+                  questionType: question.questionType || ReferendumQuestionType.yes_no,
+                  orderIndex: question.orderIndex ?? index,
+                })),
+              }
+            : undefined,
       },
-      include: {
-        contests: true,
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            role: true,
-          },
-        },
-      },
+      include: this.baseElectionInclude(),
     });
 
     // Invalidate election list cache
@@ -168,6 +263,16 @@ class ElectionService {
       }
     }
 
+    if (filters.countyId) {
+      where.countyId = filters.countyId;
+    }
+    if (filters.constituencyId) {
+      where.constituencyId = filters.constituencyId;
+    }
+    if (filters.wardId) {
+      where.wardId = filters.wardId;
+    }
+
     // Check cache
     const cacheKey = `elections:list:${userId}:${JSON.stringify(where)}`;
     const cached = await this.redis.get(cacheKey);
@@ -178,21 +283,7 @@ class ElectionService {
     // Fetch from database
     const elections = await this.prisma.election.findMany({
       where,
-      include: {
-        contests: {
-          include: {
-            candidates: true,
-          },
-        },
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
+      include: this.baseElectionInclude(true),
       orderBy: { electionDate: 'desc' },
     });
 
@@ -209,25 +300,7 @@ class ElectionService {
   async getElectionById(userId: string, role: UserRole, electionId: string) {
     const election = await this.prisma.election.findUnique({
       where: { id: electionId, deletedAt: null },
-      include: {
-        contests: {
-          include: {
-            candidates: {
-              include: {
-                party: true,
-              },
-            },
-          },
-        },
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
+      include: this.baseElectionInclude(true),
     });
 
     if (!election) {
@@ -297,21 +370,78 @@ class ElectionService {
       );
     }
 
-    // Update election
-    const updated = await this.prisma.election.update({
-      where: { id: electionId },
-      data,
-      include: {
-        contests: true,
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
+    const {
+      contests,
+      referendumQuestions,
+      countyId,
+      constituencyId,
+      wardId,
+      scopeLevel,
+      parentElectionId,
+      ...updateData
+    } = data;
+
+    const payload: any = {
+      ...updateData,
+    };
+
+    if (parentElectionId !== undefined) {
+      payload.parentElectionId = parentElectionId ?? null;
+    }
+    if (scopeLevel !== undefined) {
+      payload.scopeLevel = scopeLevel ?? null;
+    }
+    if (countyId !== undefined) {
+      payload.countyId = countyId ?? null;
+    }
+    if (constituencyId !== undefined) {
+      payload.constituencyId = constituencyId ?? null;
+    }
+    if (wardId !== undefined) {
+      payload.wardId = wardId ?? null;
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.election.update({
+        where: { id: electionId },
+        data: payload,
+      });
+
+      if (Array.isArray(contests)) {
+        await tx.electionContest.deleteMany({ where: { electionId } });
+        if (contests.length > 0) {
+          await tx.electionContest.createMany({
+            data: contests.map((contest, index) => ({
+              electionId,
+              positionName: contest.positionName,
+              description: contest.description || null,
+              orderIndex: contest.orderIndex ?? index,
+            })),
+          });
+        }
+      }
+
+      if (Array.isArray(referendumQuestions)) {
+        await tx.electionReferendumQuestion.deleteMany({
+          where: { electionId },
+        });
+        if (referendumQuestions.length > 0) {
+          await tx.electionReferendumQuestion.createMany({
+            data: referendumQuestions.map((question, index) => ({
+              electionId,
+              questionText: question.questionText,
+              questionType:
+                question.questionType || ReferendumQuestionType.yes_no,
+              orderIndex: question.orderIndex ?? index,
+            })),
+          });
+        }
+      }
+
+      return tx.election.findUniqueOrThrow({
+        where: { id: electionId },
+        include: this.baseElectionInclude(true),
+      });
     });
 
     // Invalidate caches
@@ -412,9 +542,7 @@ class ElectionService {
       data: {
         status: 'scheduled',
       },
-      include: {
-        contests: true,
-      },
+      include: this.baseElectionInclude(),
     });
 
     // Invalidate caches
@@ -422,6 +550,72 @@ class ElectionService {
     await this.redis.invalidatePattern('elections:*');
 
     return approved;
+  }
+
+  private baseElectionInclude(includeCandidates = false) {
+    return {
+      contests: includeCandidates
+        ? {
+            include: {
+              candidates: true,
+            },
+          }
+        : true,
+      referendumQuestions: true,
+      creator: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+        },
+      },
+      county: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      constituency: {
+        select: {
+          id: true,
+          name: true,
+          county: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      ward: {
+        select: {
+          id: true,
+          name: true,
+          constituency: {
+            select: {
+              id: true,
+              name: true,
+              county: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      parentElection: {
+        select: {
+          id: true,
+          title: true,
+          electionCode: true,
+          electionDate: true,
+        },
+      },
+    } as const;
   }
 
   /**
@@ -456,7 +650,7 @@ class ElectionService {
     const conditions: any[] = [];
 
     // If user has explicit filter, use it if within their scope
-    if (filters.countyId || filters.constituencyId) {
+    if (filters.countyId || filters.constituencyId || filters.wardId) {
       const hasAccess = scopes.some((scope) => {
         if (filters.countyId && scope.countyId === filters.countyId)
           return true;
@@ -465,6 +659,7 @@ class ElectionService {
           scope.constituencyId === filters.constituencyId
         )
           return true;
+        if (filters.wardId && scope.wardId === filters.wardId) return true;
         return false;
       });
 
@@ -473,6 +668,7 @@ class ElectionService {
         if (filters.countyId) condition.countyId = filters.countyId;
         if (filters.constituencyId)
           condition.constituencyId = filters.constituencyId;
+        if (filters.wardId) condition.wardId = filters.wardId;
         return [condition];
       }
     }
