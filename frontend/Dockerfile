@@ -11,8 +11,8 @@ FROM node:20-alpine AS dependencies
 WORKDIR /app
 
 # Copy package files
-COPY frontend/package.json ./package.json
-COPY frontend/package-lock.json ./package-lock.json
+COPY package.json ./package.json
+COPY package-lock.json ./package-lock.json
 
 # Install dependencies
 RUN npm ci
@@ -32,7 +32,7 @@ ENV VITE_API_URL=$VITE_API_URL
 COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy source code
-COPY frontend/. .
+COPY . .
 
 # Build application
 RUN npm run build
@@ -43,7 +43,7 @@ RUN npm run build
 FROM nginx:alpine AS production
 
 # Copy custom nginx config
-COPY frontend/deployment/nginx.conf /etc/nginx/nginx.conf
+COPY deployment/nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
