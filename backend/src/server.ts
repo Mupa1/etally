@@ -167,6 +167,7 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
+    console.log('DATABASE_URL at startup:', process.env.DATABASE_URL);
     // Connect to database
     const prisma = PrismaService.getInstance();
     await prisma.connect();
