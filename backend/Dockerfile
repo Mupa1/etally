@@ -69,7 +69,10 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 # Copy node_modules and Prisma files from builder (already pruned to production deps)
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+# Rebuild native modules against Alpine musl libc
+RUN npm rebuild bcrypt --build-from-source && \
+    npm rebuild sharp --build-from-source && \
+    npm cache clean --force
 # Generate Prisma client for linux-musl-openssl-3.0.x (Alpine Linux with OpenSSL 3)
 ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
 RUN npx prisma generate
