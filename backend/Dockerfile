@@ -96,5 +96,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Run pending migrations, then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+# Start the API server (Run migrations manually using the runbook before deploy)
+CMD ["node", "dist/server.js"]
