@@ -38,6 +38,7 @@ import emailTemplateRoutes from '@/domains/communication/email-template.routes';
 // Server configuration
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || '::';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ==========================================
@@ -177,8 +178,13 @@ const startServer = async () => {
       console.warn('⚠️  Redis connection failed, continuing without cache');
     }
 
-    // Bind to 0.0.0.0 to accept connections from all network interfaces
-    app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, HOST, () => {
+      const hostLabel =
+        HOST === '::'
+          ? ':: (all interfaces)'
+          : HOST === '0.0.0.0'
+          ? '0.0.0.0 (all interfaces)'
+          : HOST;
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
@@ -186,7 +192,7 @@ const startServer = async () => {
 ║                                                           ║
 ║   Environment: ${NODE_ENV.padEnd(43)}║
 ║   Port:        ${PORT.toString().padEnd(43)}║
-║   Host:        0.0.0.0 (all interfaces)                  ║
+║   Host:        ${hostLabel.padEnd(43)}║
 ║   Status:      Running ✓                                 ║
 ║   Database:    Connected ✓                               ║
 ║   Redis:       ${(redisHealthy ? 'Connected ✓' : 'Disconnected ⚠️').padEnd(47)}║
