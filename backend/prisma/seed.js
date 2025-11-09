@@ -4,17 +4,10 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
-
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seed...');
-
-  // Hash password for initial admin
-  const SALT_ROUNDS = 12;
-  const defaultPassword = 'Admin@2024!Secure';
-  const passwordHash = await bcrypt.hash(defaultPassword, SALT_ROUNDS);
 
   // Create initial super admin user
   const adminUser = await prisma.user.upsert({
@@ -26,7 +19,7 @@ async function main() {
       phoneNumber: '+254700000001',
       firstName: 'System',
       lastName: 'Administrator',
-      passwordHash,
+      passwordHash: '$2b$12$xZO3BpMWh5bhejhGOzLwTe2jnPX1ppij3qB4Lr300/tUdrrNZeEWm',
       role: 'super_admin',
       isActive: true,
       createdAt: new Date(),
@@ -41,10 +34,6 @@ async function main() {
   });
 
   // Create initial election manager user
-  const managerPasswordHash = await bcrypt.hash(
-    'Manager@2024!Secure',
-    SALT_ROUNDS
-  );
   const managerUser = await prisma.user.upsert({
     where: { email: 'manager@elections.ke' },
     update: {},
@@ -54,7 +43,8 @@ async function main() {
       phoneNumber: '+254700000002',
       firstName: 'Election',
       lastName: 'Manager',
-      passwordHash: managerPasswordHash,
+      passwordHash:
+        '$2b$12$hGD31n5L.IHO98SieseYy.Q3Vu7/vWVAjabIdeFykF0CymjDHxEx6',
       role: 'election_manager',
       isActive: true,
       createdAt: new Date(),
