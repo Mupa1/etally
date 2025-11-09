@@ -69,6 +69,8 @@ services:
       context: ../backend
       dockerfile: Dockerfile
       target: production
+      args:
+        APP_DIR: .
     container_name: etally-api
     restart: unless-stopped
     env_file:
@@ -106,6 +108,7 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
+        APP_DIR: .
         VITE_API_URL: ${VITE_API_URL}
     container_name: etally-frontend
     restart: unless-stopped
