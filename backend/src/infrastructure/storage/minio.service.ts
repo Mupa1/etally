@@ -5,6 +5,29 @@
 
 import * as Minio from 'minio';
 
+const parseEndpoint = (
+  value: string | undefined,
+  fallbackHost: string,
+  fallbackPort: number
+) => {
+  if (!value || value.trim().length === 0) {
+    return { host: fallbackHost, port: fallbackPort };
+  }
+
+  const sanitized = value
+    .replace(/^https?:\/\//i, '')
+    .replace(/^tcp:\/\//i, '')
+    .split('/')[0];
+
+  const [host, portString] = sanitized.split(':');
+  const port = portString ? Number(portString) : fallbackPort;
+
+  return {
+    host: host || fallbackHost,
+    port: Number.isNaN(port) ? fallbackPort : port,
+  };
+};
+
 class MinIOService {
   private static instance: MinIOService;
   private client: Minio.Client;
@@ -16,8 +39,12 @@ class MinIOService {
 
   private constructor() {
     // Use the internal Docker network name for internal operations
-    const endPoint = process.env.MINIO_ENDPOINT || 'minio';
-    const port = parseInt(process.env.MINIO_PORT || '9000');
+    const fallbackPort = parseInt(process.env.MINIO_PORT || '9000', 10);
+    const { host: endPoint, port } = parseEndpoint(
+      process.env.MINIO_ENDPOINT,
+      'minio',
+      fallbackPort
+    );
 
     this.client = new Minio.Client({
       endPoint,
@@ -85,8 +112,12 @@ class MinIOService {
   ): Promise<string> {
     // Generate presigned URL with the correct host for LAN access
     // Use the LAN IP for presigned URLs so they work from other devices
-    const endPoint = '192.168.178.72'; // Use LAN IP for presigned URLs
-    const port = parseInt(process.env.MINIO_PORT || '9000');
+    const fallbackPort = parseInt(process.env.MINIO_PORT || '9000', 10);
+    const { host: endPoint, port } = parseEndpoint(
+      process.env.MINIO_PRESIGNED_ENDPOINT,
+      '192.168.178.72',
+      fallbackPort
+    );
     const useSSL = process.env.MINIO_USE_SSL === 'true';
 
     // Create a temporary client with the correct endpoint for presigned URLs

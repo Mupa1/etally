@@ -6,7 +6,7 @@
 # ==========================================
 # Stage 1: Dependencies
 # ==========================================
-FROM node:18-alpine AS dependencies
+FROM node:20-alpine AS dependencies
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN npx prisma generate
 # ==========================================
 # Stage 2: Builder
 # ==========================================
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -47,7 +47,7 @@ RUN npm prune --production
 # ==========================================
 # Stage 3: Production
 # ==========================================
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
