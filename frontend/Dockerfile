@@ -8,11 +8,13 @@
 # ==========================================
 FROM node:20-alpine AS dependencies
 
+ARG APP_DIR=frontend
+
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./package.json
-COPY package-lock.json ./package-lock.json
+COPY ${APP_DIR}/package.json ./package.json
+COPY ${APP_DIR}/package-lock.json ./package-lock.json
 
 # Install dependencies
 RUN npm ci
@@ -21,6 +23,8 @@ RUN npm ci
 # Stage 2: Builder
 # ==========================================
 FROM node:20-alpine AS builder
+
+ARG APP_DIR=frontend
 
 WORKDIR /app
 
@@ -32,7 +36,7 @@ ENV VITE_API_URL=$VITE_API_URL
 COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy source code
-COPY . .
+COPY ${APP_DIR}/ .
 
 # Build application
 RUN npm run build
@@ -42,8 +46,10 @@ RUN npm run build
 # ==========================================
 FROM nginx:alpine AS production
 
+ARG APP_DIR=frontend
+
 # Copy custom nginx config
-COPY deployment/nginx.conf /etc/nginx/nginx.conf
+COPY ${APP_DIR}/deployment/nginx.conf /etc/nginx/nginx.conf
 
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
