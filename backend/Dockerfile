@@ -8,15 +8,17 @@
 # ==========================================
 FROM node:20-alpine AS dependencies
 
+ARG APP_DIR=backend
+
 WORKDIR /app
 
 # Install dependencies for native modules
 RUN apk add --no-cache python3 make g++
 
 # Copy package files explicitly (ensures lockfile is present)
-COPY package.json ./package.json
-COPY package-lock.json ./package-lock.json
-COPY prisma ./prisma/
+COPY ${APP_DIR}/package.json ./package.json
+COPY ${APP_DIR}/package-lock.json ./package-lock.json
+COPY ${APP_DIR}/prisma ./prisma/
 
 # Install all dependencies
 RUN npm ci
@@ -29,6 +31,8 @@ RUN npx prisma generate
 # ==========================================
 FROM node:20-alpine AS builder
 
+ARG APP_DIR=backend
+
 WORKDIR /app
 
 # Copy dependencies from previous stage
@@ -36,7 +40,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/prisma ./prisma
 
 # Copy source code
-COPY . .
+COPY ${APP_DIR}/ .
 
 # Build TypeScript
 RUN npm run build
@@ -48,6 +52,8 @@ RUN npm prune --production
 # Stage 3: Production
 # ==========================================
 FROM node:20-alpine AS production
+
+ARG APP_DIR=backend
 
 WORKDIR /app
 
