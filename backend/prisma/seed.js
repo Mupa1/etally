@@ -143,14 +143,6 @@ async function main() {
     console.log(`✓ Created ${policy.statusMessage}: ${policy.name}`);
   }
 
-  // Seed configurations
-  try {
-    const { seedConfigurations } = require('./seeds/configurations.seed.ts');
-    await seedConfigurations();
-  } catch (error) {
-    console.error('❌ Failed to seed configurations:', error);
-  }
-
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Initial Credentials:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
