@@ -63,12 +63,12 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or Postman)
       if (!origin) return callback(null, true);
-      
+
       // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      
+
       // In development, allow any local network IP
       if (NODE_ENV === 'development') {
         // Allow localhost and private IP ranges (with or without ports)
@@ -83,7 +83,7 @@ app.use(
           return callback(null, true);
         }
       }
-      
+
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -183,8 +183,9 @@ const startServer = async () => {
         HOST === '::'
           ? ':: (all interfaces)'
           : HOST === '0.0.0.0'
-          ? '0.0.0.0 (all interfaces)'
-          : HOST;
+            ? '0.0.0.0 (all interfaces)'
+            : HOST;
+      console.log(`API server listening on ${hostLabel}:${PORT}`);
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
