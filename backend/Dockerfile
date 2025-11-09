@@ -69,6 +69,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 # Install production dependencies (this will rebuild native modules for the correct arch)
 # Use --ignore-scripts to skip prepare/husky hooks, then rebuild native modules
 RUN npm ci --only=production --ignore-scripts && \
+    npm install --no-save prisma && \
     npm rebuild bcrypt --build-from-source && \
     npm rebuild sharp --build-from-source && \
     npm cache clean --force
