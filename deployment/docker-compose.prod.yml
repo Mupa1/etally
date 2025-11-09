@@ -11,14 +11,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U admin -d elections']
+      test: ["CMD-SHELL", "pg_isready -U admin -d elections"]
       interval: 10s
       timeout: 5s
       retries: 10
     networks:
       - etally
     ports:
-      - '5432:5432'
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
@@ -33,14 +33,14 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '$${REDIS_PASSWORD}', 'PING']
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "PING"]
       interval: 10s
       timeout: 5s
       retries: 10
     networks:
       - etally
     ports:
-      - '6379:6379'
+      - "6379:6379"
 
   minio:
     image: minio/minio:latest
@@ -54,15 +54,37 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 5
     networks:
       - etally
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: etally-pgadmin
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@elections.ke}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5050:80"
+    networks:
+      - etally
 
   api:
     build:
@@ -82,7 +104,7 @@ services:
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: admin
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_USE_SSL: 'false'
+      MINIO_USE_SSL: "false"
       HOST: 0.0.0.0
       PORT: 3000
     depends_on:
@@ -93,14 +115,14 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 5
     networks:
       - etally
     ports:
-      - '3000:3000'
+      - "3000:3000"
 
   frontend:
     build:
@@ -117,7 +139,41 @@ services:
     depends_on:
       - api
     ports:
-      - '80:80'
+      - "80:80"
+    networks:
+      - etally
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: etally-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - etally
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: etally-grafana
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-clock-panel
+      GF_SERVER_ROOT_URL: ${GRAFANA_URL:-http://localhost:3001}
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
     networks:
       - etally
 
@@ -125,8 +181,10 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  pgadmin_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   etally:
     driver: bridge
-
