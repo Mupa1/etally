@@ -63,9 +63,6 @@ RUN apk add --no-cache dumb-init curl python3 make g++ openssl-dev && \
       --repository=https://dl-cdn.alpinelinux.org/alpine/v3.18/community \
       openssl1.1-compat
 
-# Copy package files first
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-
 # Copy node_modules and Prisma files from builder (already pruned to production deps)
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
@@ -99,5 +96,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Run migrations, seed (first deploy), then start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run prisma:seed && node dist/server.js"]
+# Run pending migrations, then start the server
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
