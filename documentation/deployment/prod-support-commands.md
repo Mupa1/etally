@@ -88,4 +88,3 @@ docker exec -it etally-minio mc ls local
 - Grafana dashboards live in `deployment/grafana`.
 
 Keep this page updated as operational practices evolve.
-
