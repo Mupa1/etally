@@ -132,8 +132,6 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://localhost:80,http://localhost:5173}
-      # Force Prisma to use OpenSSL 3.0.x binary on Alpine Linux
-      PRISMA_QUERY_ENGINE_LIBRARY: /app/node_modules/.prisma/client/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
     depends_on:
       database:
         condition: service_healthy

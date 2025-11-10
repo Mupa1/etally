@@ -12,12 +12,17 @@
     :class="[
       'fixed top-0 left-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 flex flex-col',
       // Mobile: Hidden by default (-translate-x-full), full width when open
-      'w-64 sm:w-20 lg:w-64',
+      'w-64',
       '-translate-x-full sm:translate-x-0',
       // Mobile menu open: slide in and higher z-index
       isMobileMenuOpen ? 'translate-x-0 z-50' : 'z-40',
       // Desktop/Tablet: Respect collapsed state
-      { 'sm:w-20': isCollapsed, 'sm:w-64': !isCollapsed },
+      {
+        'sm:w-20': isCollapsed,
+        'lg:w-20': isCollapsed,
+        'sm:w-64': !isCollapsed,
+        'lg:w-64': !isCollapsed,
+      },
     ]"
   >
     <!-- Logo & Toggle -->

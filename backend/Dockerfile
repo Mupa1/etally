@@ -76,8 +76,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 RUN npm rebuild bcrypt --build-from-source && \
     npm rebuild sharp --build-from-source && \
     npm cache clean --force
-# Generate Prisma client for linux-musl-openssl-3.0.x (Alpine Linux with OpenSSL 3)
-ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
+# Generate Prisma client for Linux musl (x64 & arm64) with OpenSSL 3
+ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x,linux-musl-arm64-openssl-3.0.x
 RUN npx prisma generate
 
 # Copy built application
