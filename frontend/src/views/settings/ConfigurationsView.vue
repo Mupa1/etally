@@ -240,8 +240,15 @@ const categoryDefinitions: Record<
     status: 'active',
   },
   email: {
-    name: 'Email Service',
-    description: 'SMTP and email host configurations',
+    name: 'Email Service (legacy)',
+    description: 'Legacy email configuration (currently disabled)',
+    icon: SettingsIcon,
+    color: 'gray',
+    status: 'inactive',
+  },
+  sms: {
+    name: 'SMS Service',
+    description: 'SMS provider configuration',
     icon: SettingsIcon,
     color: 'info',
     status: 'active',

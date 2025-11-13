@@ -362,7 +362,7 @@
                   Set Up Your Password
                 </h4>
                 <p class="text-sm text-gray-600">
-                  Once approved, you'll receive an email with a link to set up
+                  Once approved, you'll receive an SMS with a link to set up
                   your secure password.
                 </p>
               </div>

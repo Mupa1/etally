@@ -4,14 +4,7 @@
     <Sidebar />
 
     <!-- Main Content Area -->
-    <div
-      :class="[
-        'flex flex-col min-h-screen transition-all duration-300',
-        // Mobile: No margin (sidebar is overlay)
-        // Desktop: Margin based on collapsed state
-        'ml-0 sm:ml-20 lg:ml-64',
-      ]"
-    >
+    <div :class="mainContentClasses">
       <!-- Top Header Bar -->
       <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div class="px-4 sm:px-6 py-4">
@@ -107,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from 'vue';
+import { computed, provide, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useUserUtils } from '@/composables/useUserUtils';
 import Avatar from '@/components/common/Avatar.vue';
@@ -153,4 +146,10 @@ function closeMobileMenu() {
 provide('isSidebarCollapsed', isSidebarCollapsed);
 provide('isMobileMenuOpen', isMobileMenuOpen);
 provide('closeMobileMenu', closeMobileMenu);
+
+const mainContentClasses = computed(() => [
+  'flex flex-col min-h-screen transition-all duration-300',
+  'ml-0',
+  isSidebarCollapsed.value ? 'sm:ml-20 lg:ml-20' : 'sm:ml-64 lg:ml-64',
+]);
 </script>

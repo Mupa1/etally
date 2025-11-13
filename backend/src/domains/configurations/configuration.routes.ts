@@ -51,6 +51,17 @@ router.post(
 );
 
 /**
+ * @route   POST /api/v1/configurations/sms/test
+ * @desc    Send a diagnostic SMS using current configuration
+ * @access  Private (Super Admin)
+ */
+router.post(
+  '/sms/test',
+  authMiddleware.requireRoles(['super_admin']),
+  configurationController.sendTestSms
+);
+
+/**
  * @route   GET /api/v1/configurations/categories/list
  * @desc    Get all configuration categories with counts
  * @access  Private (Super Admin)

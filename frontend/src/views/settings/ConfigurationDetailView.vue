@@ -58,8 +58,14 @@
 
       <!-- Settings List -->
       <div v-else class="space-y-4">
+        <SmsServiceConfigCard
+          v-if="isSmsCategory"
+          :settings="settings"
+          @updated="loadSettings"
+        />
+        <SmsServiceTestCard v-if="isSmsCategory" />
         <div
-          v-for="setting in settings"
+          v-for="setting in remainingSettings"
           :key="setting.id"
           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
         >
@@ -214,7 +220,10 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="settings.length === 0" class="p-12 text-center">
+        <div
+          v-if="!isSmsCategory && remainingSettings.length === 0"
+          class="p-12 text-center"
+        >
           <EmptyState
             title="No settings found"
             description="No configurations available for this category"
@@ -362,6 +371,8 @@ import Alert from '@/components/common/Alert.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import Modal from '@/components/common/Modal.vue';
 import FormField from '@/components/mobile/FormField.vue';
+import SmsServiceConfigCard from '@/components/settings/SmsServiceConfigCard.vue';
+import SmsServiceTestCard from '@/components/settings/SmsServiceTestCard.vue';
 import api from '@/utils/api';
 
 interface Configuration {
@@ -401,7 +412,11 @@ const categoryNames: Record<string, { name: string; description: string }> = {
   },
   email: {
     name: 'Email Service',
-    description: 'SMTP and email host configurations',
+    description: 'Legacy email host configurations (currently disabled)',
+  },
+  sms: {
+    name: 'SMS Service',
+    description: 'SMS provider configuration',
   },
   notifications: {
     name: 'Notifications',
@@ -429,6 +444,44 @@ const categoryDescription = computed(() => {
   return (
     categoryNames[categoryId.value]?.description ||
     'System configuration settings'
+  );
+});
+
+const smsCategoryTokens = ['sms', 'text', 'africastalking', 'mobile'];
+
+const smsConfigKeys = new Set([
+  'sms_provider',
+  'africastalking_username',
+  'africastalking_api_key',
+  'africastalking_sender_id',
+  'africastalking_masked_number',
+  'africastalking_telco',
+  'africastalking_base_url',
+  'africastalking_bulk_endpoint',
+  'sms_max_retry',
+  'sms_timeout',
+]);
+
+const isSmsCategory = computed(() => {
+  const rawId = (categoryId.value ?? '').toString();
+  const normalizedId = rawId.trim().toLowerCase().replace(/[\s_-]+/g, '');
+
+  if (smsCategoryTokens.some((token) => normalizedId.includes(token))) {
+    return true;
+  }
+
+  return settings.value.some((setting) =>
+    smsConfigKeys.has(setting.key.toLowerCase())
+  );
+});
+
+const remainingSettings = computed(() => {
+  if (!isSmsCategory.value) {
+    return settings.value;
+  }
+
+  return settings.value.filter(
+    (setting) => !smsConfigKeys.has(setting.key.toLowerCase())
   );
 });
 
@@ -541,7 +594,8 @@ function formatJson(value: any): string {
 }
 
 function isPasswordField(key: string): boolean {
-  return key.toLowerCase().includes('password');
+  const lower = key.toLowerCase();
+  return lower.includes('password') || lower.includes('api_key');
 }
 
 function goBack() {

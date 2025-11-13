@@ -18,12 +18,13 @@ import {
   generateTrackingNumber,
   calculateAge,
 } from './observer.types';
+import { SmsService } from './sms.service';
 
 export class ObserverService {
   constructor(
     private prisma: PrismaClient,
     private minioService: any, // Will be injected
-    private emailService: any // Will be injected
+    private smsService: SmsService // Will be injected
   ) {}
 
   /**
@@ -84,19 +85,19 @@ export class ObserverService {
       },
     });
 
-    // Send confirmation email (non-blocking - don't fail registration if email fails)
+    // Send confirmation SMS (non-blocking - don't fail registration if SMS fails)
     try {
-      await this.emailService.sendRegistrationConfirmation(
-        data.email,
+      await this.smsService.sendRegistrationConfirmation(
+        data.phoneNumber,
         data.firstName,
         trackingNumber
       );
-    } catch (emailError: any) {
+    } catch (smsError: any) {
       console.error(
-        'Failed to send registration confirmation email:',
-        emailError.message
+        'Failed to send registration confirmation SMS:',
+        smsError.message
       );
-      // Continue with registration - email failure should not block observer registration
+      // Continue with registration - SMS failure should not block observer registration
     }
 
     return {
@@ -104,7 +105,7 @@ export class ObserverService {
       trackingNumber,
       message: 'Application submitted successfully',
       nextSteps:
-        'You will receive an email when your application is reviewed (typically within 24-48 hours)',
+        'You will receive an SMS when your application is reviewed (typically within 24-48 hours)',
     };
   }
 
@@ -127,14 +128,14 @@ export class ObserverService {
 
     const statusMessages: Record<ObserverStatus, string> = {
       pending_review:
-        'Your application is under review. You will be notified via email once reviewed.',
+        'Your application is under review. You will be notified via SMS once reviewed.',
       more_information_requested:
-        'We need more information to complete your application review. Please check your email for details.',
+        'We need more information to complete your application review. Please check your SMS messages for details.',
       approved:
-        'Your application has been approved! Check your email for password setup link.',
+        'Your application has been approved! Check your SMS messages for the password setup link.',
       active: 'Your account is active. You can login to the observer portal.',
       rejected:
-        'Your application was not approved. Check your email for details.',
+        'Your application was not approved. Check your SMS messages for details.',
       suspended:
         'Your account has been suspended. Contact support for more information.',
       inactive: 'Your account is inactive.',
@@ -556,17 +557,24 @@ export class ObserverService {
         },
       });
 
-      // 7. Send password setup email (non-blocking)
-      try {
-        await this.emailService.sendPasswordSetupEmail(
-          user.email,
-          user.firstName,
-          setupToken
-        );
-      } catch (emailError: any) {
-        console.error(
-          'Failed to send password setup email:',
-          emailError.message
+      // 7. Send password setup SMS (non-blocking)
+      if (user.phoneNumber) {
+        try {
+          await this.smsService.sendPasswordSetupSms(
+            user.phoneNumber,
+            user.firstName,
+            setupToken
+          );
+        } catch (smsError: any) {
+          console.error(
+            'Failed to send password setup SMS:',
+            smsError.message
+          );
+        }
+      } else {
+        console.warn(
+          'Skipping password setup SMS - user is missing phone number',
+          { userId: user.id, applicationId }
         );
       }
 
@@ -598,7 +606,7 @@ export class ObserverService {
         },
       });
 
-      // Get application for email
+      // Get application for notification
       const application = await tx.observerRegistration.findUnique({
         where: { id: applicationId },
       });
@@ -617,16 +625,23 @@ export class ObserverService {
         },
       });
 
-      // Send rejection email (non-blocking)
+      // Send rejection SMS (non-blocking)
       if (application) {
-        try {
-          await this.emailService.sendRejectionEmail(
-            application.email,
-            application.firstName,
-            rejectionReason
+        if (application.phoneNumber) {
+          try {
+            await this.smsService.sendRejectionSms(
+              application.phoneNumber,
+              application.firstName,
+              rejectionReason
+            );
+          } catch (smsError: any) {
+            console.error('Failed to send rejection SMS:', smsError.message);
+          }
+        } else {
+          console.warn(
+            'Skipping rejection SMS - application is missing phone number',
+            { applicationId }
           );
-        } catch (emailError: any) {
-          console.error('Failed to send rejection email:', emailError.message);
         }
       }
 
@@ -653,18 +668,25 @@ export class ObserverService {
       },
     });
 
-    // Send clarification request email (non-blocking)
-    try {
-      await this.emailService.sendClarificationRequest(
-        application.email,
-        application.firstName,
-        notes,
-        application.trackingNumber
-      );
-    } catch (emailError: any) {
-      console.error(
-        'Failed to send clarification request email:',
-        emailError.message
+    // Send clarification request SMS (non-blocking)
+    if (application.phoneNumber) {
+      try {
+        await this.smsService.sendClarificationRequestSms(
+          application.phoneNumber,
+          application.firstName,
+          notes,
+          application.trackingNumber
+        );
+      } catch (smsError: any) {
+        console.error(
+          'Failed to send clarification request SMS:',
+          smsError.message
+        );
+      }
+    } else {
+      console.warn(
+        'Skipping clarification SMS - application is missing phone number',
+        { applicationId }
       );
     }
 
@@ -739,14 +761,21 @@ export class ObserverService {
         },
       });
 
-      // 7. Send welcome email (non-blocking)
-      try {
-        await this.emailService.sendWelcomeEmail(
-          tokenRecord.user.email,
-          tokenRecord.user.firstName
+      // 7. Send welcome SMS (non-blocking)
+      if (tokenRecord.user.phoneNumber) {
+        try {
+          await this.smsService.sendWelcomeSms(
+            tokenRecord.user.phoneNumber,
+            tokenRecord.user.firstName
+          );
+        } catch (smsError: any) {
+          console.error('Failed to send welcome SMS:', smsError.message);
+        }
+      } else {
+        console.warn(
+          'Skipping welcome SMS - user is missing phone number',
+          { userId: tokenRecord.user.id }
         );
-      } catch (emailError: any) {
-        console.error('Failed to send welcome email:', emailError.message);
       }
 
       return {

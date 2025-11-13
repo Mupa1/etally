@@ -68,7 +68,7 @@
                 >2</span
               >
               <span
-                >You will receive an email notification about your application
+                >You will receive an SMS notification about your application
                 status</span
               >
             </li>

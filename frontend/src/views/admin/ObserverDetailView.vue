@@ -422,7 +422,7 @@
     <ConfirmDialog
       v-model="showApproveConfirmModal"
       title="Approve Observer"
-      message="Are you sure you want to approve this observer? They will receive an email to set up their password."
+      message="Are you sure you want to approve this observer? They will receive an SMS to set up their password."
       variant="primary"
       confirmLabel="Approve"
       cancelLabel="Cancel"

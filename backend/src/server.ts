@@ -32,7 +32,7 @@ import observerApplicationsRoutes from '@/domains/mobile/observer-applications.r
 import { createObserverRoutes } from '@/domains/mobile/observer.routes';
 import { ObserverService } from '@/domains/mobile/observer.service';
 import { ObserverMinIOService } from '@/domains/mobile/minio.service';
-import { EmailService } from '@/domains/mobile/email.service';
+import { SmsService } from '@/domains/mobile/sms.service';
 import emailTemplateRoutes from '@/domains/communication/email-template.routes';
 
 // Server configuration
@@ -125,11 +125,11 @@ app.get('/api', (_req, res) => {
 
 // Initialize observer services
 const observerMinIOService = new ObserverMinIOService();
-const emailService = new EmailService();
+const smsService = new SmsService();
 const observerService = new ObserverService(
   PrismaService.getInstance(),
   observerMinIOService,
-  emailService
+  smsService
 );
 
 // API Routes

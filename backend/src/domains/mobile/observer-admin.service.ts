@@ -6,7 +6,7 @@
 import { PrismaClient, ObserverStatus, Prisma } from '@prisma/client';
 import { ValidationError, NotFoundError } from '@/shared/types/errors';
 import { ObserverMinIOService } from './minio.service';
-import { EmailService } from './email.service';
+import { SmsService } from './sms.service';
 import * as crypto from 'crypto';
 
 // Types for admin operations
@@ -79,7 +79,7 @@ export class ObserverAdminService {
   constructor(
     private prisma: PrismaClient,
     private minioService?: ObserverMinIOService,
-    private emailService?: EmailService
+    private smsService?: SmsService
   ) {}
 
   /**
@@ -327,7 +327,7 @@ export class ObserverAdminService {
     // Check if status is actually changing
     const statusChanged = data.status !== undefined && data.status !== observer.status;
     
-    // If status is being changed to approved, handle user creation and email
+    // If status is being changed to approved, handle user creation and notifications
     const isApproving = data.status === 'approved' && observer.status !== 'approved';
     
     // Request info: either status is changing to more_information_requested OR 
@@ -336,24 +336,24 @@ export class ObserverAdminService {
       (data.status === 'more_information_requested' && observer.status !== 'more_information_requested') ||
       (data.status === 'more_information_requested' && observer.status === 'more_information_requested' && data.reviewNotes);
     
-    console.log(`📧 Status change check:`, {
+    console.log(`📱 Status change check:`, {
       hasStatusInData: data.status !== undefined,
       newStatus: data.status,
       currentStatus: observer.status,
       statusChanged,
       isApproving,
       isRequestingInfo,
-      emailServiceAvailable: !!this.emailService,
+      smsServiceAvailable: !!this.smsService,
     });
-    let userToEmail = null;
+    let userForNotification: any = null;
     let setupToken = null;
     
     if (isApproving) {
-      console.log(`📧 Starting approval flow for observer ${observer.id}...`);
+      console.log(`📱 Starting approval flow for observer ${observer.id}...`);
       let user;
       
       if (observer.userId) {
-        console.log(`📧 Observer already has userId: ${observer.userId}, fetching user...`);
+        console.log(`📱 Observer already has userId: ${observer.userId}, fetching user...`);
         // User already exists, just get it
         user = await this.prisma.user.findUnique({
           where: { id: observer.userId },
@@ -365,7 +365,7 @@ export class ObserverAdminService {
         }
         console.log(`✓ User found: ${user.email}`);
       } else {
-        console.log(`📧 Creating new user account for approved observer...`);
+        console.log(`📱 Creating new user account for approved observer...`);
         // Create user account for approved observer
         user = await this.prisma.user.create({
           data: {
@@ -386,7 +386,7 @@ export class ObserverAdminService {
       }
 
       // Check if user already has an unused password setup token
-      console.log(`📧 Checking for existing password setup token for user ${user.id}...`);
+      console.log(`📱 Checking for existing password setup token for user ${user.id}...`);
       const existingToken = await this.prisma.passwordSetupToken.findFirst({
         where: {
           userId: user.id,
@@ -397,7 +397,7 @@ export class ObserverAdminService {
       });
 
       if (!existingToken) {
-        console.log(`📧 No valid token found, generating new password setup token...`);
+        console.log(`📱 No valid token found, generating new password setup token...`);
         // Generate new password setup token
         setupToken = crypto.randomBytes(32).toString('hex');
         const expiry = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
@@ -415,8 +415,8 @@ export class ObserverAdminService {
         setupToken = existingToken.token;
       }
 
-      userToEmail = user;
-      console.log(`📧 Approval flow completed. User ready for email: ${user.email}`);
+      userForNotification = user;
+      console.log(`📱 Approval flow completed. User ready for SMS: ${user.phoneNumber}`);
     }
 
     // If status is being changed, add review information
@@ -443,100 +443,104 @@ export class ObserverAdminService {
       },
     });
 
-    // Send password setup email if observer was just approved (BEFORE MinIO URL generation)
-    console.log(`📧 Checking if approval email should be sent:`, {
+    // Send password setup SMS if observer was just approved (BEFORE MinIO URL generation)
+    console.log(`📱 Checking if approval SMS should be sent:`, {
       isApproving,
-      hasUser: !!userToEmail,
+      hasUser: !!userForNotification,
       hasToken: !!setupToken,
-      hasEmailService: !!this.emailService,
+      hasSmsService: !!this.smsService,
     });
     
-    if (isApproving && userToEmail && setupToken) {
-      if (!this.emailService) {
-        console.error('⚠ Email service is not available. Cannot send password setup email.');
+    if (isApproving && userForNotification && setupToken) {
+      if (!this.smsService) {
+        console.error('⚠ SMS service is not available. Cannot send password setup SMS.');
       } else {
-        console.log(`📧 Attempting to send password setup email to ${userToEmail.email}...`);
-        console.log(`📧 User details:`, {
-          email: userToEmail.email,
-          firstName: userToEmail.firstName,
+        console.log(`📱 Attempting to send password setup SMS to ${userForNotification.phoneNumber}...`);
+        console.log(`📱 User details:`, {
+          phoneNumber: userForNotification.phoneNumber,
+          firstName: userForNotification.firstName,
           hasToken: !!setupToken,
           tokenLength: setupToken?.length,
         });
         
-        // Send email (non-blocking - don't fail approval if email fails)
-        // Use the same pattern as registration emails for consistency
+        // Send SMS (non-blocking - don't fail approval if SMS fails)
+        // Use the same pattern as registration notifications for consistency
         try {
-          console.log(`📧 Calling sendPasswordSetupEmail for ${userToEmail.email}...`);
-          await this.emailService.sendPasswordSetupEmail(
-            userToEmail.email,
-            userToEmail.firstName,
+          console.log(`📱 Calling sendPasswordSetupSms for ${userForNotification.phoneNumber}...`);
+          await this.smsService.sendPasswordSetupSms(
+            userForNotification.phoneNumber,
+            userForNotification.firstName,
             setupToken
           );
-          console.log(`✓ Password setup email sent successfully to ${userToEmail.email}`);
-        } catch (emailError: any) {
-          console.error('✗ Failed to send password setup email:', {
-            email: userToEmail.email,
-            error: emailError.message,
-            stack: emailError.stack,
-            name: emailError.name,
+          console.log(`✓ Password setup SMS sent successfully to ${userForNotification.phoneNumber}`);
+        } catch (smsError: any) {
+          console.error('✗ Failed to send password setup SMS:', {
+            phoneNumber: userForNotification.phoneNumber,
+            error: smsError.message,
+            stack: smsError.stack,
+            name: smsError.name,
           });
-          // Continue with approval - email failure should not block observer approval
+          // Continue with approval - SMS failure should not block observer approval
         }
       }
     } else if (isApproving) {
-      console.warn('⚠ Cannot send approval email - missing requirements:', {
-        hasUser: !!userToEmail,
+      console.warn('⚠ Cannot send approval SMS - missing requirements:', {
+        hasUser: !!userForNotification,
         hasToken: !!setupToken,
-        hasEmailService: !!this.emailService,
+        hasSmsService: !!this.smsService,
         observerStatus: observer.status,
         newStatus: data.status,
-        userToEmailDetails: userToEmail ? {
-          id: userToEmail.id,
-          email: userToEmail.email,
-        } : null,
+        userNotificationDetails: userForNotification
+          ? {
+              id: userForNotification.id,
+              phoneNumber: userForNotification.phoneNumber,
+            }
+          : null,
         setupTokenPreview: setupToken ? `${setupToken.substring(0, 8)}...` : null,
       });
     }
 
-    // Send clarification request email if requesting more information
+    // Send clarification request SMS if requesting more information
     // This includes: status changing to more_information_requested OR 
     // status already more_information_requested with new review notes
-    const shouldSendInfoRequestEmail = 
-      data.status === 'more_information_requested' && 
-      this.emailService && 
+    const shouldSendInfoRequestSms =
+      data.status === 'more_information_requested' &&
+      this.smsService &&
       updatedObserver &&
       (observer.status !== 'more_information_requested' || data.reviewNotes);
-    
-    if (shouldSendInfoRequestEmail && updatedObserver) {
+
+    if (shouldSendInfoRequestSms && updatedObserver) {
       try {
-        // TypeScript guard: we know updatedObserver exists here due to the condition above
         const observerData = updatedObserver;
-        const notes = data.reviewNotes || observerData.reviewNotes || 'Please provide the requested information.';
-        console.log(`📧 Attempting to send clarification request email to ${observerData.email}...`);
-        console.log(`📧 Email details:`, {
-          email: observerData.email,
+        const notes =
+          data.reviewNotes ||
+          observerData.reviewNotes ||
+          'Please provide the requested information.';
+        console.log(`📱 Attempting to send clarification request SMS to ${observerData.phoneNumber}...`);
+        console.log(`📱 SMS details:`, {
+          phoneNumber: observerData.phoneNumber,
           trackingNumber: observerData.trackingNumber,
           hasNotes: !!notes,
         });
-        await this.emailService!.sendClarificationRequest(
-          observerData.email,
+        await this.smsService!.sendClarificationRequestSms(
+          observerData.phoneNumber,
           observerData.firstName,
           notes,
           observerData.trackingNumber
         );
-        console.log(`✓ Clarification request email sent successfully to ${observerData.email}`);
-      } catch (emailError: any) {
-        console.error('✗ Failed to send clarification request email:', {
-          email: updatedObserver?.email || 'unknown',
-          error: emailError.message,
-          stack: emailError.stack,
-          name: emailError.name,
+        console.log(`✓ Clarification request SMS sent successfully to ${observerData.phoneNumber}`);
+      } catch (smsError: any) {
+        console.error('✗ Failed to send clarification request SMS:', {
+          phoneNumber: updatedObserver?.phoneNumber || 'unknown',
+          error: smsError.message,
+          stack: smsError.stack,
+          name: smsError.name,
         });
-        // Continue - email failure should not block status update
+        // Continue - SMS failure should not block status update
       }
     }
 
-    // Generate presigned URLs for images if MinIO service is available (AFTER sending emails)
+    // Generate presigned URLs for images if MinIO service is available (AFTER sending SMS)
     if (this.minioService) {
       const observerWithUrls = { ...updatedObserver };
       

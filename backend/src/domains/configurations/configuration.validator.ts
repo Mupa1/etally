@@ -48,6 +48,17 @@ export const configurationFiltersSchema = z.object({
   search: z.string().optional(),
 });
 
+export const sendTestSmsSchema = z.object({
+  phoneNumber: z
+    .string()
+    .min(5, { message: 'A valid recipient phone number is required' }),
+  message: z
+    .string()
+    .min(1, { message: 'Message cannot be empty' })
+    .max(1000, { message: 'Message must be 1000 characters or less' })
+    .optional(),
+});
+
 export type CreateConfigurationDTO = z.infer<typeof createConfigurationSchema>;
 export type UpdateConfigurationDTO = z.infer<typeof updateConfigurationSchema>;
 export type UpdateConfigurationValueDTO = z.infer<
@@ -56,3 +67,4 @@ export type UpdateConfigurationValueDTO = z.infer<
 export type ConfigurationFiltersDTO = z.infer<
   typeof configurationFiltersSchema
 >;
+export type SendTestSmsDTO = z.infer<typeof sendTestSmsSchema>;

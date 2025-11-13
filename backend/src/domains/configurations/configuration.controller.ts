@@ -10,14 +10,18 @@ import {
   updateConfigurationSchema,
   updateConfigurationValueSchema,
   configurationFiltersSchema,
+  sendTestSmsSchema,
 } from './configuration.validator';
 import { ValidationError } from '@/shared/types/errors';
+import { SmsService } from '@/domains/mobile/sms.service';
 
 class ConfigurationController {
   private configurationService: ConfigurationService;
+  private smsService: SmsService;
 
   constructor() {
     this.configurationService = new ConfigurationService();
+    this.smsService = new SmsService();
   }
 
   /**
@@ -354,6 +358,42 @@ class ConfigurationController {
         success: true,
         message: 'Configuration reset to default successfully',
         data: configuration,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Send a diagnostic test SMS using current configuration
+   * POST /api/v1/configurations/sms/test
+   */
+  sendTestSms = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const validationResult = sendTestSmsSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
+        throw new ValidationError(
+          `Validation failed: ${errors.map((e) => e.message).join(', ')}`
+        );
+      }
+
+      const { phoneNumber, message } = validationResult.data;
+
+      const result = await this.smsService.sendTestSms(phoneNumber, message);
+
+      res.status(200).json({
+        success: true,
+        message: `Test SMS sent successfully to ${phoneNumber}`,
+        data: result,
       });
     } catch (error) {
       next(error);

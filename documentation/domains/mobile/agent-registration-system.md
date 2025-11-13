@@ -671,7 +671,7 @@ Register new field observer
   "success": true,
   "trackingNumber": "OBS-2025-123456",
   "message": "Application submitted successfully",
-  "nextSteps": "You will receive an email when reviewed..."
+  "nextSteps": "You will receive an SMS when reviewed..."
 }
 ```
 

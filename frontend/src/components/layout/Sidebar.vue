@@ -279,20 +279,6 @@
                 <span>Voting Areas</span>
               </a>
             </router-link>
-            <router-link to="/settings/database" v-slot="{ isActive }" custom>
-              <a
-                href="/settings/database"
-                @click.prevent="handleNavClick('/settings/database')"
-                :class="[
-                  'flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm',
-                  isActive
-                    ? 'bg-primary-50 text-primary-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
-                ]"
-              >
-                <span>DB Settings</span>
-              </a>
-            </router-link>
             <router-link
               to="/settings/configurations"
               v-slot="{ isActive }"
@@ -397,7 +383,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { userInitials, roleLabel } = useUserUtils();
 
-const isCollapsed = ref(false);
+const isCollapsed = inject('isSidebarCollapsed', ref(false)) as Ref<boolean>;
 const isMobile = ref(false);
 const expandedMenus = ref<string[]>([]);
 

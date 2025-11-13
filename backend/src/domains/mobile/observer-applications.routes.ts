@@ -10,12 +10,14 @@ import { ObserverService } from './observer.service';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, requireRoles } from '@/domains/auth/auth.middleware';
 import { requirePermission } from '@/infrastructure/middleware/authorization.middleware';
+import { SmsService } from './sms.service';
+import { ObserverMinIOService } from './minio.service';
 
 const router = Router();
 const prisma = new PrismaClient();
-const emailService = new (require('./email.service').EmailService)();
-const minioService = new (require('./minio.service').ObserverMinIOService)();
-const observerService = new ObserverService(prisma, minioService, emailService);
+const smsService = new SmsService();
+const minioService = new ObserverMinIOService();
+const observerService = new ObserverService(prisma, minioService, smsService);
 const observerController = new ObserverController(observerService);
 
 // ==========================================

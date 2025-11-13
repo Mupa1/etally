@@ -12,17 +12,21 @@ import { ObserverAdminController } from './observer-admin.controller';
 import observerAdminRoutes from './observer-admin.routes';
 import observerMobileRoutes from './observer-mobile.routes';
 import observerApplicationsRoutes from './observer-applications.routes';
-import { EmailService } from './email.service';
 import { ObserverMinIOService } from './minio.service';
+import { SmsService } from './sms.service';
 
 // Initialize services
 const prisma = new PrismaClient();
-const emailService = new EmailService();
+const smsService = new SmsService();
 const minioService = new ObserverMinIOService();
 
 // Create observer services
-const observerService = new ObserverService(prisma, minioService, emailService);
-const observerAdminService = new ObserverAdminService(prisma, minioService);
+const observerService = new ObserverService(prisma, minioService, smsService);
+const observerAdminService = new ObserverAdminService(
+  prisma,
+  minioService,
+  smsService
+);
 
 // Create controllers
 const observerController = new ObserverController(observerService);
@@ -51,7 +55,7 @@ export {
   ObserverController,
   ObserverAdminService,
   ObserverAdminController,
-  EmailService,
+  SmsService,
   ObserverMinIOService,
 };
 export * from './observer.types';
