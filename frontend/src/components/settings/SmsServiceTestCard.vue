@@ -7,7 +7,7 @@
           Verify that the configured SMS provider can successfully deliver messages.
         </p>
       </div>
-      <Badge variant="info">Africa's Talking</Badge>
+      <Badge variant="info">Jambo Bulk SMS</Badge>
     </div>
 
     <Alert

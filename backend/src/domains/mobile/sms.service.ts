@@ -1,20 +1,29 @@
-import africastalking from 'africastalking';
 import PrismaService from '@/infrastructure/database/prisma.service';
 import { decrypt, isEncrypted } from '@/shared/utils/encryption.util';
 
-type SmsProvider = 'africastalking';
+type SmsProvider = 'jambo';
 
 interface SmsConfig {
   provider: SmsProvider;
-  username: string;
   apiKey: string;
-  senderId?: string;
-  maskedNumber?: string;
-  telco?: string;
+  partnerID: string;
+  shortcode: string;
   maxRetry: number;
   timeoutSeconds: number;
   apiBaseUrl: string;
-  bulkEndpoint: string;
+}
+
+interface JamboSmsResponseItem {
+  'respose-code'?: number;
+  'response-code'?: number;
+  'response-description'?: string;
+  mobile?: number | string | null;
+  messageid?: number;
+  networkid?: string;
+}
+
+interface JamboSmsResponse {
+  responses: JamboSmsResponseItem[];
 }
 
 interface SmsSendResult {
@@ -59,43 +68,39 @@ export class SmsService {
 
       const configMap = new Map(configs.map((c) => [c.key, c.value]));
 
-      let apiKey = configMap.get('africastalking_api_key') || '';
+      let apiKey = configMap.get('jambo_api_key') || '';
       if (apiKey && isEncrypted(apiKey)) {
         try {
           apiKey = decrypt(apiKey);
         } catch (error) {
-          console.error('Failed to decrypt Africa\'s Talking API key:', error);
-          throw new Error('Failed to decrypt Africa\'s Talking API key');
+          console.error('Failed to decrypt Jambo SMS API key:', error);
+          throw new Error('Failed to decrypt Jambo SMS API key');
         }
       }
 
-      const providerRaw = (configMap.get('sms_provider') || 'africastalking').toLowerCase();
-      const provider: SmsProvider = providerRaw === 'africastalking' ? 'africastalking' : 'africastalking';
+      const providerRaw = (
+        configMap.get('sms_provider') || 'jambo'
+      ).toLowerCase();
+      const provider: SmsProvider = providerRaw === 'jambo' ? 'jambo' : 'jambo';
 
       const timeout = parseInt(configMap.get('sms_timeout') || '30', 10);
       const maxRetry = parseInt(configMap.get('sms_max_retry') || '3', 10);
       const apiBaseUrl =
-        configMap.get('africastalking_base_url') || 'https://api.africastalking.com';
-      const bulkEndpoint =
-        configMap.get('africastalking_bulk_endpoint') ||
-        '/version1/messaging/bulk';
+        configMap.get('jambo_base_url') || 'https://smsgm.lemu.co.ke';
 
       const smsConfig: SmsConfig = {
         provider,
-        username: configMap.get('africastalking_username') || '',
         apiKey,
-        senderId: configMap.get('africastalking_sender_id') || undefined,
-        maskedNumber: configMap.get('africastalking_masked_number') || undefined,
-        telco: configMap.get('africastalking_telco') || undefined,
+        partnerID: configMap.get('jambo_partner_id') || '',
+        shortcode: configMap.get('jambo_shortcode') || '',
         maxRetry: Number.isFinite(maxRetry) ? maxRetry : 3,
         timeoutSeconds: Number.isFinite(timeout) ? timeout : 30,
         apiBaseUrl,
-        bulkEndpoint,
       };
 
-      if (!smsConfig.username || !smsConfig.apiKey) {
+      if (!smsConfig.apiKey || !smsConfig.partnerID || !smsConfig.shortcode) {
         throw new Error(
-          'SMS configuration is incomplete. Please provide Africa\'s Talking username and API key.'
+          'SMS configuration is incomplete. Please provide Jambo SMS API key, Partner ID, and Shortcode.'
         );
       }
 
@@ -110,10 +115,24 @@ export class SmsService {
   }
 
   private normalizePhoneNumber(phoneNumber: string): string {
-    return phoneNumber.trim();
+    // Remove + prefix if present, ensure it starts with country code
+    let normalized = phoneNumber.trim().replace(/^\+/, '');
+
+    // If it doesn't start with 254 (Kenya), assume it's missing the country code
+    if (!normalized.startsWith('254')) {
+      // If it starts with 0, replace with 254
+      if (normalized.startsWith('0')) {
+        normalized = '254' + normalized.substring(1);
+      } else {
+        // Assume it's a local number and prepend 254
+        normalized = '254' + normalized;
+      }
+    }
+
+    return normalized;
   }
 
-  private async sendWithAfricasTalking(
+  private async sendWithJambo(
     config: SmsConfig,
     recipients: string[],
     message: string
@@ -126,32 +145,167 @@ export class SmsService {
       throw new Error('No valid phone numbers provided for SMS delivery.');
     }
 
-    const client = africastalking({
-      username: config.username,
-      apiKey: config.apiKey,
-    });
+    // Construct endpoint URL, handling trailing slashes
+    const baseUrl = config.apiBaseUrl.replace(/\/$/, ''); // Remove trailing slash
+    const endpoint = `${baseUrl}/api/services/sendsms/`;
+    const results: any[] = [];
 
-    const payload: Record<string, any> = {
-      to: phoneNumbers,
-      message,
-    };
+    // Jambo SMS API requires one request per phone number
+    for (const mobile of phoneNumbers) {
+      try {
+        const payload = {
+          apikey: config.apiKey,
+          partnerID: config.partnerID,
+          message: message,
+          shortcode: config.shortcode,
+          mobile: mobile,
+        };
 
-    if (config.senderId || config.maskedNumber) {
-      payload.from = config.senderId || config.maskedNumber;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          config.timeoutSeconds * 1000
+        );
+
+        try {
+          console.log(`📤 Sending SMS to Jambo API: ${endpoint}`);
+          console.log(
+            `📤 Payload (masked): { apikey: "***", partnerID: "${config.partnerID}", shortcode: "${config.shortcode}", mobile: "${mobile}", message: "${message.substring(0, 50)}..." }`
+          );
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          // Read response body as text first (can be parsed as JSON later if needed)
+          const responseText = await response.text();
+
+          if (!response.ok) {
+            console.error(
+              `❌ Jambo API error: ${response.status} ${response.statusText}`
+            );
+            if (responseText) {
+              console.error(`❌ Response body: ${responseText}`);
+            }
+            throw new Error(
+              `HTTP ${response.status}: ${response.statusText}${responseText ? ` - ${responseText.substring(0, 200)}` : ''}`
+            );
+          }
+
+          // Parse response as JSON
+          let responseData: JamboSmsResponse;
+          try {
+            responseData = JSON.parse(responseText) as JamboSmsResponse;
+          } catch (parseError) {
+            console.error(
+              `❌ Failed to parse Jambo API response as JSON: ${responseText}`
+            );
+            throw new Error(
+              `Invalid JSON response from Jambo API: ${responseText.substring(0, 200)}`
+            );
+          }
+
+          // Check for Jambo SMS error responses
+          if (responseData.responses && responseData.responses.length > 0) {
+            const responseItem = responseData.responses[0];
+            const responseCode =
+              responseItem['respose-code'] || responseItem['response-code'];
+
+            // Handle success (200)
+            if (responseCode === 200) {
+              results.push({
+                success: true,
+                mobile: responseItem.mobile,
+                messageId: responseItem.messageid,
+                networkId: responseItem.networkid,
+                responseDescription: responseItem['response-description'],
+              });
+            } else {
+              // Handle various error codes
+              const errorDescription =
+                responseItem['response-description'] || 'Unknown error';
+              let errorMessage = errorDescription;
+
+              switch (responseCode) {
+                case 1001:
+                  errorMessage = 'Invalid sender ID';
+                  break;
+                case 1002:
+                  errorMessage = 'Network not allowed';
+                  break;
+                case 1004:
+                  errorMessage = 'Invalid or unsupported mobile number';
+                  break;
+                case 1005:
+                  errorMessage = 'System error';
+                  break;
+                case 1006:
+                  errorMessage = 'Invalid credentials';
+                  break;
+                case 402:
+                  errorMessage = `Low credit units: ${errorDescription}`;
+                  break;
+                case 4091:
+                  errorMessage = 'No Partner ID is set';
+                  break;
+                case 4092:
+                  errorMessage = 'No API KEY provided';
+                  break;
+                case 4093:
+                  errorMessage = 'Details not found';
+                  break;
+              }
+
+              results.push({
+                success: false,
+                mobile: responseItem.mobile || mobile,
+                errorCode: responseCode,
+                errorMessage: errorMessage,
+              });
+            }
+          } else {
+            throw new Error('Invalid response format from Jambo SMS API');
+          }
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            throw new Error(
+              `Request timeout after ${config.timeoutSeconds} seconds`
+            );
+          }
+          throw fetchError;
+        }
+      } catch (error: any) {
+        results.push({
+          success: false,
+          mobile: mobile,
+          errorMessage: error?.message || 'Failed to send SMS',
+        });
+      }
     }
 
-    if (config.telco) {
-      payload.keyword = config.telco;
-    }
-
-    try {
-      return await client.SMS.send(payload);
-    } catch (error: any) {
+    // If all requests failed, throw an error
+    const failedCount = results.filter((r) => !r.success).length;
+    if (failedCount === results.length) {
+      const firstError = results.find((r) => !r.success);
       throw new Error(
-        error?.message ||
-          "Africa's Talking SDK reported an error while sending SMS."
+        firstError?.errorMessage || 'All SMS messages failed to send'
       );
     }
+
+    // Return results in a consistent format
+    return {
+      results: results,
+      successCount: results.filter((r) => r.success).length,
+      failedCount: failedCount,
+    };
   }
 
   private async sendSms(
@@ -163,13 +317,18 @@ export class SmsService {
 
     for (let attempt = 1; attempt <= config.maxRetry; attempt++) {
       try {
-        const providerResponse = await this.sendWithAfricasTalking(
+        const providerResponse = await this.sendWithJambo(
           config,
           recipients,
           message
         );
 
-        console.log(`✓ SMS sent successfully to ${recipients.join(', ')}`);
+        const successCount = providerResponse.successCount || 0;
+        if (successCount > 0) {
+          console.log(
+            `✓ SMS sent successfully to ${successCount} recipient(s)`
+          );
+        }
 
         return {
           provider: config.provider,
@@ -277,4 +436,3 @@ export class SmsService {
     this.configCacheExpiry = 0;
   }
 }
-

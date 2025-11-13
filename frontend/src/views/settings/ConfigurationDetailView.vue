@@ -447,17 +447,14 @@ const categoryDescription = computed(() => {
   );
 });
 
-const smsCategoryTokens = ['sms', 'text', 'africastalking', 'mobile'];
+const smsCategoryTokens = ['sms', 'text', 'jambo', 'mobile'];
 
 const smsConfigKeys = new Set([
   'sms_provider',
-  'africastalking_username',
-  'africastalking_api_key',
-  'africastalking_sender_id',
-  'africastalking_masked_number',
-  'africastalking_telco',
-  'africastalking_base_url',
-  'africastalking_bulk_endpoint',
+  'jambo_api_key',
+  'jambo_partner_id',
+  'jambo_shortcode',
+  'jambo_base_url',
   'sms_max_retry',
   'sms_timeout',
 ]);

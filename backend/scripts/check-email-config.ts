@@ -19,30 +19,27 @@ async function checkSmsConfig() {
     if (smsConfigs.length === 0) {
       console.log('   ✗ No SMS configurations found!');
       console.log(
-        "   → Configure Africa's Talking credentials in the database"
+        '   → Configure Jambo SMS credentials in the database'
       );
       console.log('   → Category: "sms"');
       console.log(
-        '   → Required keys: africastalking_username, africastalking_api_key'
+        '   → Required keys: jambo_api_key, jambo_partner_id, jambo_shortcode'
       );
     } else {
       console.log(`   ✓ Found ${smsConfigs.length} configuration(s)`);
       const configMap = new Map(smsConfigs.map((c) => [c.key, c.value]));
       const provider = (
-        configMap.get('sms_provider') || 'africastalking'
+        configMap.get('sms_provider') || 'jambo'
       ).toLowerCase();
       console.log(`   ✓ sms_provider: ${provider}`);
 
       const requiredKeys = [
-        'africastalking_username',
-        'africastalking_api_key',
+        'jambo_api_key',
+        'jambo_partner_id',
+        'jambo_shortcode',
       ];
       const optionalKeys = [
-        'africastalking_sender_id',
-        'africastalking_masked_number',
-        'africastalking_telco',
-        'africastalking_base_url',
-        'africastalking_bulk_endpoint',
+        'jambo_base_url',
         'sms_max_retry',
         'sms_timeout',
       ];
