@@ -141,7 +141,7 @@ export const DocumentUploadSchema = z.object({
 // File type validation
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-export const MAX_PROFILE_PHOTO_SIZE = 2 * 1024 * 1024; // 2MB
+export const MAX_PROFILE_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
 
 export function validateImageFile(
   file: { size: number; mimetype: string },

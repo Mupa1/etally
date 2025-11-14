@@ -127,8 +127,8 @@
               <FileUploadField
                 v-model="documents.profilePhoto"
                 label="Profile Photo"
-                :max-size="2 * 1024 * 1024"
-                hint="PNG, JPG up to 2MB"
+                :max-size="5 * 1024 * 1024"
+                hint="PNG, JPG up to 5MB"
                 required
                 @error="handleFileError"
               />
@@ -431,10 +431,10 @@ function validatePersonalInfo(): boolean {
 
   // Validate email if provided
   if (form.value.email) {
-    const emailValidation = validateFormInput(form.value.email, 'email');
-    if (!emailValidation.isValid) {
-      error.value = emailValidation.error || 'Invalid email';
-      return false;
+  const emailValidation = validateFormInput(form.value.email, 'email');
+  if (!emailValidation.isValid) {
+    error.value = emailValidation.error || 'Invalid email';
+    return false;
     }
   }
 
@@ -613,7 +613,7 @@ async function uploadDocuments(trackingNumber: string) {
       `/agent/register/${trackingNumber}/upload-document`,
       formData,
       {
-        baseURL: '/api',
+        baseURL: getAgentApiBaseUrl(),
         headers: { 'Content-Type': 'multipart/form-data' },
       }
     );
