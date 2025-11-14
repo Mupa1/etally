@@ -29,7 +29,7 @@
         </h1>
 
         <p class="text-gray-600 mb-6">
-          Your observer registration has been received and is now under review.
+          Your agent registration has been received and is now under review.
         </p>
 
         <!-- Tracking Number -->
@@ -88,7 +88,7 @@
                 >4</span
               >
               <span
-                >Once active, you can login and access the observer portal</span
+                >Once active, you can login and access the agent portal</span
               >
             </li>
           </ol>

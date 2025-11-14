@@ -152,6 +152,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/agents',
+    name: 'admin-agents',
+    component: () => import('@/views/admin/ObserversView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('@/views/admin/UsersOverviewView.vue'),
@@ -162,7 +171,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/admin/observers',
-    name: 'admin-observers',
+    name: 'admin-agents',
     component: () => import('@/views/admin/ObserversView.vue'),
     meta: {
       requiresAuth: true,

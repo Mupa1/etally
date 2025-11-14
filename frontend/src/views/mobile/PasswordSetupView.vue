@@ -8,7 +8,7 @@
             Set Up Your Password
           </h1>
           <p class="text-gray-600">
-            Create a secure password for your observer account
+            Create a secure password for your agent account
           </p>
         </div>
 

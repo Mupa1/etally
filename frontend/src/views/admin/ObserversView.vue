@@ -1,18 +1,18 @@
 <template>
   <MainLayout
-    page-title="Observer Management"
-    page-description="Manage field observers, review applications, and monitor observer activities"
+    page-title="Agents Management"
+    page-description="Manage field agents, review applications, and monitor agent activities"
   >
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <StatCard
-        title="Total Observers"
+        title="Total Agents"
         :value="stats.total || 0"
         icon="users"
         color="primary"
       />
       <StatCard
-        title="Active Observers"
+        title="Active Agents"
         :value="stats.active || 0"
         :percentage="stats.total > 0 ? (stats.active / stats.total) * 100 : 0"
         icon="check-circle"
@@ -25,7 +25,7 @@
         color="warning"
       />
       <StatCard
-        title="Assigned Observers"
+        title="Assigned Agents"
         :value="stats.assigned || 0"
         :percentage="stats.total > 0 ? (stats.assigned / stats.total) * 100 : 0"
         icon="location"
@@ -78,7 +78,7 @@
           </Button>
           <Button
             variant="primary"
-            @click="loadObservers"
+            @click="loadAgents"
             class="w-full sm:w-auto"
             :disabled="loading"
           >
@@ -87,7 +87,7 @@
           </Button>
           <Button
             variant="primary"
-            @click="exportObservers"
+            @click="exportAgents"
             class="w-full sm:w-auto"
             :disabled="loading"
           >
@@ -108,23 +108,23 @@
 
     <!-- Empty State -->
     <EmptyState
-      v-else-if="filteredObservers.length === 0"
-      title="No observers found"
-      description="No observers match your search criteria"
+      v-else-if="filteredAgents.length === 0"
+      title="No agents found"
+      description="No agents match your search criteria"
     />
 
-    <!-- Observers Table -->
+    <!-- Agents Table -->
     <Table
       v-else
       :columns="tableColumns"
-      :data="filteredObservers"
+      :data="filteredAgents"
       :current-page="currentPage"
       :per-page="perPage"
       @page-change="currentPage = $event"
       @per-page-change="handlePerPageChange"
     >
-      <!-- Observer Column -->
-      <template #cell-observer="{ item }">
+      <!-- Agent Column -->
+      <template #cell-agent="{ item }">
         <div class="flex items-start sm:items-center py-2">
           <Avatar
             :user="item"
@@ -184,7 +184,7 @@
         <Button
           variant="secondary"
           size="sm"
-          @click="viewObserver(item.id)"
+          @click="viewAgent(item.id)"
           class="w-full sm:w-auto"
         >
           View
@@ -215,7 +215,7 @@ const router = useRouter();
 
 // Table columns configuration
 const tableColumns: TableColumn[] = [
-  { key: 'observer', label: 'Observer' },
+  { key: 'agent', label: 'Agent' },
   {
     key: 'contact',
     label: 'Contact',
@@ -270,9 +270,9 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const searchQuery = ref('');
 const statusFilter = ref('');
-const viewMode = ref('observers');
+const viewMode = ref('agents');
 
-const observers = ref<Observer[]>([]);
+const agents = ref<Observer[]>([]);
 const stats = ref<ObserverStats>({
   total: 0,
   active: 0,
@@ -309,29 +309,29 @@ const statusOptions = computed(() => [
 ]);
 
 const viewModeOptions = computed(() => [
-  { value: 'observers', label: 'Show Observers' },
+  { value: 'agents', label: 'Show Agents' },
   { value: 'applications', label: 'Show Applications' },
 ]);
 
 // Computed properties
-const filteredObservers = computed(() => {
-  let filtered = observers.value;
+const filteredAgents = computed(() => {
+  let filtered = agents.value;
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(
-      (observer) =>
-        observer.firstName.toLowerCase().includes(query) ||
-        observer.lastName.toLowerCase().includes(query) ||
-        observer.email.toLowerCase().includes(query) ||
-        observer.nationalId.toLowerCase().includes(query) ||
-        observer.phoneNumber?.toLowerCase().includes(query)
+      (agent) =>
+        agent.firstName.toLowerCase().includes(query) ||
+        agent.lastName.toLowerCase().includes(query) ||
+        agent.email.toLowerCase().includes(query) ||
+        agent.nationalId.toLowerCase().includes(query) ||
+        agent.phoneNumber?.toLowerCase().includes(query)
     );
   }
 
   if (statusFilter.value) {
     filtered = filtered.filter(
-      (observer) => observer.status === statusFilter.value
+      (agent) => agent.status === statusFilter.value
     );
   }
 
@@ -339,14 +339,14 @@ const filteredObservers = computed(() => {
 });
 
 // Methods
-const loadObservers = async () => {
+const loadAgents = async () => {
   loading.value = true;
   error.value = null;
   currentPage.value = 1; // Reset to first page when reloading
 
   try {
-    // Load observers data
-    const observersResponse = await api.get('/admin/observers', {
+    // Load agents data
+    const agentsResponse = await api.get('/admin/observers', {
       params: {
         page: currentPage.value,
         limit: perPage.value,
@@ -355,20 +355,20 @@ const loadObservers = async () => {
       },
     });
 
-    observers.value = observersResponse.data.data;
+    agents.value = agentsResponse.data.data;
 
     // Load stats data
     const statsResponse = await api.get('/admin/observers/stats');
     stats.value = statsResponse.data.data;
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to load observers';
-    console.error('Error loading observers:', err);
+    error.value = err.response?.data?.message || 'Failed to load agents';
+    console.error('Error loading agents:', err);
   } finally {
     loading.value = false;
   }
 };
 
-const exportObservers = async () => {
+const exportAgents = async () => {
   try {
     const response = await api.get('/admin/observers/export', {
       responseType: 'blob',
@@ -378,21 +378,21 @@ const exportObservers = async () => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'observers.csv');
+    link.setAttribute('download', 'agents.csv');
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('Error exporting observers:', err);
-    error.value = 'Failed to export observers';
+    console.error('Error exporting agents:', err);
+    error.value = 'Failed to export agents';
   }
 };
 
 const resetFilters = () => {
   searchQuery.value = '';
   statusFilter.value = '';
-  viewMode.value = 'observers';
+  viewMode.value = 'agents';
   currentPage.value = 1; // Reset to first page when resetting filters
 };
 
@@ -401,7 +401,7 @@ const handlePerPageChange = (newPerPage: number) => {
   currentPage.value = 1; // Reset to first page when changing per page
 };
 
-const viewObserver = (id: string) => {
+const viewAgent = (id: string) => {
   router.push(`/admin/observers/${id}`);
 };
 
@@ -433,7 +433,7 @@ const formatDate = (date: string) => {
 
 // Lifecycle
 onMounted(() => {
-  loadObservers();
+  loadAgents();
 });
 </script>
 

@@ -41,9 +41,9 @@
 
       <StatCard
         title="Coalitions"
-        :value="stats.coalitions"
+        :value="coalitionStats.total"
         color="warning"
-        :loading="loading"
+        :loading="loadingCoalitions"
       >
         <template #icon>
           <svg
@@ -80,6 +80,26 @@
             @click="showCreateModal = true"
           >
             Add Party
+          </Button>
+
+          <Button
+            variant="success"
+            @click="showCoalitionModal = true"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+            <span class="ml-2">Manage Coalitions</span>
           </Button>
 
           <Button variant="success" @click="triggerFileUpload">
@@ -206,9 +226,12 @@
                       {{ party.abbreviation }}
                     </span>
                   </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">
-                      {{ party.partyName }}
+                  <div class="ml-4 flex-1">
+                    <div class="flex items-center gap-2">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ party.partyName }}
+                      </div>
+                      <CoalitionBadge :coalitions="party.coalitions || []" />
                     </div>
                     <div class="text-sm text-gray-500">
                       {{ party.abbreviation }}
@@ -369,6 +392,12 @@
         </Button>
       </template>
     </Modal>
+
+    <!-- Coalition Management Modal -->
+    <CoalitionManagementModal
+      v-model="showCoalitionModal"
+      @coalition-created="handleCoalitionCreated"
+    />
   </MainLayout>
 </template>
 
@@ -384,8 +413,18 @@ import Alert from '@/components/common/Alert.vue';
 import Modal from '@/components/common/Modal.vue';
 import Badge from '@/components/common/Badge.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
+import CoalitionBadge from '@/components/common/CoalitionBadge.vue';
+import CoalitionManagementModal from '@/components/admin/CoalitionManagementModal.vue';
 import { PartyIcon, PlusIcon } from '@/components/icons';
 import api from '@/utils/api';
+
+interface Coalition {
+  id: string;
+  name: string;
+  abbreviation?: string;
+  isCompetitor?: boolean;
+  isActive?: boolean;
+}
 
 interface Party {
   id: string;
@@ -405,6 +444,7 @@ interface Party {
   affiliation?: 'main_party' | 'friendly_party' | 'competitor';
   isActive: boolean;
   candidateCount?: number;
+  coalitions?: Coalition[];
   createdAt: string;
   updatedAt: string;
 }
@@ -429,6 +469,7 @@ const loading = ref(false);
 const error = ref('');
 const searchQuery = ref('');
 const showCreateModal = ref(false);
+const showCoalitionModal = ref(false);
 const showImportPreview = ref(false);
 const editingParty = ref<Party | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -437,11 +478,19 @@ const importStatus = ref<{ type: string; message: string } | null>(null);
 
 // Data from API
 const parties = ref<Party[]>([]);
+const loadingCoalitions = ref(false);
+const coalitionStats = ref({
+  total: 0,
+  active: 0,
+  inactive: 0,
+  competitor: 0,
+  friendly: 0,
+});
 
 const stats = computed(() => ({
   total: parties.value.length,
   active: parties.value.filter((p) => p.isActive).length,
-  coalitions: 0, // Placeholder for coalition count
+  coalitions: coalitionStats.value.total,
 }));
 
 const filteredParties = computed(() => {
@@ -691,7 +740,28 @@ async function loadParties() {
   }
 }
 
+async function loadCoalitionStats() {
+  try {
+    loadingCoalitions.value = true;
+    const response = await api.get('/coalitions/statistics');
+    if (response.data.success) {
+      coalitionStats.value = response.data.data;
+    }
+  } catch (err: any) {
+    console.error('Error loading coalition stats:', err);
+  } finally {
+    loadingCoalitions.value = false;
+  }
+}
+
+function handleCoalitionCreated() {
+  // Reload parties to get updated coalition information
+  loadParties();
+  loadCoalitionStats();
+}
+
 onMounted(() => {
   loadParties();
+  loadCoalitionStats();
 });
 </script>

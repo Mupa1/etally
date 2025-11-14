@@ -13,7 +13,7 @@
         </label>
         <input
           :value="electionCode"
-          @input="$emit('update:electionCode', ($event.target as HTMLInputElement).value)"
+          @input="handleElectionCodeInput($event)"
           type="text"
           placeholder="e.g., GE-2027, BE-KITUI-WEST-2024"
           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -122,7 +122,7 @@ function getTitlePlaceholder(): string {
     case 'general_election':
       return 'e.g., 2027 General Election';
     case 'by_election':
-      return 'e.g., Kitui West By-Election 2024';
+      return 'e.g., 2025 By Elections';
     case 'referendum':
       return 'e.g., Constitutional Amendment Referendum 2025';
     default:
@@ -152,6 +152,20 @@ function handleDateInput(event: Event) {
   } else {
     emit('update:electionDate', null);
   }
+}
+
+function handleElectionCodeInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  let value = target.value;
+  
+  // Convert to uppercase and filter out invalid characters
+  // Only allow: uppercase letters (A-Z), numbers (0-9), hyphens (-), underscores (_)
+  value = value
+    .toUpperCase() // Convert to uppercase
+    .replace(/[^A-Z0-9_-]/g, ''); // Remove any character that's not A-Z, 0-9, -, or _
+  
+  // Emit the cleaned value
+  emit('update:electionCode', value);
 }
 
 // Validation

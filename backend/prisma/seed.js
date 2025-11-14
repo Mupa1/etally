@@ -143,6 +143,8 @@ async function main() {
     console.log(`✓ Created ${policy.statusMessage}: ${policy.name}`);
   }
 
+  await seedSmsTemplates();
+
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Initial Credentials:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -181,3 +183,110 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+async function seedSmsTemplates() {
+  console.log('📱 Seeding SMS templates...');
+
+  const templates = [
+    {
+      name: 'Registration Confirmation SMS',
+      templateType: 'registration_confirmation',
+      body:
+        'Hi {{firstName}}, we received your observer application (Ref: {{trackingNumber}}). You will be notified once it is reviewed.',
+      description: 'Sent to observers immediately after registration',
+      variables: {
+        firstName: 'Observer first name',
+        trackingNumber: 'Application tracking number',
+      },
+    },
+    {
+      name: 'Password Setup SMS',
+      templateType: 'password_setup',
+      body:
+        'Hi {{firstName}}, your observer application was approved. Set your password here: {{setupUrl}} (link expires in 48 hrs).',
+      description: 'Guides newly approved observers to set their password',
+      variables: {
+        firstName: 'Observer first name',
+        setupUrl: 'Password setup URL',
+      },
+    },
+    {
+      name: 'Welcome SMS',
+      templateType: 'welcome',
+      body:
+        'Welcome {{firstName}}! Your observer account is active. Login to the observer portal here: {{loginUrl}}.',
+      description: 'Sent after password setup is completed',
+      variables: {
+        firstName: 'Observer first name',
+        loginUrl: 'Observer portal login URL',
+      },
+    },
+    {
+      name: 'Rejection SMS',
+      templateType: 'rejection',
+      body:
+        'Hello {{firstName}}, we’re unable to approve your observer application at this time. Reason: {{rejectionReason}}.',
+      description: 'Sent when an application is rejected',
+      variables: {
+        firstName: 'Observer first name',
+        rejectionReason: 'Reason for rejection',
+      },
+    },
+    {
+      name: 'Clarification Request SMS',
+      templateType: 'clarification_request',
+      body:
+        'Hi {{firstName}}, we need more info for your application. Please check {{trackingUrl}} and update Ref: {{trackingNumber}}.',
+      description: 'Requests additional information from the applicant',
+      variables: {
+        firstName: 'Observer first name',
+        trackingUrl: 'Tracking portal link',
+        trackingNumber: 'Application reference number',
+      },
+    },
+    {
+      name: 'Election Update SMS',
+      templateType: 'election_update',
+      body:
+        'Reminder {{firstName}}: Election {{electionCode}} timeline updated. Check the portal for your assignments.',
+      description: 'Used to notify observers about election updates',
+      variables: {
+        firstName: 'Observer first name',
+        electionCode: 'Election unique code',
+      },
+    },
+    {
+      name: 'General Notification SMS',
+      templateType: 'general_notification',
+      body:
+        'Hello {{firstName}}, you have a new notification in the observer portal. Please login to view.',
+      description: 'Generic notification for miscellaneous updates',
+      variables: {
+        firstName: 'Observer first name',
+      },
+    },
+  ];
+
+  for (const template of templates) {
+    await prisma.smsTemplate.upsert({
+      where: { templateType: template.templateType },
+      update: {
+        name: template.name,
+        body: template.body,
+        description: template.description,
+        variables: template.variables,
+        isActive: true,
+      },
+      create: {
+        name: template.name,
+        body: template.body,
+        description: template.description,
+        templateType: template.templateType,
+        variables: template.variables,
+        isActive: true,
+      },
+    });
+  }
+
+  console.log('✅ SMS templates seeded successfully');
+}

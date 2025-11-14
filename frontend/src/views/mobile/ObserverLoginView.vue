@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
           <h1 class="text-2xl font-bold text-gray-900 mb-2">
-            Observer Portal Login
+            Agent Portal Login
           </h1>
           <p class="text-gray-600">Login to submit election results</p>
         </div>
@@ -76,7 +76,7 @@
             to="/agent/register"
             class="block text-sm text-blue-600 hover:text-blue-700"
           >
-            New Observer Registration
+            New Agent Registration
           </router-link>
         </div>
       </div>

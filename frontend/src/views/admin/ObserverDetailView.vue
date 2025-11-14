@@ -1,7 +1,7 @@
 <template>
   <MainLayout
-    page-title="Observer Details"
-    page-description="View detailed information about an observer"
+    page-title="Agent Details"
+    page-description="View detailed information about an agent"
   >
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center py-12">
@@ -11,7 +11,7 @@
     <!-- Error State -->
     <Alert v-else-if="error" type="error" :message="error" class="mb-4" />
 
-    <!-- Observer Details -->
+    <!-- Agent Details -->
     <div v-else-if="observer" class="space-y-6">
       <!-- Header Section -->
       <div class="bg-white shadow-sm rounded-lg p-4 sm:p-6">
@@ -72,7 +72,7 @@
               class="w-full sm:w-auto"
             >
               <i class="icon-arrow-left mr-2"></i>
-              <span class="hidden sm:inline">Back to Observers</span>
+              <span class="hidden sm:inline">Back to Agents</span>
               <span class="sm:hidden">Back</span>
             </Button>
           </div>

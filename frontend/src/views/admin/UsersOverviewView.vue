@@ -25,7 +25,7 @@
         color="warning"
       />
       <StatCard
-        title="Field Observers"
+        title="Field Agents"
         :value="stats.observers"
         :percentage="
           stats.total > 0 ? (stats.observers / stats.total) * 100 : 0
@@ -499,7 +499,7 @@ function formatRole(role: string): string {
   const roles: Record<string, string> = {
     super_admin: 'Super Admin',
     election_manager: 'Election Manager',
-    field_observer: 'Field Observer',
+    field_observer: 'Field Agent',
     public_viewer: 'Public Viewer',
   };
   return roles[role] || role;
