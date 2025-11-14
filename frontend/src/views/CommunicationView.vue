@@ -158,6 +158,77 @@
         </div>
       </div>
 
+      <!-- SMS Templates Section -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">SMS Templates</h2>
+          <router-link to="/communication/sms-templates">
+            <Button variant="primary" size="sm">
+              <svg
+                class="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-3-3v6m5-9H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2z"
+                />
+              </svg>
+              Manage SMS Templates
+            </Button>
+          </router-link>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">
+          Define reusable SMS content for registration updates, password setup,
+          and election notifications. Templates support personalization through
+          dynamic placeholders.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <div
+              class="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center"
+            >
+              <span class="font-semibold text-sm">RC</span>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">
+                Registration SMS
+              </p>
+              <p class="text-xs text-gray-500">
+                Confirms successful application
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <div
+              class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center"
+            >
+              <span class="font-semibold text-sm">PU</span>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Password Setup</p>
+              <p class="text-xs text-gray-500">Guides agents to set passwords</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+            <div
+              class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"
+            >
+              <span class="font-semibold text-sm">EU</span>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Election Update</p>
+              <p class="text-xs text-gray-500">
+                Sends election schedule reminders
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Placeholder for future features -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">
@@ -182,27 +253,6 @@
               <h3 class="font-medium text-gray-900">In-App Notifications</h3>
               <p class="text-sm text-gray-500">
                 Coming soon - Real-time notifications for users
-              </p>
-            </div>
-          </div>
-          <div class="flex items-start space-x-3">
-            <svg
-              class="w-5 h-5 text-gray-400 mt-0.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <div>
-              <h3 class="font-medium text-gray-900">SMS Integration</h3>
-              <p class="text-sm text-gray-500">
-                Coming soon - SMS notifications for critical alerts
               </p>
             </div>
           </div>

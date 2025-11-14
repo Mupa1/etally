@@ -241,74 +241,118 @@
             <div
               v-for="(contest, index) in election.contests"
               :key="contest.id || `${contest.positionName}-${index}`"
-              class="border border-gray-200 rounded-lg p-4"
+              class="border border-gray-200 rounded-lg"
             >
+              <!-- Contest Header (Clickable to expand/collapse) -->
               <div
-                class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"
+                @click="toggleContestExpansion(contest.id || index)"
+                class="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
               >
-                <div>
-                  <h3 class="text-base font-semibold text-gray-900">
-                    {{ contest.positionName || 'Contest' }}
-                  </h3>
-                  <p
-                    v-if="contest.description"
-                    class="text-sm text-gray-600 mt-1"
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <div
+                    class="flex-shrink-0 text-gray-400 transition-transform"
+                    :class="{ 'rotate-90': isContestExpanded(contest.id || index) }"
                   >
-                    {{ contest.description }}
-                  </p>
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900">
+                      {{ contest.positionName || 'Contest' }}
+                    </h3>
+                    <p
+                      v-if="getContestDescription(contest)"
+                      class="text-sm text-gray-600 mt-1"
+                    >
+                      {{ getContestDescription(contest) }}
+                    </p>
+                  </div>
                 </div>
                 <Badge
                   variant="info"
                   :label="`${contest.candidates?.length || 0} candidate${
                     (contest.candidates?.length || 0) === 1 ? '' : 's'
                   }`"
+                  class="flex-shrink-0"
                 />
               </div>
 
-              <div
-                v-if="contest.candidates && contest.candidates.length"
-                class="mt-3"
+              <!-- Contest Content (Collapsible) -->
+              <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="opacity-0 max-h-0"
+                enter-to-class="opacity-100 max-h-[2000px]"
+                leave-active-class="transition-all duration-300 ease-in"
+                leave-from-class="opacity-100 max-h-[2000px]"
+                leave-to-class="opacity-0 max-h-0"
               >
-                <p class="text-xs uppercase tracking-wide text-gray-400 mb-2">
-                  Candidates
-                </p>
                 <div
-                  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+                  v-if="isContestExpanded(contest.id || index)"
+                  class="overflow-hidden"
                 >
                   <div
-                    v-for="candidate in contest.candidates"
-                    :key="candidate.id"
-                    class="border border-gray-100 rounded-lg p-3"
+                    v-if="contest.candidates && contest.candidates.length"
+                    class="px-4 pb-4 border-t border-gray-100 pt-3"
                   >
-                    <p class="text-sm font-medium text-gray-900">
-                      {{ candidate.fullName || candidate.name }}
-                      <span
-                        v-if="candidate.party?.abbreviation"
-                        class="text-xs font-semibold text-primary-600 ml-2"
-                      >
-                        ({{ candidate.party.abbreviation }})
-                      </span>
-                      <span
-                        v-else-if="candidate.isIndependent"
-                        class="text-xs font-semibold text-gray-500 ml-2"
-                      >
-                        (Independent)
-                      </span>
-                      <CoalitionBadge
-                        v-if="candidate.party?.coalitions && candidate.party.coalitions.length > 0"
-                        :coalitions="getCoalitionsForParty(candidate.party)"
-                        class="ml-2"
-                      />
+                    <p class="text-xs uppercase tracking-wide text-gray-400 mb-2">
+                      Candidates
                     </p>
-                    <p
-                      v-if="candidate.party && !candidate.party.abbreviation"
-                      class="text-xs text-gray-500 mt-1"
+                    <div
+                      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     >
-                      Party: {{ candidate.party?.partyName || candidate.party?.name }}
-                    </p>
+                      <div
+                        v-for="candidate in contest.candidates"
+                        :key="candidate.id"
+                        class="border border-gray-100 rounded-lg p-3"
+                      >
+                        <p class="text-sm font-medium text-gray-900">
+                          {{ candidate.fullName || candidate.name }}
+                          <span
+                            v-if="candidate.party?.abbreviation"
+                            class="text-xs font-semibold text-primary-600 ml-2"
+                          >
+                            ({{ candidate.party.abbreviation }})
+                          </span>
+                          <span
+                            v-else-if="candidate.isIndependent"
+                            class="text-xs font-semibold text-gray-500 ml-2"
+                          >
+                            (Independent)
+                          </span>
+                          <CoalitionBadge
+                            v-if="candidate.party?.coalitions && candidate.party.coalitions.length > 0"
+                            :coalitions="getCoalitionsForParty(candidate.party)"
+                            class="ml-2"
+                          />
+                        </p>
+                        <p
+                          v-if="candidate.party && !candidate.party.abbreviation"
+                          class="text-xs text-gray-500 mt-1"
+                        >
+                          Party: {{ candidate.party?.partyName || candidate.party?.name }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    v-else
+                    class="px-4 pb-4 border-t border-gray-100 pt-3"
+                  >
+                    <p class="text-sm text-gray-500">No candidates added yet.</p>
                   </div>
                 </div>
-              </div>
+              </Transition>
             </div>
           </div>
         </div>
@@ -506,6 +550,37 @@ const showUploadContestsModal = ref(false);
 const isUploading = ref(false);
 
 const contestCount = computed(() => election.value?.contests?.length || 0);
+
+// Track expanded/collapsed state for contests
+const expandedContests = ref<Set<string | number>>(new Set());
+
+function isContestExpanded(contestId: string | number): boolean {
+  return expandedContests.value.has(contestId);
+}
+
+function toggleContestExpansion(contestId: string | number) {
+  if (expandedContests.value.has(contestId)) {
+    expandedContests.value.delete(contestId);
+  } else {
+    expandedContests.value.add(contestId);
+  }
+}
+
+// Expand all contests by default when election is loaded
+watch(
+  () => election.value?.contests,
+  (contests) => {
+    if (contests && contests.length > 0) {
+      contests.forEach((contest, index) => {
+        const contestId = contest.id || index;
+        if (!expandedContests.value.has(contestId)) {
+          expandedContests.value.add(contestId);
+        }
+      });
+    }
+  },
+  { immediate: true }
+);
 
 const timelineItems = computed(() => {
   if (!election.value) return [];
@@ -824,6 +899,44 @@ async function downloadContestsTemplate() {
     toast.error(message);
     console.error('Download error:', err);
   }
+}
+
+function getContestDescription(contest: any): string | null {
+  if (!contest || !contest.description) {
+    return null;
+  }
+
+  const description = contest.description.trim();
+  if (!description) {
+    return null;
+  }
+
+  const positionName = contest.positionName?.trim();
+  const contestType = contest.contestType?.trim();
+
+  if (
+    contestType &&
+    positionName &&
+    description.toLowerCase() ===
+      `${contestType.toLowerCase()} contest for ${positionName.toLowerCase()}`
+  ) {
+    return null;
+  }
+
+  const cleaned = description
+    .replace(
+      /^(presidential|gubernatorial|senatorial|national_assembly|county_assembly|women'?s?_?representative|womens?_rep)\s+contest\s+for\s+/i,
+      ''
+    )
+    .trim();
+
+  const finalDescription = cleaned || description;
+
+  if (positionName && finalDescription.toLowerCase() === positionName.toLowerCase()) {
+    return null;
+  }
+
+  return finalDescription;
 }
 
 // Helper function to transform coalition data from backend format to component format

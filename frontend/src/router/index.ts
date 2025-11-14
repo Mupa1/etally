@@ -100,6 +100,24 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/communication/sms-templates',
+    name: 'communication-sms-templates',
+    component: () => import('@/views/SmsTemplatesView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
+    path: '/communication/sms-templates/:id/edit',
+    name: 'communication-sms-template-edit',
+    component: () => import('@/views/SmsTemplateEditView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin'],
+    },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
