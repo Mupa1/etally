@@ -19,6 +19,13 @@ import {
 } from './auth.validator';
 import { ValidationError } from '@/shared/types/errors';
 import { ILoginRequest } from '@/shared/interfaces/auth.interface';
+import {
+  logLoginAttempt,
+  logLoginSuccess,
+  logLogout,
+  logDataModification,
+  logPrivilegeChange,
+} from '@/shared/utils/security-logger';
 
 const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const KENYAN_PHONE_REGEX = /^(\+254|254|0)[17]\d{8}$/;
@@ -58,6 +65,30 @@ class AuthController {
       // Register user
       const result = await this.authService.register(registerData);
 
+      // Log user creation (admin action)
+      if (req.user) {
+        const ipAddress =
+          req.ip ||
+          req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown';
+
+        logDataModification(
+          req.user.userId,
+          'CREATE',
+          'user',
+          result.user.id,
+          ipAddress,
+          undefined,
+          {
+            email: result.user.email,
+            role: result.user.role,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+          }
+        );
+      }
+
       res.status(201).json({
         success: true,
         message: 'User registered successfully',
@@ -92,6 +123,12 @@ class AuthController {
       }
 
       const identifier = this.resolveLoginIdentifier(validationResult.data);
+      const ipAddress =
+        req.ip ||
+        req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+        req.socket.remoteAddress ||
+        'unknown';
+      const userAgent = req.get('User-Agent') || 'unknown';
 
       const loginData: ILoginRequest = {
         identifier: identifier.value,
@@ -99,20 +136,53 @@ class AuthController {
         password: validationResult.data.password,
         deviceInfo: {
           ...validationResult.data.deviceInfo,
-          ip: req.ip,
-          userAgent: req.get('User-Agent'),
+          ip: ipAddress,
+          userAgent,
         },
       };
 
       // Authenticate user
       const result = await this.authService.login(loginData);
 
+      // Log successful login
+      logLoginSuccess(
+        result.user.id,
+        result.user.email || identifier.value,
+        ipAddress,
+        userAgent,
+        {
+          role: result.user.role,
+          identifierType: identifier.type,
+        }
+      );
+
       res.status(200).json({
         success: true,
         message: 'Login successful',
         data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
+      // Log failed login attempt
+      const identifier =
+        req.body.identifier ||
+        req.body.username ||
+        req.body.email ||
+        req.body.phoneNumber ||
+        'unknown';
+      const ipAddress =
+        req.ip ||
+        req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+        req.socket.remoteAddress ||
+        'unknown';
+
+      logLoginAttempt(
+        identifier,
+        ipAddress,
+        false,
+        undefined,
+        error?.message || 'Authentication failed'
+      );
+
       next(error);
     }
   };
@@ -134,6 +204,18 @@ class AuthController {
       }
 
       await this.authService.logout(refreshToken);
+
+      // Log logout if user is authenticated
+      if (req.user) {
+        const ipAddress =
+          req.ip ||
+          req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown';
+        const userAgent = req.get('User-Agent') || 'unknown';
+
+        logLogout(req.user.userId, ipAddress, userAgent);
+      }
 
       res.status(200).json({
         success: true,
@@ -338,6 +420,25 @@ class AuthController {
       const { isActive } = req.body;
 
       await this.authService.updateUserStatus(userId, isActive);
+
+      // Log user status change (admin action)
+      if (req.user) {
+        const ipAddress =
+          req.ip ||
+          req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+          req.socket.remoteAddress ||
+          'unknown';
+
+        logDataModification(
+          req.user.userId,
+          'UPDATE',
+          'user_status',
+          userId,
+          ipAddress,
+          { isActive: !isActive },
+          { isActive }
+        );
+      }
 
       res.status(200).json({
         success: true,

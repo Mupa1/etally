@@ -107,6 +107,9 @@ services:
       MINIO_USE_SSL: "false"
       HOST: 0.0.0.0
       PORT: 3000
+      LOG_DIR: /var/log/api
+    volumes:
+      - /var/log/api:/var/log/api
     depends_on:
       postgres:
         condition: service_healthy
