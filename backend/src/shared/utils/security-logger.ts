@@ -209,7 +209,7 @@ export const logDataModification = (
  * Log privilege escalation (role change)
  */
 export const logPrivilegeChange = (
-  userId: string,
+  _userId: string, // Changed by user ID (for future use)
   targetUserId: string,
   oldRole: string,
   newRole: string,

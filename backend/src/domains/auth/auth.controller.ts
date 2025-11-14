@@ -24,7 +24,6 @@ import {
   logLoginSuccess,
   logLogout,
   logDataModification,
-  logPrivilegeChange,
 } from '@/shared/utils/security-logger';
 
 const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
