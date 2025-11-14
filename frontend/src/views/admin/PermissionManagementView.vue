@@ -15,7 +15,7 @@
       >
         <option value="">-- Select a user --</option>
         <option v-for="user in users" :key="user.id" :value="user.id">
-          {{ user.firstName }} {{ user.lastName }} ({{ user.email }}) -
+          {{ user.firstName }} {{ user.lastName }} ({{ user.email ?? 'No email' }}) -
           {{ user.role }}
         </option>
       </select>

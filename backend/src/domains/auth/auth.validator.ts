@@ -33,12 +33,42 @@ const deviceInfoSchema = z
   })
   .optional();
 
+const KENYAN_PHONE_REGEX = /^(\+254|254|0)[17]\d{8}$/;
+const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const identifierSchema = z
+  .string()
+  .trim()
+  .min(1, 'Email or phone number is required')
+  .refine(
+    (value) =>
+      SIMPLE_EMAIL_REGEX.test(value) || KENYAN_PHONE_REGEX.test(value),
+    'Identifier must be a valid email address or Kenyan phone number'
+  );
+
 // Login request schema
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
-  deviceInfo: deviceInfoSchema,
-});
+export const loginSchema = z
+  .object({
+    identifier: identifierSchema.optional(),
+    email: z.string().email('Invalid email format').optional(),
+    phoneNumber: z
+      .string()
+      .trim()
+      .regex(
+        KENYAN_PHONE_REGEX,
+        'Phone number must be a valid Kenyan number (+2547..., 071..., 01...)'
+      )
+      .optional(),
+    password: z.string().min(1, 'Password is required'),
+    deviceInfo: deviceInfoSchema,
+  })
+  .refine(
+    (data) => data.identifier || data.email || data.phoneNumber,
+    {
+      message: 'Email or phone number is required',
+      path: ['identifier'],
+    }
+  );
 
 // Register request schema
 export const registerSchema = z.object({

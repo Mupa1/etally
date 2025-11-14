@@ -370,7 +370,7 @@ const filteredUsers = computed(() => {
       (u) =>
         u.firstName.toLowerCase().includes(query) ||
         u.lastName.toLowerCase().includes(query) ||
-        u.email.toLowerCase().includes(query) ||
+        (u.email ?? '').toLowerCase().includes(query) ||
         u.nationalId.toLowerCase().includes(query) ||
         u.phoneNumber?.toLowerCase().includes(query)
     );

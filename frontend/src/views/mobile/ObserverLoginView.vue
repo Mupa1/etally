@@ -15,9 +15,9 @@
           <div class="space-y-4">
             <FormField
               v-model="form.identifier"
-              label="Email or National ID"
+              label="Email or Phone Number"
               type="text"
-              placeholder="email@example.com or 12345678"
+              placeholder="email@example.com or +254712345678"
               required
             />
 
@@ -89,13 +89,17 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { handleError } from '@/utils/errorHandler';
-import { validateFormInput, sanitizeInput } from '@/utils/security';
+import { sanitizeInput } from '@/utils/security';
 import api from '@/utils/api';
+import type { LoginRequest } from '@/types/auth';
 import { getApiBaseUrl } from '@/utils/api';
 import Alert from '@/components/common/Alert.vue';
 import Button from '@/components/common/Button.vue';
 import PasswordInput from '@/components/common/PasswordInput.vue';
 import FormField from '@/components/mobile/FormField.vue';
+
+const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const KENYAN_PHONE_REGEX = /^(\+254|254|0)[17]\d{8}$/;
 
 // Note: Observer login uses /api/v1/auth/login, not /api/agent
 
@@ -143,25 +147,41 @@ async function handleLogin() {
   submitting.value = true;
 
   try {
-    // Validate inputs
-    const identifierValidation = validateFormInput(
-      form.value.identifier,
-      'text'
-    );
-    if (!identifierValidation.isValid) {
-      error.value = identifierValidation.error || 'Invalid identifier';
+    const rawIdentifier = form.value.identifier?.trim();
+    if (!rawIdentifier) {
+      error.value = 'Please enter your email address or phone number';
       return;
     }
 
-    // Sanitize inputs
-    const sanitizedIdentifier = sanitizeInput(form.value.identifier);
+    const sanitizedIdentifier = sanitizeInput(rawIdentifier);
     const sanitizedPassword = sanitizeInput(form.value.password);
 
-    // Login using existing auth store
-    await authStore.login({
-      email: sanitizedIdentifier,
+    const isEmail = SIMPLE_EMAIL_REGEX.test(
+      sanitizedIdentifier.toLowerCase()
+    );
+    const isPhone = KENYAN_PHONE_REGEX.test(sanitizedIdentifier);
+
+    if (!isEmail && !isPhone) {
+      error.value = 'Enter a valid email or Kenyan phone number';
+      return;
+    }
+
+    const payload: LoginRequest = {
+      identifier: sanitizedIdentifier,
       password: sanitizedPassword,
-    });
+    };
+
+    if (isEmail) {
+      const normalizedEmail = sanitizedIdentifier.toLowerCase();
+      payload.identifier = normalizedEmail;
+      payload.email = normalizedEmail;
+    } else {
+      const normalizedPhone = sanitizedIdentifier.replace(/\s+/g, '');
+      payload.identifier = normalizedPhone;
+      payload.phoneNumber = normalizedPhone;
+    }
+
+    await authStore.login(payload);
 
     // Redirect to agent dashboard
     router.push('/agent/dashboard');

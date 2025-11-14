@@ -44,9 +44,14 @@ export class ObserverService {
     }
 
     // Check for duplicates
+    const duplicateConditions = [{ nationalId: data.nationalId }];
+    if (data.email) {
+      duplicateConditions.push({ email: data.email });
+    }
+
     const existing = await this.prisma.observerRegistration.findFirst({
       where: {
-        OR: [{ nationalId: data.nationalId }, { email: data.email }],
+        OR: duplicateConditions,
       },
     });
 
@@ -57,7 +62,7 @@ export class ObserverService {
           'nationalId'
         );
       }
-      if (existing.email === data.email) {
+      if (data.email && existing.email === data.email) {
         throw new ValidationError('Email already registered', 'email');
       }
     }
@@ -73,7 +78,7 @@ export class ObserverService {
         nationalId: data.nationalId,
         dateOfBirth: dob,
         phoneNumber: data.phoneNumber,
-        email: data.email,
+        email: data.email || null,
         preferredCountyId: data.preferredCountyId,
         preferredConstituencyId: data.preferredConstituencyId,
         preferredWardId: data.preferredWardId,
@@ -186,7 +191,7 @@ export class ObserverService {
       nationalId: application.nationalId,
       dateOfBirth: application.dateOfBirth.toISOString(),
       phoneNumber: application.phoneNumber,
-      email: application.email,
+      email: application.email || undefined,
       preferredCountyId: application.preferredCountyId,
       preferredConstituencyId: application.preferredConstituencyId,
       preferredWardId: application.preferredWardId,
@@ -239,7 +244,8 @@ export class ObserverService {
       dataToUpdate.phoneNumber = updateData.phoneNumber;
     }
     if (updateData.email !== undefined) {
-      dataToUpdate.email = updateData.email;
+      const sanitizedEmail = updateData.email?.trim();
+      dataToUpdate.email = sanitizedEmail ? sanitizedEmail : null;
     }
     if (updateData.dateOfBirth !== undefined) {
       dataToUpdate.dateOfBirth = new Date(updateData.dateOfBirth);
@@ -286,7 +292,7 @@ export class ObserverService {
       nationalId: updated.nationalId,
       dateOfBirth: updated.dateOfBirth.toISOString(),
       phoneNumber: updated.phoneNumber,
-      email: updated.email,
+      email: updated.email || undefined,
       preferredCountyId: updated.preferredCountyId,
       preferredConstituencyId: updated.preferredConstituencyId,
       preferredWardId: updated.preferredWardId,
@@ -417,7 +423,7 @@ export class ObserverService {
       nationalId: application.nationalId,
       dateOfBirth: application.dateOfBirth.toISOString(),
       phoneNumber: application.phoneNumber,
-      email: application.email,
+      email: application.email || undefined,
       preferredLocation: {
         county: application.preferredCounty?.name,
         constituency: application.preferredConstituency?.name,
@@ -513,7 +519,7 @@ export class ObserverService {
       const user = await tx.user.create({
         data: {
           nationalId: application.nationalId,
-          email: application.email,
+          email: application.email || null,
           phoneNumber: application.phoneNumber,
           firstName: application.firstName,
           lastName: application.lastName,

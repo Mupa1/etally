@@ -47,7 +47,12 @@ export const ObserverRegistrationSchema = z.object({
     .string()
     .regex(KENYAN_PHONE_REGEX, 'Invalid Kenyan phone number format'),
 
-  email: z.string().email('Invalid email address').toLowerCase(),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email('Invalid email address')
+    .optional(),
 
   // Preferred Assignment (all optional)
   preferredCountyId: z.string().uuid().optional(),

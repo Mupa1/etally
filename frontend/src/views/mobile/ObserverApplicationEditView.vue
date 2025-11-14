@@ -276,7 +276,7 @@ async function handleSubmit() {
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       phoneNumber: form.value.phoneNumber,
-      email: form.value.email,
+      email: form.value.email || undefined,
       dateOfBirth: new Date(form.value.dateOfBirth).toISOString(),
       preferredCountyId: form.value.preferredCountyId || undefined,
       preferredConstituencyId: form.value.preferredConstituencyId || undefined,

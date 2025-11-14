@@ -18,6 +18,10 @@ import {
   FirstLoginPasswordChangeInput,
 } from './auth.validator';
 import { ValidationError } from '@/shared/types/errors';
+import { ILoginRequest } from '@/shared/interfaces/auth.interface';
+
+const SIMPLE_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const KENYAN_PHONE_REGEX = /^(\+254|254|0)[17]\d{8}$/;
 
 class AuthController {
   private authService: AuthService;
@@ -87,8 +91,12 @@ class AuthController {
         );
       }
 
-      const loginData: LoginInput = {
-        ...validationResult.data,
+      const identifier = this.resolveLoginIdentifier(validationResult.data);
+
+      const loginData: ILoginRequest = {
+        identifier: identifier.value,
+        identifierType: identifier.type,
+        password: validationResult.data.password,
         deviceInfo: {
           ...validationResult.data.deviceInfo,
           ip: req.ip,
@@ -339,6 +347,31 @@ class AuthController {
       next(error);
     }
   };
+
+  private resolveLoginIdentifier(
+    data: LoginInput
+  ): { value: string; type: 'email' | 'phone' } {
+    const rawIdentifier =
+      data.identifier?.trim() ||
+      data.email?.trim() ||
+      data.phoneNumber?.trim();
+
+    if (!rawIdentifier) {
+      throw new ValidationError('Email or phone number is required');
+    }
+
+    if (SIMPLE_EMAIL_REGEX.test(rawIdentifier)) {
+      return { value: rawIdentifier.toLowerCase(), type: 'email' };
+    }
+
+    if (KENYAN_PHONE_REGEX.test(rawIdentifier)) {
+      return { value: rawIdentifier.replace(/\s+/g, ''), type: 'phone' };
+    }
+
+    throw new ValidationError(
+      'Identifier must be a valid email address or Kenyan phone number'
+    );
+  }
 }
 
 export default AuthController;

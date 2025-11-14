@@ -135,10 +135,13 @@ const showAssignModal = ref(false);
 // Computed property for user options
 const userOptions = computed(() => [
   { value: '', label: '-- Select a user --' },
-  ...users.value.map((user) => ({
-    value: user.id,
-    label: `${user.firstName} ${user.lastName} (${user.email}) - ${user.role}`,
-  })),
+  ...users.value.map((user) => {
+    const displayEmail = user.email ?? 'No email';
+    return {
+      value: user.id,
+      label: `${user.firstName} ${user.lastName} (${displayEmail}) - ${user.role}`,
+    };
+  }),
 ]);
 
 async function loadUsers() {

@@ -132,13 +132,29 @@ class AuthService {
    * @throws AuthenticationError if credentials are invalid
    */
   async login(loginData: ILoginRequest): Promise<IAuthResponse> {
-    // Find user by email
-    const user = await this.prisma.user.findUnique({
-      where: { email: loginData.email },
-    });
+    let user = null;
+
+    if (loginData.identifierType === 'email') {
+      user = await this.prisma.user.findFirst({
+        where: { email: loginData.identifier.toLowerCase() },
+      });
+    } else {
+      const phoneCandidates = this.buildPhoneCandidates(
+        loginData.identifier
+      );
+      if (phoneCandidates.length > 0) {
+        user = await this.prisma.user.findFirst({
+          where: {
+            phoneNumber: {
+              in: phoneCandidates,
+            },
+          },
+        });
+      }
+    }
 
     if (!user) {
-      throw new AuthenticationError('Invalid email or password');
+      throw new AuthenticationError('Invalid email/phone or password');
     }
 
     // Check if user is active
@@ -168,7 +184,7 @@ class AuthService {
         },
       });
 
-      throw new AuthenticationError('Invalid email or password');
+      throw new AuthenticationError('Invalid email/phone or password');
     }
 
     // Reset failed attempts and update last login
@@ -599,6 +615,54 @@ class AuthService {
       where: { id: userId },
       data: { isActive },
     });
+  }
+
+  private buildPhoneCandidates(input: string): string[] {
+    if (!input) {
+      return [];
+    }
+
+    const trimmed = input.replace(/\s+/g, '');
+    const withoutPlus = trimmed.startsWith('+')
+      ? trimmed.substring(1)
+      : trimmed;
+    const digitsOnly = withoutPlus.replace(/\D/g, '');
+
+    const candidates = new Set<string>();
+    if (trimmed) {
+      candidates.add(trimmed);
+    }
+    if (withoutPlus) {
+      candidates.add(withoutPlus);
+    }
+    if (digitsOnly) {
+      candidates.add(digitsOnly);
+    }
+
+    if (digitsOnly.startsWith('254')) {
+      const local = `0${digitsOnly.substring(3)}`;
+      if (local.length === 10) {
+        candidates.add(local);
+      }
+      candidates.add(`+${digitsOnly}`);
+      candidates.add(`254${digitsOnly.substring(3)}`);
+    } else if (trimmed.startsWith('0')) {
+      const withoutZero = trimmed.substring(1);
+      if (withoutZero) {
+        candidates.add(`+254${withoutZero}`);
+        candidates.add(`254${withoutZero}`);
+        candidates.add(withoutZero);
+      }
+    } else if (
+      trimmed.startsWith('7') ||
+      trimmed.startsWith('1')
+    ) {
+      candidates.add(`0${trimmed}`);
+      candidates.add(`+254${trimmed}`);
+      candidates.add(`254${trimmed}`);
+    }
+
+    return Array.from(candidates).filter(Boolean);
   }
 }
 

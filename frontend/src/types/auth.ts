@@ -8,7 +8,7 @@ export type UserRole = 'super_admin' | 'election_manager' | 'field_observer' | '
 export interface User {
   id: string;
   nationalId: string;
-  email: string;
+  email?: string | null;
   phoneNumber?: string;
   firstName: string;
   lastName: string;
@@ -25,7 +25,9 @@ export interface AuthTokens {
 }
 
 export interface LoginRequest {
-  email: string;
+  identifier?: string;
+  email?: string;
+  phoneNumber?: string;
   password: string;
   deviceInfo?: {
     deviceName?: string;

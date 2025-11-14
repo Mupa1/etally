@@ -323,7 +323,7 @@ const filteredAgents = computed(() => {
       (agent) =>
         agent.firstName.toLowerCase().includes(query) ||
         agent.lastName.toLowerCase().includes(query) ||
-        agent.email.toLowerCase().includes(query) ||
+        (agent.email ?? '').toLowerCase().includes(query) ||
         agent.nationalId.toLowerCase().includes(query) ||
         agent.phoneNumber?.toLowerCase().includes(query)
     );

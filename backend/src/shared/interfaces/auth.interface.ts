@@ -8,7 +8,7 @@ import { UserRole } from '@prisma/client';
 export interface IUser {
   id: string;
   nationalId: string;
-  email: string;
+  email: string | null;
   phoneNumber?: string;
   firstName: string;
   lastName: string;
@@ -37,7 +37,8 @@ export interface IRefreshTokenPayload {
 }
 
 export interface ILoginRequest {
-  email: string;
+  identifier: string;
+  identifierType: 'email' | 'phone';
   password: string;
   deviceInfo?: IDeviceInfo;
 }

@@ -13,7 +13,7 @@ export interface ObserverRegistrationDTO {
   nationalId: string;
   dateOfBirth: string; // ISO string
   phoneNumber: string;
-  email: string;
+  email?: string;
 
   // Preferred Assignment (optional)
   preferredCountyId?: string;
@@ -81,7 +81,7 @@ export interface ObserverApplicationDetail {
   nationalId: string;
   dateOfBirth: string;
   phoneNumber: string;
-  email: string;
+  email?: string;
 
   // Preferred Location
   preferredLocation?: {

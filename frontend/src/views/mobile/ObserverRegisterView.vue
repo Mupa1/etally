@@ -99,7 +99,6 @@
                 label="Email Address"
                 type="email"
                 placeholder="john.doe@example.com"
-                required
               />
             </div>
           </div>
@@ -430,11 +429,13 @@ function validatePersonalInfo(): boolean {
     return false;
   }
 
-  // Validate email
-  const emailValidation = validateFormInput(form.value.email, 'email');
-  if (!emailValidation.isValid) {
-    error.value = emailValidation.error || 'Invalid email';
-    return false;
+  // Validate email if provided
+  if (form.value.email) {
+    const emailValidation = validateFormInput(form.value.email, 'email');
+    if (!emailValidation.isValid) {
+      error.value = emailValidation.error || 'Invalid email';
+      return false;
+    }
   }
 
   return true;
@@ -487,7 +488,9 @@ async function submitRegistration() {
       lastName: sanitizeInput(form.value.lastName),
       nationalId: sanitizeInput(form.value.nationalId),
       phoneNumber: sanitizeInput(form.value.phoneNumber),
-      email: sanitizeInput(form.value.email),
+      email: form.value.email
+        ? sanitizeInput(form.value.email)
+        : undefined,
       dateOfBirth: new Date(form.value.dateOfBirth).toISOString(),
       // Convert empty strings to undefined for optional fields
       preferredCountyId: form.value.preferredCountyId || undefined,

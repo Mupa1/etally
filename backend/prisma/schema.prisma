@@ -11,7 +11,7 @@ datasource db {
 model User {
   id                      String                 @id @default(uuid())
   nationalId              String                 @unique
-  email                   String                 @unique
+  email                   String?                @unique
   phoneNumber             String?
   firstName               String
   lastName                String
@@ -671,7 +671,7 @@ model ObserverRegistration {
   lastName                String
   dateOfBirth             DateTime
   phoneNumber             String
-  email                   String               @unique
+  email                   String?              @unique
   preferredCountyId       String?
   preferredConstituencyId String?
   preferredWardId         String?
