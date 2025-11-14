@@ -175,9 +175,9 @@ postgres-exporter:
 - [x] Create `deployment/prometheus/prometheus.yml` with above configuration ✅ **COMPLETED** - Updated existing config with cluster/environment labels
 - [x] Add Node Exporter service to `deployment/docker-compose.prod.yml` ✅ **COMPLETED**
 - [x] Add PostgreSQL Exporter service to `deployment/docker-compose.prod.yml` ✅ **COMPLETED**
-- [ ] **NEXT STEP**: Deploy to production - Restart services: `docker compose --env-file .env -f deployment/docker-compose.prod.yml up -d node-exporter postgres-exporter prometheus`
-- [ ] Verify Prometheus UI at `http://134.122.78.111:9090`
-- [ ] Check targets at `http://134.122.78.111:9090/targets` (should show node-exporter and postgres-exporter as UP)
+- [x] Deploy to production ✅ **COMPLETED** - Services deployed successfully
+- [x] Verify Prometheus UI at `http://134.122.78.111:9090` ✅ **COMPLETED**
+- [x] Check targets at `http://134.122.78.111:9090/targets` ✅ **COMPLETED** - node: 1/1 up, postgres: 1/1 up, prometheus: 1/1 up
 
 **⚠️ IMPORTANT**: Before deploying, verify the `DB_PASSWORD` variable name in your `.env` file matches what's used in the postgres-exporter service. Common names: `DB_PASSWORD`, `POSTGRES_PASSWORD`, or `DATABASE_PASSWORD`.
 
@@ -216,9 +216,9 @@ postgres-exporter:
 
 **Actions**:
 
-- [ ] Prometheus data source configured and tested
-- [ ] PostgreSQL data source configured and tested
-- [ ] Both data sources show "working" status
+- [x] Configure Prometheus data source in Grafana ✅ **COMPLETED**
+- [x] Configure PostgreSQL data source in Grafana ✅ **COMPLETED**
+- [x] Both data sources show "working" status ✅ **COMPLETED**
 
 ---
 
@@ -308,11 +308,11 @@ docker compose --env-file .env -f deployment/docker-compose.prod.yml up -d loki 
 
 **Actions**:
 
-- [ ] Loki and Promtail added to `deployment/docker-compose.prod.yml`
-- [ ] `loki_data` volume added to volumes section
-- [ ] Create `deployment/promtail/config.yml`
-- [ ] Promtail configured to collect logs
-- [ ] Start Loki and Promtail services
+- [x] Loki and Promtail added to `deployment/docker-compose.prod.yml` ✅ **COMPLETED**
+- [x] `loki_data` volume added to volumes section ✅ **COMPLETED**
+- [x] Create `deployment/promtail/config.yml` ✅ **COMPLETED**
+- [x] Promtail configured to collect logs ✅ **COMPLETED**
+- [ ] **NEXT STEP**: Deploy to production - Start Loki and Promtail services
 - [ ] Loki data source added to Grafana
 - [ ] Test log collection
 
