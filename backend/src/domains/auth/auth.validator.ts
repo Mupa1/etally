@@ -50,20 +50,15 @@ const identifierSchema = z
 export const loginSchema = z
   .object({
     identifier: identifierSchema.optional(),
-    email: z.string().email('Invalid email format').optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .regex(
-        KENYAN_PHONE_REGEX,
-        'Phone number must be a valid Kenyan number (+2547..., 071..., 01...)'
-      )
-      .optional(),
+    username: identifierSchema.optional(),
+    email: identifierSchema.optional(),
+    phoneNumber: identifierSchema.optional(),
     password: z.string().min(1, 'Password is required'),
     deviceInfo: deviceInfoSchema,
   })
   .refine(
-    (data) => data.identifier || data.email || data.phoneNumber,
+    (data) =>
+      data.identifier || data.username || data.email || data.phoneNumber,
     {
       message: 'Email or phone number is required',
       path: ['identifier'],

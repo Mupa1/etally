@@ -353,6 +353,7 @@ class AuthController {
   ): { value: string; type: 'email' | 'phone' } {
     const rawIdentifier =
       data.identifier?.trim() ||
+      data.username?.trim() ||
       data.email?.trim() ||
       data.phoneNumber?.trim();
 

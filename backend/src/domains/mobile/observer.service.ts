@@ -44,7 +44,9 @@ export class ObserverService {
     }
 
     // Check for duplicates
-    const duplicateConditions = [{ nationalId: data.nationalId }];
+    const duplicateConditions: Array<
+      { nationalId: string } | { email: string }
+    > = [{ nationalId: data.nationalId }];
     if (data.email) {
       duplicateConditions.push({ email: data.email });
     }

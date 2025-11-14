@@ -26,6 +26,7 @@ export interface AuthTokens {
 
 export interface LoginRequest {
   identifier?: string;
+  username?: string;
   email?: string;
   phoneNumber?: string;
   password: string;
