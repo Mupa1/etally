@@ -20,6 +20,16 @@ const defaultConfigurations = [
     isDefault: false,
   },
   {
+    key: 'observer_portal_base_url',
+    name: 'Observer Portal Base URL',
+    description: 'Base URL for observer-facing links sent via SMS',
+    value: 'https://observer.etally.ke',
+    type: ConfigurationType.string,
+    category: 'general',
+    isRequired: true,
+    isDefault: true,
+  },
+  {
     key: 'maintenance_mode',
     name: 'Maintenance Mode',
     description: 'Enable maintenance mode to prevent user access',

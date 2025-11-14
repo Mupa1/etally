@@ -1,6 +1,9 @@
 import PrismaService from '@/infrastructure/database/prisma.service';
 import { decrypt, isEncrypted } from '@/shared/utils/encryption.util';
 
+const OBSERVER_PORTAL_URL_CONFIG_KEY = 'observer_portal_base_url';
+const DEFAULT_OBSERVER_PORTAL_URL = 'https://observer.etally.ke';
+
 type SmsProvider = 'jambo';
 
 interface SmsConfig {
@@ -39,10 +42,52 @@ export class SmsService {
   private prisma: PrismaService;
   private configCache: SmsConfig | null = null;
   private configCacheExpiry = 0;
+  private portalUrlCache: string | null = null;
+  private portalUrlCacheExpiry = 0;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     this.prisma = PrismaService.getInstance();
+  }
+
+  private normalizeBaseUrl(url: string): string {
+    return url.trim().replace(/\/$/, '');
+  }
+
+  private async getObserverPortalBaseUrl(): Promise<string> {
+    if (this.portalUrlCache && Date.now() < this.portalUrlCacheExpiry) {
+      return this.portalUrlCache;
+    }
+
+    let baseUrl = process.env.APP_URL?.trim() || '';
+
+    try {
+      const config = await this.prisma.configuration.findUnique({
+        where: { key: OBSERVER_PORTAL_URL_CONFIG_KEY },
+        select: { value: true },
+      });
+
+      const configuredUrl = (config?.value ?? '').toString().trim();
+      if (configuredUrl) {
+        baseUrl = configuredUrl;
+      }
+    } catch (error) {
+      console.warn(
+        'Failed to load observer portal base URL configuration, falling back to environment/default.',
+        error
+      );
+    }
+
+    if (!baseUrl) {
+      baseUrl = DEFAULT_OBSERVER_PORTAL_URL;
+    }
+
+    const normalized = this.normalizeBaseUrl(baseUrl);
+    const finalUrl =
+      normalized || this.normalizeBaseUrl(DEFAULT_OBSERVER_PORTAL_URL);
+    this.portalUrlCache = finalUrl;
+    this.portalUrlCacheExpiry = Date.now() + this.CACHE_TTL;
+    return finalUrl;
   }
 
   private async getSmsConfig(): Promise<SmsConfig> {
@@ -85,8 +130,9 @@ export class SmsService {
 
       const timeout = parseInt(configMap.get('sms_timeout') || '30', 10);
       const maxRetry = parseInt(configMap.get('sms_max_retry') || '3', 10);
-      const apiBaseUrl =
-        configMap.get('jambo_base_url') || 'https://smsgm.lemu.co.ke';
+      const apiBaseUrl = this.normalizeBaseUrl(
+        configMap.get('jambo_base_url') || 'https://smsgm.lemu.co.ke'
+      );
 
       const smsConfig: SmsConfig = {
         provider,
@@ -146,7 +192,7 @@ export class SmsService {
     }
 
     // Construct endpoint URL, handling trailing slashes
-    const baseUrl = config.apiBaseUrl.replace(/\/$/, ''); // Remove trailing slash
+    const baseUrl = config.apiBaseUrl; // Already normalized
     const endpoint = `${baseUrl}/api/services/sendsms/`;
     const results: any[] = [];
 
@@ -371,8 +417,8 @@ export class SmsService {
     firstName: string,
     setupToken: string
   ): Promise<SmsSendResult> {
-    const appUrl = process.env.APP_URL || 'https://observer.etally.ke';
-    const setupUrl = `${appUrl.replace(/\/$/, '')}/agent/setup-password?token=${setupToken}`;
+    const appUrl = await this.getObserverPortalBaseUrl();
+    const setupUrl = `${appUrl}/agent/setup-password?token=${encodeURIComponent(setupToken)}`;
     const message = `Hi ${firstName}, your observer account is ready. Set your password here: ${setupUrl}`;
     return this.sendSms([phoneNumber], message);
   }
@@ -381,8 +427,8 @@ export class SmsService {
     phoneNumber: string,
     firstName: string
   ): Promise<SmsSendResult> {
-    const appUrl = process.env.APP_URL || 'https://observer.etally.ke';
-    const loginUrl = `${appUrl.replace(/\/$/, '')}/agent/login`;
+    const appUrl = await this.getObserverPortalBaseUrl();
+    const loginUrl = `${appUrl}/agent/login`;
     const message = `Hi ${firstName}, welcome aboard! You can now sign in to the observer portal: ${loginUrl}`;
     return this.sendSms([phoneNumber], message);
   }
@@ -403,7 +449,7 @@ export class SmsService {
     trackingNumber?: string,
     trackingUrl?: string
   ): Promise<SmsSendResult> {
-    const appUrl = process.env.APP_URL || 'https://observer.etally.ke';
+    const appUrl = await this.getObserverPortalBaseUrl();
     const base = `Hi ${firstName}, we need more info for your observer application. ${notes}`;
     const trackingPart = trackingNumber
       ? ` Tracking number: ${trackingNumber}.`
@@ -411,7 +457,7 @@ export class SmsService {
     const finalTrackingUrl =
       trackingUrl ||
       (trackingNumber
-        ? `${appUrl.replace(/\/$/, '')}/agent/track/${trackingNumber}`
+        ? `${appUrl}/agent/track/${encodeURIComponent(trackingNumber)}`
         : undefined);
     const urlPart = finalTrackingUrl ? ` Update here: ${finalTrackingUrl}` : '';
     const message = `${base}${trackingPart}${urlPart}`;
