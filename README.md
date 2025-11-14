@@ -429,5 +429,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Issue Tracker:** https://github.com/yourusername/etally/issues
 
 ---
-
 **Built with ❤️ for transparent and secure elections**
