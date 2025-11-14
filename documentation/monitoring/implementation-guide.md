@@ -418,8 +418,8 @@ export const logDataModification = (
 - [x] Install logging libraries ✅ **COMPLETED** - Added `winston-daily-rotate-file` to package.json
 - [x] Create security logger utility ✅ **COMPLETED** - Created `backend/src/shared/utils/security-logger.ts`
 - [x] Added log directory volume mount to API container ✅ **COMPLETED**
-- [ ] **NEXT STEP**: Install dependencies and rebuild API: `npm install` in backend directory
-- [ ] Test logging to files
+- [x] Install dependencies and rebuild API ✅ **COMPLETED** - Deployed successfully
+- [x] Test logging to files ✅ **COMPLETED** - Logs are being generated
 
 ---
 
@@ -465,8 +465,8 @@ async login(req: Request, res: Response) {
 - [x] Add logging to logout endpoint ✅ **COMPLETED**
 - [x] Add logging to user registration ✅ **COMPLETED** - Logs user creation
 - [x] Add logging to user status changes ✅ **COMPLETED**
-- [ ] **NEXT STEP**: Install dependencies, rebuild, and deploy API
-- [ ] Test log output after deployment
+- [x] Deploy API with security logging ✅ **COMPLETED**
+- [x] Test log output ✅ **COMPLETED** - Logs verified in production
 
 ---
 
@@ -474,78 +474,70 @@ async login(req: Request, res: Response) {
 
 **Objective**: Log all data modifications to critical tables
 
-#### 2.3.1: Enable PostgreSQL Audit Extension
+#### 2.3.1: Run Database Audit Migration
 
-```sql
--- Connect to database
-psql -U admin -d elections
+**Option A: Using Docker (Recommended)**
 
--- Enable pgAudit extension
-CREATE EXTENSION IF NOT EXISTS pgaudit;
+```bash
+# On production server
+cd /opt/etally
 
--- Configure audit logging
-ALTER SYSTEM SET pgaudit.log = 'write, ddl';
-ALTER SYSTEM SET pgaudit.log_catalog = off;
-ALTER SYSTEM SET pgaudit.log_parameter = on;
-ALTER SYSTEM SET pgaudit.log_statement_once = off;
-
--- Reload configuration
-SELECT pg_reload_conf();
+# Run the SQL migration
+docker exec -i etally-postgres psql -U admin -d elections < backend/prisma/migrations/create_database_audit.sql
 ```
 
-#### 2.3.2: Create Audit Trigger Function
+**Option B: Direct psql Connection**
+
+```bash
+# Connect to database
+psql -h localhost -U admin -d elections
+
+# Then run the SQL file
+\i backend/prisma/migrations/create_database_audit.sql
+```
+
+**Option C: Copy and Paste SQL**
+
+```bash
+# Copy the SQL content and run it in pgAdmin or psql
+cat backend/prisma/migrations/create_database_audit.sql | docker exec -i etally-postgres psql -U admin -d elections
+```
+
+#### 2.3.2: Verify Audit Triggers Are Active
 
 ```sql
--- Create audit log table
-CREATE TABLE IF NOT EXISTS audit_log (
-  id SERIAL PRIMARY KEY,
-  table_name TEXT NOT NULL,
-  operation TEXT NOT NULL,
-  user_id TEXT,
-  old_data JSONB,
-  new_data JSONB,
-  changed_at TIMESTAMP DEFAULT NOW(),
-  ip_address TEXT,
-  user_agent TEXT
-);
+-- Check if triggers exist
+SELECT
+  trigger_name,
+  event_object_table,
+  action_statement
+FROM information_schema.triggers
+WHERE trigger_name LIKE 'database_audit%';
 
--- Create trigger function
-CREATE OR REPLACE FUNCTION audit_trigger_function()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF (TG_OP = 'DELETE') THEN
-    INSERT INTO audit_log (table_name, operation, old_data, user_id)
-    VALUES (TG_TABLE_NAME, 'DELETE', row_to_json(OLD), current_setting('app.user_id', true));
-    RETURN OLD;
-  ELSIF (TG_OP = 'UPDATE') THEN
-    INSERT INTO audit_log (table_name, operation, old_data, new_data, user_id)
-    VALUES (TG_TABLE_NAME, 'UPDATE', row_to_json(OLD), row_to_json(NEW), current_setting('app.user_id', true));
-    RETURN NEW;
-  ELSIF (TG_OP = 'INSERT') THEN
-    INSERT INTO audit_log (table_name, operation, new_data, user_id)
-    VALUES (TG_TABLE_NAME, 'INSERT', row_to_json(NEW), current_setting('app.user_id', true));
-    RETURN NEW;
-  END IF;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create triggers for critical tables
-CREATE TRIGGER audit_results
-  AFTER INSERT OR UPDATE OR DELETE ON results
-  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-
-CREATE TRIGGER audit_elections
-  AFTER INSERT OR UPDATE OR DELETE ON elections
-  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+-- Test by making a change and checking audit log
+-- (This will be done after deployment)
+SELECT COUNT(*) FROM database_audit_log;
 ```
+
+**What This Creates**:
+
+- `database_audit_log` table - Stores all changes to critical tables
+- `database_audit_trigger_function()` - Function that logs changes
+- Triggers on critical tables:
+  - `election_results` (MOST CRITICAL - for tampering detection)
+  - `elections`
+  - `users`
+  - `candidates`
+  - `observer_registrations`
+  - `observer_assignments`
+  - `election_contests`
 
 **Actions**:
 
-- [ ] Enable pgAudit extension
-- [ ] Create audit_log table
-- [ ] Create trigger function
-- [ ] Add triggers to critical tables
-- [ ] Test audit logging
+- [ ] Run database audit migration SQL
+- [ ] Verify triggers are created
+- [ ] Test audit logging by making a test change
+- [ ] Verify entries appear in `database_audit_log` table
 
 ---
 
