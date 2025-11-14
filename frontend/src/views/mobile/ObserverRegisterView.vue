@@ -27,10 +27,10 @@
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Field Observer Registration
+          Field Agent Registration
         </h1>
         <p class="text-gray-600">
-          Register to become a certified field observer for election monitoring
+          Register to become a certified field agent for election monitoring
         </p>
       </div>
 
@@ -153,13 +153,13 @@
               >
                 <h3 class="font-semibold mb-2">Terms and Conditions</h3>
                 <p class="text-sm text-gray-700">
-                  By registering as a field observer, you agree to:
+                  By registering as a field agent, you agree to:
                 </p>
                 <ul
                   class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1"
                 >
                   <li>Provide accurate and truthful information</li>
-                  <li>Follow all election observer guidelines</li>
+                  <li>Follow all election agent guidelines</li>
                   <li>Maintain confidentiality of sensitive information</li>
                   <li>Submit election results accurately and promptly</li>
                   <li>Report any irregularities or incidents</li>
@@ -188,7 +188,7 @@
                 />
                 <label class="ml-2 text-sm text-gray-700">
                   I consent to the processing of my personal data for election
-                  observer management
+                  agent management
                   <span class="text-red-500">*</span>
                 </label>
               </div>

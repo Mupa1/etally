@@ -78,6 +78,7 @@ model County {
   preferredByObservers ObserverRegistration[]
   geographicScopes     UserGeographicScope[]
   elections            Election[]             @relation("ElectionCounty")
+  contests             ElectionContest[]
 
   @@index([code])
   @@map("counties")
@@ -96,6 +97,7 @@ model Constituency {
   preferredByObservers ObserverRegistration[]
   geographicScopes     UserGeographicScope[]
   elections            Election[]             @relation("ElectionConstituency")
+  contests             ElectionContest[]
 
   @@index([countyId])
   @@index([code])
@@ -115,6 +117,7 @@ model ElectoralWard {
   pollingStations      PollingStation[]
   geographicScopes     UserGeographicScope[]
   elections            Election[]             @relation("ElectionWard")
+  contests             ElectionContest[]
 
   @@index([constituencyId])
   @@index([code])
@@ -191,19 +194,31 @@ model Election {
 }
 
 model ElectionContest {
-  id           String           @id @default(uuid())
-  electionId   String
-  positionName String
-  description  String?
-  orderIndex   Int              @default(0)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  deletedAt    DateTime?
-  candidates   Candidate[]
-  election     Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
-  results      ElectionResult[]
+  id              String           @id @default(uuid())
+  electionId      String
+  positionName    String
+  description     String?
+  contestType     String?          // 'senatorial' | 'gubernatorial' | 'womens_representative' | 'national_assembly' | 'county_assembly'
+  countyId        String?
+  constituencyId  String?
+  wardId          String?
+  postponedDate   DateTime?        // If contest is postponed, when will it be held
+  orderIndex      Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  candidates      Candidate[]
+  election        Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  county          County?          @relation(fields: [countyId], references: [id])
+  constituency    Constituency?    @relation(fields: [constituencyId], references: [id])
+  ward            ElectoralWard?   @relation(fields: [wardId], references: [id])
+  results         ElectionResult[]
 
   @@index([electionId])
+  @@index([countyId])
+  @@index([constituencyId])
+  @@index([wardId])
+  @@index([contestType])
   @@map("election_contests")
 }
 
@@ -263,12 +278,46 @@ model PoliticalParty {
   updatedAt          DateTime          @updatedAt
   deletedAt          DateTime?
   candidates         Candidate[]
+  coalitions         PartyCoalition[]
 
   @@index([certificateNumber])
   @@index([abbreviation])
   @@index([isActive])
   @@index([affiliation])
   @@map("political_parties")
+}
+
+model Coalition {
+  id                 String            @id @default(uuid())
+  name               String
+  abbreviation       String?
+  description        String?
+  isCompetitor       Boolean           @default(false)
+  logoUrl            String?
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  parties            PartyCoalition[]
+
+  @@index([name])
+  @@index([isActive])
+  @@index([isCompetitor])
+  @@map("coalitions")
+}
+
+model PartyCoalition {
+  id          String        @id @default(uuid())
+  partyId     String
+  coalitionId String
+  joinedAt    DateTime      @default(now())
+  party       PoliticalParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  coalition   Coalition     @relation(fields: [coalitionId], references: [id], onDelete: Cascade)
+
+  @@unique([partyId, coalitionId])
+  @@index([partyId])
+  @@index([coalitionId])
+  @@map("party_coalitions")
 }
 
 model ElectionResult {
@@ -518,6 +567,24 @@ model EmailTemplate {
   @@index([templateType])
   @@index([isActive])
   @@map("email_templates")
+}
+
+model SmsTemplate {
+  id           String          @id @default(uuid())
+  name         String
+  body         String
+  description  String?
+  templateType SmsTemplateType @unique
+  variables    Json?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  createdBy    String?
+  updatedBy    String?
+
+  @@index([templateType])
+  @@index([isActive])
+  @@map("sms_templates")
 }
 
 model UserGeographicScope {
@@ -860,4 +927,14 @@ enum EmailTemplateType {
   welcome
   rejection
   clarification_request
+}
+
+enum SmsTemplateType {
+  registration_confirmation
+  password_setup
+  welcome
+  rejection
+  clarification_request
+  election_update
+  general_notification
 }

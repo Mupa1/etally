@@ -89,7 +89,7 @@
             </p>
           </div>
           <p v-if="!formData.referendumQuestions || formData.referendumQuestions.length === 0" class="text-sm text-gray-500">
-            No questions added
+            Referendum questions can be added later from the election detail page.
           </p>
         </div>
         <div v-else>
@@ -105,9 +105,14 @@
           </div>
           <p v-if="!formData.contests || formData.contests.length === 0" class="text-sm text-gray-500">
             <span v-if="electionType === 'general_election'">
-              Contests will be created automatically based on geographic scope
+              Contests can be added later from the election detail page.
             </span>
-            <span v-else>No contests added</span>
+            <span v-else-if="electionType === 'by_election'">
+              Contests will be added later via CSV upload or manual input. Each contest will have its own geographic coverage.
+            </span>
+            <span v-else>
+              Contests can be added later from the election detail page.
+            </span>
           </p>
         </div>
       </div>
@@ -115,17 +120,21 @@
       <!-- Geographic Scope -->
       <div class="border-b pb-4">
         <h3 class="text-lg font-semibold text-gray-800 mb-3">Geographic Scope</h3>
-        <div class="space-y-2 text-sm text-gray-900">
-          <div>
-            <span class="text-gray-500">Coverage Level:</span>
-            <span class="ml-2 font-medium">{{ scopeSummary.levelLabel }}</span>
-          </div>
-          <div v-if="scopeSummary.detail">
-            <span class="text-gray-500">Area:</span>
-            <span class="ml-2">{{ scopeSummary.detail }}</span>
-          </div>
-          <p v-if="scopeSummary.note" class="text-xs text-gray-500">
-            {{ scopeSummary.note }}
+        <div v-if="electionType === 'by_election'" class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <p class="text-sm text-gray-700">
+            By-elections don't have an election-level geographic scope. Each contest
+            will have its own geographic coverage (county, constituency, or ward) that
+            will be specified when the contest is added.
+          </p>
+        </div>
+        <div v-else-if="electionType === 'general_election' || electionType === 'referendum'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p class="text-sm text-green-800">
+            <strong>Nationwide Coverage:</strong> This election will cover all polling areas nationally.
+          </p>
+        </div>
+        <div v-else class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p class="text-sm text-blue-700">
+            Geographic scope can be configured later from the election detail page if needed.
           </p>
         </div>
       </div>
@@ -187,6 +196,15 @@ function formatScopeLevel(level: string | null | undefined): string {
 }
 
 const scopeSummary = computed(() => {
+  // By-elections don't have election-level scope
+  if (props.electionType === 'by_election') {
+    return {
+      levelLabel: 'Not applicable',
+      detail: null,
+      note: 'By-elections have geographic coverage at the contest level, not the election level.',
+    };
+  }
+
   const level = props.formData.scopeLevel || '';
   const countyName = props.formData.countyName;
   const constituencyName = props.formData.constituencyName;
@@ -259,50 +277,13 @@ const validationErrors = computed(() => {
   if (!props.formData.title) errors.push('Title is required');
   if (!props.formData.electionDate) errors.push('Election date is required');
   
-  if (props.electionType === 'referendum') {
-    if (!props.formData.referendumQuestions || props.formData.referendumQuestions.length === 0) {
-      errors.push('At least one referendum question is required');
-    }
-  } else if (props.electionType === 'by_election') {
-    if (!props.formData.contests || props.formData.contests.length === 0) {
-      errors.push('At least one contest is required');
-    }
-  } else if (
-    props.electionType !== 'general_election' &&
-    (!props.formData.contests || props.formData.contests.length === 0)
-  ) {
-    errors.push('At least one contest is required');
-  }
-
-  if (
-    props.electionType !== 'general_election' &&
-    props.electionType !== 'referendum'
-  ) {
-    if (!props.formData.scopeLevel) {
-      errors.push('Coverage level is required');
-    } else {
-      if (
-        props.formData.scopeLevel === 'county' &&
-        !props.formData.countyId
-      ) {
-        errors.push('County selection is required for county-wide coverage');
-      }
-      if (
-        props.formData.scopeLevel === 'constituency' &&
-        !props.formData.constituencyId
-      ) {
-        errors.push(
-          'Constituency selection is required for constituency-wide coverage'
-        );
-      }
-      if (
-        props.formData.scopeLevel === 'county_assembly' &&
-        !props.formData.wardId
-      ) {
-        errors.push('Ward selection is required for county assembly coverage');
-      }
-    }
-  }
+  // Contests & scope step has been removed
+  // All election types can be created without contests/questions at creation time
+  // They can be added later via the election detail page
+  // By-elections: contests added via CSV upload or manual input
+  // Referendums: questions can be added later
+  // Other types: contests can be added later
+  // No validation errors for missing contests/questions or scope
   
   return errors;
 });

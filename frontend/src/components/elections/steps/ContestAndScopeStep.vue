@@ -70,39 +70,39 @@
 
       <!-- Candidate-Based Contests -->
       <div v-else class="space-y-6">
-        <!-- By-Election: Single Contest -->
+        <!-- By-Election: Contests Added Later -->
         <div v-if="electionType === 'by_election'">
-          <div class="border border-gray-300 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">
-              Contest Details
-            </h3>
-
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Position Name <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="singleContest.positionName"
-                  @input="updateContests"
-                  type="text"
-                  placeholder="e.g., Member of Parliament - Kitui West"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  required
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex items-start">
+              <svg
+                class="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Description (Optional)
-                </label>
-                <textarea
-                  v-model="singleContest.description"
-                  @input="updateContests"
-                  rows="3"
-                  placeholder="Additional details about this contest..."
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                ></textarea>
+              </svg>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">
+                  Contests Will Be Added Later
+                </h3>
+                <p class="text-sm text-blue-800 mb-3">
+                  For by-elections, contests and their geographic coverage will be
+                  added after the election is created. You can upload contests and
+                  candidates using a CSV file or add them manually from the election
+                  details page.
+                </p>
+                <ul class="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                  <li>Each contest will have its own geographic coverage (county, constituency, or ward)</li>
+                  <li>Contests can be uploaded via CSV file with candidate details</li>
+                  <li>Contests can also be added manually one at a time</li>
+                  <li>The system will automatically detect contest type based on geographic data</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -228,7 +228,33 @@
         <h3 class="text-lg font-semibold text-gray-900">Geographic Coverage</h3>
       </div>
 
-      <div v-if="autoNationwide" class="bg-green-50 border border-green-200 rounded-lg p-4">
+      <div v-if="electionType === 'by_election'" class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div class="flex items-start">
+          <svg
+            class="w-5 h-5 text-gray-600 mr-2 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-gray-800 mb-1">No Election-Level Geographic Scope</p>
+            <p class="text-xs text-gray-600">
+              By-elections don't have an election-level geographic scope. Each contest
+              will have its own geographic coverage (county, constituency, or ward) that
+              will be specified when the contest is added.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="autoNationwide" class="bg-green-50 border border-green-200 rounded-lg p-4">
         <div class="flex items-center mb-2">
           <svg
             class="w-5 h-5 text-green-600 mr-2"
@@ -385,13 +411,18 @@ watch(
         emit('update:wardName', null);
       }
     } else if (type === 'by_election') {
-      if (
-        !internalScopeLevel.value ||
-        internalScopeLevel.value === 'nationwide'
-      ) {
-        internalScopeLevel.value = 'constituency';
-        emit('update:scopeLevel', 'constituency');
-      }
+      // By-elections don't have election-level scope
+      // Clear any scope settings
+      internalScopeLevel.value = '';
+      emit('update:scopeLevel', '');
+      emit('update:countyId', null);
+      emit('update:constituencyId', null);
+      emit('update:wardId', null);
+      emit('update:countyName', null);
+      emit('update:constituencyName', null);
+      emit('update:wardName', null);
+      // Clear contests as they will be added later
+      emit('update:contests', []);
     }
   },
   { immediate: true }
@@ -405,8 +436,10 @@ const autoNationwide = computed(() => {
 });
 
 function updateContests() {
+  // By-elections don't require contests at creation time
+  // This function is kept for compatibility but contests will be empty for by-elections
   if (props.electionType === 'by_election') {
-    emit('update:contests', [singleContest.value]);
+    emit('update:contests', []);
   }
 }
 

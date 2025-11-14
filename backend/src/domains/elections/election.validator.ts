@@ -96,51 +96,41 @@ export const createElectionSchema = z
       });
     }
 
-    if (data.scopeLevel === 'county' && !data.countyId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['countyId'],
-        message: 'County selection is required for county-wide coverage',
-      });
+    // Scope validation - skip for by-elections as they don't have election-level scope
+    // By-elections will have geographic coverage at the contest level
+    if (data.electionType !== 'by_election') {
+      if (data.scopeLevel === 'county' && !data.countyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['countyId'],
+          message: 'County selection is required for county-wide coverage',
+        });
+      }
+
+      if (data.scopeLevel === 'constituency' && !data.constituencyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['constituencyId'],
+          message: 'Constituency selection is required for constituency-wide coverage',
+        });
+      }
+
+      if (data.scopeLevel === 'county_assembly' && !data.wardId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['wardId'],
+          message: 'Ward selection is required for county assembly coverage',
+        });
+      }
     }
 
-    if (data.scopeLevel === 'constituency' && !data.constituencyId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['constituencyId'],
-        message: 'Constituency selection is required for constituency-wide coverage',
-      });
-    }
-
-    if (data.scopeLevel === 'county_assembly' && !data.wardId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['wardId'],
-        message: 'Ward selection is required for county assembly coverage',
-      });
-    }
-
-    if (
-      data.electionType === 'referendum' &&
-      (!data.referendumQuestions || data.referendumQuestions.length === 0)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['referendumQuestions'],
-        message: 'At least one referendum question is required for a referendum',
-      });
-    }
-
-    if (
-      data.electionType === 'by_election' &&
-      (!data.contests || data.contests.length === 0)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['contests'],
-        message: 'At least one contest is required for a by-election',
-      });
-    }
+    // Note: Contests & scope step has been removed from the UI.
+    // All election types (including referendums and by-elections) can be created
+    // without contests/questions at creation time.
+    // They can be added later via the election detail page:
+    // - By-elections: contests added via CSV upload or manual input
+    // - Referendums: questions can be added later
+    // - Other types: contests can be added later
   });
 
 export type CreateElectionInput = z.infer<typeof createElectionSchema>;

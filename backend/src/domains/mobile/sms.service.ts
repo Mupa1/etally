@@ -282,7 +282,7 @@ export class SmsService {
           }
           throw fetchError;
         }
-      } catch (error: any) {
+    } catch (error: any) {
         results.push({
           success: false,
           mobile: mobile,

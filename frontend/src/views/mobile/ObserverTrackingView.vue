@@ -27,10 +27,10 @@
       <!-- Header -->
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Track Observer Application
+          Track Agent Application
         </h1>
         <p class="text-gray-600">
-          Check the status of your observer registration application
+          Check the status of your agent registration application
         </p>
       </div>
 

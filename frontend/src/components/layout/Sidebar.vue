@@ -367,6 +367,7 @@ import {
   AuditIcon,
   LocationIcon,
   PartyIcon,
+  BriefcaseIcon,
 } from '@/components/icons';
 
 // Navigation item type
@@ -458,6 +459,21 @@ const adminItems = computed<NavigationItem[]>(() => {
     icon: PartyIcon,
   });
 
+  // Agents Management menu
+  items.push({
+    name: 'agents-management',
+    label: 'Agents Management',
+    icon: BriefcaseIcon,
+    children: [
+      {
+        name: 'observers',
+        label: 'Agents',
+        path: '/admin/observers',
+        icon: BriefcaseIcon,
+      },
+    ],
+  });
+
   // Super Admin only items
   if (authStore.userRole === 'super_admin') {
     items.push({
@@ -469,12 +485,6 @@ const adminItems = computed<NavigationItem[]>(() => {
           name: 'users-overview',
           label: 'Users Overview',
           path: '/admin/users',
-          icon: UsersIcon,
-        },
-        {
-          name: 'observers',
-          label: 'Observers',
-          path: '/admin/observers',
           icon: UsersIcon,
         },
         {

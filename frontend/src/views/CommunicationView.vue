@@ -114,7 +114,7 @@
               <p class="text-sm font-medium text-gray-900">
                 Registration Confirmation
               </p>
-              <p class="text-xs text-gray-500">Sent to new observers</p>
+              <p class="text-xs text-gray-500">Sent to new agents</p>
             </div>
           </div>
           <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">

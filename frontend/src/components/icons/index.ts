@@ -23,3 +23,4 @@ export { default as ShieldIcon } from './ShieldIcon.vue';
 export { default as AnalyticsIcon } from './AnalyticsIcon.vue';
 export { default as AuditIcon } from './AuditIcon.vue';
 export { default as PartyIcon } from './PartyIcon.vue';
+export { default as BriefcaseIcon } from './BriefcaseIcon.vue';

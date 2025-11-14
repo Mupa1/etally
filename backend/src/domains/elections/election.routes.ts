@@ -4,12 +4,28 @@
  */
 
 import { Router } from 'express';
+import multer from 'multer';
 import { authenticate } from '@/domains/auth/auth.middleware';
 import { requirePermission } from '@/infrastructure/middleware/authorization.middleware';
 import ElectionController from './election.controller';
 
 const router = Router();
 const electionController = new ElectionController();
+
+// Configure multer for CSV upload (memory storage)
+const uploadCSV = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  },
+});
 
 /**
  * @route   GET /api/v1/elections/stats
@@ -95,6 +111,46 @@ router.post(
   authenticate,
   requirePermission('election', 'approve'),
   electionController.approve
+);
+
+/**
+ * @route   POST /api/v1/elections/:electionId/contests/:contestId/contestants/upload
+ * @desc    Upload contestants from CSV file (for existing contest)
+ * @access  Protected - Requires 'update' permission
+ * @abac    Checks: Role, Ownership, Status
+ */
+router.post(
+  '/:electionId/contests/:contestId/contestants/upload',
+  authenticate,
+  requirePermission('election', 'update'),
+  uploadCSV.single('file'),
+  electionController.uploadContestants
+);
+
+/**
+ * @route   GET /api/v1/elections/contests/template
+ * @desc    Download CSV template for contests and candidates
+ * @access  Protected - Requires 'read' permission on 'election'
+ */
+router.get(
+  '/contests/template',
+  authenticate,
+  requirePermission('election', 'read'),
+  electionController.downloadContestsTemplate
+);
+
+/**
+ * @route   POST /api/v1/elections/:electionId/contests/upload
+ * @desc    Upload contests and candidates from CSV file (for by-elections)
+ * @access  Protected - Requires 'update' permission
+ * @abac    Checks: Role, Ownership, Status
+ */
+router.post(
+  '/:electionId/contests/upload',
+  authenticate,
+  requirePermission('election', 'update'),
+  uploadCSV.single('file'),
+  electionController.uploadContests
 );
 
 export default router;

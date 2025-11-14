@@ -176,6 +176,19 @@ class PartyService {
             candidates: true,
           },
         },
+        coalitions: {
+          include: {
+            coalition: {
+              select: {
+                id: true,
+                name: true,
+                abbreviation: true,
+                isCompetitor: true,
+                isActive: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -198,6 +211,13 @@ class PartyService {
           ...party,
           logoUrl,
           candidateCount: party._count.candidates,
+          coalitions: party.coalitions.map((pc: any) => ({
+            id: pc.coalition.id,
+            name: pc.coalition.name,
+            abbreviation: pc.coalition.abbreviation,
+            isCompetitor: pc.coalition.isCompetitor,
+            isActive: pc.coalition.isActive,
+          })),
           _count: undefined,
         };
       })
@@ -216,6 +236,19 @@ class PartyService {
         _count: {
           select: {
             candidates: true,
+          },
+        },
+        coalitions: {
+          include: {
+            coalition: {
+              select: {
+                id: true,
+                name: true,
+                abbreviation: true,
+                isCompetitor: true,
+                isActive: true,
+              },
+            },
           },
         },
       },
@@ -240,6 +273,13 @@ class PartyService {
       ...party,
       logoUrl,
       candidateCount: party._count.candidates,
+      coalitions: party.coalitions.map((pc: any) => ({
+        id: pc.coalition.id,
+        name: pc.coalition.name,
+        abbreviation: pc.coalition.abbreviation,
+        isCompetitor: pc.coalition.isCompetitor,
+        isActive: pc.coalition.isActive,
+      })),
       _count: undefined,
     };
   }

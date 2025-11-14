@@ -184,8 +184,9 @@ watch(
       return;
     }
 
-    form.provider =
-      toStringValue(map.get('sms_provider')?.value, 'jambo') || 'jambo';
+    // Normalize provider value (handle legacy 'africastalking' value)
+    const providerValue = toStringValue(map.get('sms_provider')?.value, 'jambo') || 'jambo';
+    form.provider = providerValue.toLowerCase() === 'africastalking' ? 'jambo' : providerValue;
     form.apiKey = '';
     form.partnerID = toStringValue(map.get('jambo_partner_id')?.value);
     form.shortcode = toStringValue(map.get('jambo_shortcode')?.value);
@@ -205,8 +206,9 @@ function resetForm() {
     return;
   }
 
-  form.provider =
-    toStringValue(map.get('sms_provider')?.value, 'jambo') || 'jambo';
+  // Normalize provider value (handle legacy 'africastalking' value)
+  const providerValue = toStringValue(map.get('sms_provider')?.value, 'jambo') || 'jambo';
+  form.provider = providerValue.toLowerCase() === 'africastalking' ? 'jambo' : providerValue;
   form.apiKey = '';
   form.partnerID = toStringValue(map.get('jambo_partner_id')?.value);
   form.shortcode = toStringValue(map.get('jambo_shortcode')?.value);
