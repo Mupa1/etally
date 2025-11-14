@@ -1,0 +1,181 @@
+SNo,Surname,OtherNames,CountyCode,County,ConstituencyCode,ConstituencyName,CAWCode,CAWName,PartyCode,PartyName,PartyAbbreviation,ElectionType,Contested
+1,Kaplawat,Shadrack Kibet,030,Baringo,,,,,055,Alliance for Change Party,AFC,Senate,Yes
+2,Letasio,Samuel Benone,030,Baringo,,,,,011,Kenya Moja Movement,KMM,Senate,Yes
+3,Kipruto,Steve David,030,Baringo,,,,,058,Republican Liberty Party,RLP,Senate,Yes
+4,Benjamin,Chebon Kiprop,030,Baringo,,,,,040,The New Democrats,TND,Senate,Yes
+5,Cheburet,Kiprono Chemitei,030,Baringo,,,,,015,United Democratic Alliance,UDA,Senate,Yes
+6,Kurui,Daniel Kirchirchir,030,Baringo,,,,,045,Umoja Na Maendeleo Party,UMP,Senate,Yes
+7,Kenga,Stanely Karisa,003,Kilifi,017,Magarini,,,0103,Democracy for the Citizens Party,DCP,National Assembly,Yes
+8,Ngumbao,Furaha Chengo,003,Kilifi,017,Magarini,,,090,Democratic National Alliance,DNA,National Assembly,Yes
+9,Kwicha,Jacob Therno,003,Kilifi,017,Magarini,,,049,Federal Party of Kenya,FPK,National Assembly,Yes
+10,Kalama,Amos Katana,003,Kilifi,017,Magarini,,,IND,Independent,IND,National Assembly,Yes
+11,Gakahu,Sarah Wahito,003,Kilifi,017,Magarini,,,011,Kenya Moja Movement,KMM,National Assembly,Yes
+12,Masha,John Sulubu,003,Kilifi,017,Magarini,,,019,Kenya Social Congress,KSC,National Assembly,Yes
+13,Kombe,Harrison Garama,003,Kilifi,017,Magarini,,,021,Orange Democratic Movement,ODM,National Assembly,Yes
+14,Karisa,Hamadi Chadi,003,Kilifi,017,Magarini,,,059,Roots Party of Kenya,RPK,National Assembly,Yes
+15,Kalama,Emmanuel Kitsao,003,Kilifi,017,Magarini,,,0102,The We Alliance Party,TWAP,National Assembly,Yes
+16,Nazi,Samuel Kombe,003,Kilifi,017,Magarini,,,012,Wiper Patriotic Front,WPF,National Assembly,Yes
+17,Hassan,Ahmed Maalim,009,Mandera,040,Banissa,,,015,United Democratic Alliance,UDA,National Assembly,Yes
+18,Mohamed,Nurdin Maalim,009,Mandera,040,Banissa,,,081,United Progressive Alliance,UPA,National Assembly,Yes
+19,Njeru,Ruben Murithi,014,Embu,066,Mbeere North,,,055,Alliance for Change Party,AFC,National Assembly,Yes
+20,Ndwiga,Newton Karinki,014,Embu,066,Mbeere North,,,013,Democratic Party of Kenya,DP,National Assembly,Yes
+21,Mbui,Duncan Iteri,014,Embu,066,Mbeere North,,,087,Chama Cha Kazi,KAZI,National Assembly,Yes
+22,Ngari,Daniel Iteri,014,Embu,066,Mbeere North,,,011,Kenya Moja Movement,KMM,National Assembly,Yes
+23,Ngari,Albert Murimi,014,Embu,066,Mbeere North,,,002,The National Vision Party,NVP,National Assembly,Yes
+24,Iteri,Lawrence Mwaniki,014,Embu,066,Mbeere North,,,034,Safina Party,SAFINA,National Assembly,Yes
+25,Njeru,Leo Wa Muthende,014,Embu,066,Mbeere North,,,015,United Democratic Alliance,UDA,National Assembly,Yes
+26,Waiharo,Simon Mwaura,014,Embu,066,Mbeere North,,,045,Umoja Na Maendeleo Party,UMP,National Assembly,Yes
+27,Muringi,Isaac Ngiri,014,Embu,066,Mbeere North,,,081,United Progressive Alliance,UPA,National Assembly,Yes
+28,Angatia,James Shinachi,037,Kakamega,201,Malava,,,055,Alliance for Change Party,AFC,National Assembly,Yes
+29,Panyako,Seth Ambusini,037,Kakamega,201,Malava,,,085,Democratic Action Party - Kenya,DAP-K,National Assembly,Yes
+30,Mwanga,Edgar Busiega,037,Kakamega,201,Malava,,,0103,Democracy for the Citizens Party,DCP,National Assembly,Yes
+31,Manyasi,Joab Burudi,037,Kakamega,201,Malava,,,090,Democratic National Alliance,DNA,National Assembly,Yes
+32,Jason,Shivakale Bruce,037,Kakamega,201,Malava,,,093,Entrust Pioneer Party,EPP,National Assembly,Yes
+33,Tuvei,Wilberforce Indai,037,Kakamega,201,Malava,,,011,Kenya Moja Movement,KMM,National Assembly,Yes
+34,Nakwa,Benjamin,,037,Kakamega,201,Malava,,,083,National Ordinary People Empowerment Union,NOPEU,National Assembly,Yes
+35,Oyugi,George Ngaira,037,Kakamega,201,Malava,,,044,Party of Democratic Unity,PPU,National Assembly,Yes
+36,Ndakwa,David Athman,037,Kakamega,201,Malava,,,015,United Democratic Alliance,UDA,National Assembly,Yes
+37,Aketch,Lilian Akinyi,041,Siaya,223,Ugunja,,,055,Alliance for Change Party,AFC,National Assembly,Yes
+38,Okumu,Maurice Jumah,041,Siaya,223,Ugunja,,,049,Federal Party of Kenya,FPK,National Assembly,Yes
+39,Offiro,Eric Ochieng,041,Siaya,223,Ugunja,,,027,Jubilee Party,JP,National Assembly,Yes
+40,Omondi,Chrisphine Odnor,041,Siaya,223,Ugunja,,,033,Kenya African National Union,KANU,National Assembly,Yes
+41,Olengo,Vincent Ywaya,041,Siaya,223,Ugunja,,,011,Kenya Moja Movement,KMM,National Assembly,Yes
+42,Ochuka,Oliver Ochieng,041,Siaya,223,Ugunja,,,071,National Liberal Party,NLP,National Assembly,Yes
+43,Omondi,Moses Okoth,041,Siaya,223,Ugunja,,,021,Orange Democratic Movement,ODM,National Assembly,Yes
+44,Ochiel,Fredrick Odhiambo,041,Siaya,223,Ugunja,,,041,United Democratic Movement,UDM,National Assembly,Yes
+45,Otieno,Benson Obol,041,Siaya,223,Ugunja,,,079,United Green Movement,UGM,National Assembly,Yes
+46,Odhiambo,Johannes Orodi Dovens,041,Siaya,223,Ugunja,,,012,Wiper Patriotic Front,WPF,National Assembly,Yes
+47,Okello,Jesse Samson Owen Okello,043,Homa Bay,245,Kasipul,,,090,Democratic National Alliance,DNA,National Assembly,Yes
+48,Aoko,Jeazmen Linda Ouma,043,Homa Bay,245,Kasipul,,,IND,Independent,IND,National Assembly,Yes
+49,Aroko,Philip Nashon,043,Homa Bay,245,Kasipul,,,IND,Independent,IND,National Assembly,Yes
+50,Bior,Robert Money,043,Homa Bay,245,Kasipul,,,IND,Independent,IND,National Assembly,Yes
+51,Abok,Isaac Kiche,043,Homa Bay,245,Kasipul,,,011,Kenya Moja Movement,KMM,National Assembly,Yes
+52,Ouma,Robert Ouko,043,Homa Bay,245,Kasipul,,,003,Labour Party of Kenya,LPK,National Assembly,Yes
+53,Omondi,Collins Okeyo,043,Homa Bay,245,Kasipul,,,072,Movement for Democracy and Growth,MDG,National Assembly,Yes
+54,Oyoo,Ishmael Omondi,043,Homa Bay,245,Kasipul,,,071,National Liberal Party,NLP,National Assembly,Yes
+55,Ongondo,Boyd Were,043,Homa Bay,245,Kasipul,,,021,Orange Democratic Movement,ODM,National Assembly,Yes
+56,Kotiende,Sam Rateng Okoth,043,Homa Bay,245,Kasipul,,,081,United Progressive Alliance,UPA,National Assembly,Yes
+57,Wayu,Pascal Galogalo,004,Tana River,019,Galole,0094,Chewani,017,Agano National Party,AGANO,County Assembly,Yes
+58,Dae,Mohamed Mgawa,004,Tana River,019,Galole,0094,Chewani,055,Alliance for Change Party,AFC,County Assembly,Yes
+59,Athman,Zena Luwa,004,Tana River,019,Galole,0094,Chewani,013,Democratic Party of Kenya,DP,County Assembly,Yes
+60,Maro,Barakatuh Guyo,004,Tana River,019,Galole,0094,Chewani,023,Forum for Restoration of Democracy - Kenya,FORD-KENYA,County Assembly,Yes
+61,Bahola,Fredrick John,004,Tana River,019,Galole,0094,Chewani,049,Federal Party of Kenya,FPK,County Assembly,Yes
+62,Jarha,Dhidha Mohamed,004,Tana River,019,Galole,0094,Chewani,052,Jirani Mzalendo Asili Party of Kenya,J-MAPK,County Assembly,Yes
+63,Hamisi,Mohamed Berhe,004,Tana River,019,Galole,0094,Chewani,033,Kenya African National Union,KANU,County Assembly,Yes
+64,Salim,Omar Guyo,004,Tana River,019,Galole,0094,Chewani,010,Mazingira Greens Party,MGP,County Assembly,Yes
+65,Mohamed,Salimu Ahireho,004,Tana River,019,Galole,0094,Chewani,021,Orange Democratic Movement,ODM,County Assembly,Yes
+66,Joel,Chekea Komora,004,Tana River,019,Galole,0094,Chewani,091,Pamaja African Alliance,PAA,County Assembly,Yes
+67,Kofa,Ezekiel Mchawala,004,Tana River,019,Galole,0094,Chewani,001,People's Liberation Party,PLP,County Assembly,Yes
+68,Jara,Mohamed Ali,004,Tana River,019,Galole,0094,Chewani,042,Shirikisho Party Kenya,SPK,County Assembly,Yes
+69,Maro,Sophia Hamadawa,004,Tana River,019,Galole,0094,Chewani,015,United Democratic Alliance,UDA,County Assembly,Yes
+70,Onchaga,Rashid Mariera,004,Tana River,019,Galole,0094,Chewani,041,United Democratic Movement,UDM,County Assembly,Yes
+71,Hiyesa,Odha Ilu,004,Tana River,019,Galole,0094,Chewani,079,United Green Movement,UGM,County Assembly,Yes
+72,Obara,Jared,,004,Tana River,019,Galole,0094,Chewani,081,United Progressive Alliance,UPA,County Assembly,Yes
+73,Kolosho,Hassan Aden,007,Garissa,031,Fafi,0155,Fafi,023,Forum for Restoration of Democracy - Kenya,FORD-KENYA,County Assembly,Yes
+74,Mohamed,Feisal Gedi,007,Garissa,031,Fafi,0155,Fafi,021,Orange Democratic Movement,ODM,County Assembly,Yes
+75,Maalim,Diriye Ibrahim,007,Garissa,031,Fafi,0155,Fafi,015,United Democratic Alliance,UDA,County Assembly,Yes
+76,Joel,Richard Nzioki,016,Machakos,081,Machakos Town,0402,Mumbuni North,036,Chama Cha Uzalendo,CCU,County Assembly,Yes
+77,Muli,Nzomo,,016,Machakos,081,Machakos Town,0402,Mumbuni North,078,Grand Dream Development Party,GDDP,County Assembly,Yes
+78,Wambua,Stephen Kilonzo,016,Machakos,081,Machakos Town,0402,Mumbuni North,011,Kenya Moja Movement,KMM,County Assembly,Yes
+79,Mutuku,Harrison Wambua,016,Machakos,081,Machakos Town,0402,Mumbuni North,067,Maendeleo Chap Chap Party,MCCP,County Assembly,Yes
+80,Mbatha,Carlweathers Mutisya,016,Machakos,081,Machakos Town,0402,Mumbuni North,071,National Liberal Party,NLP,County Assembly,Yes
+81,Mutiso,Stephen Nzioka,016,Machakos,081,Machakos Town,0402,Mumbuni North,007,Party of independent Candidate of Kenya,PICK,County Assembly,Yes
+82,Muia,Stephen Mutua,016,Machakos,081,Machakos Town,0402,Mumbuni North,025,Progressive Party of Kenya,PPOK,County Assembly,Yes
+83,Muema,Jones Benson,016,Machakos,081,Machakos Town,0402,Mumbuni North,066,People's Trust Party,PTP,County Assembly,Yes
+84,Mutua,Misi,,016,Machakos,081,Machakos Town,0402,Mumbuni North,015,United Democratic Alliance,UDA,County Assembly,Yes
+85,Nzioki,Naomi Nduku,016,Machakos,081,Machakos Town,0402,Mumbuni North,081,United Progressive Alliance,UPA,County Assembly,Yes
+86,Kyalo,Antony,,016,Machakos,081,Machakos Town,0402,Mumbuni North,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+87,Lochilli,Stephen Ekiru,023,Turkana,123,Turkana North,0612,Lake Zone,021,Orange Democratic Movement,ODM,County Assembly,Yes
+88,Erot,John Namesek,023,Turkana,123,Turkana North,0612,Lake Zone,015,United Democratic Alliance,UDA,County Assembly,Yes
+89,John,Meyan,023,Turkana,123,Turkana North,0612,Lake Zone,041,United Democratic Movement,UDM,County Assembly,Yes
+90,Lokaalei,Hashim Kerio,023,Turkana,124,Turkana West,0623,Nanaan,023,Forum for Restoration of Democracy - Kenya,FORD-KENYA,County Assembly,Yes
+91,Eruth,Francis Mio,023,Turkana,124,Turkana West,0623,Nanaan,011,Kenya Moja Movement,KMM,County Assembly,Yes
+92,Yussuf,Mohammed Ahmed,023,Turkana,124,Turkana West,0623,Nanaan,021,Orange Democratic Movement,ODM,County Assembly,Yes
+93,Napelkar,Cosmas Longor,023,Turkana,124,Turkana West,0623,Nanaan,015,United Democratic Alliance,UDA,County Assembly,Yes
+94,Lenkupae,Pruline Nasieku,025,Samburu,134,Samburu North,0670,Angata Nanyokie,037,National Agenda Party of Kenya,NAP-K,County Assembly,Yes
+95,Loisia,Letoluai,025,Samburu,134,Samburu North,0670,Angata Nanyokie,021,Orange Democratic Movement,ODM,County Assembly,Yes
+96,Leshimpiroo,Isabella,025,Samburu,134,Samburu North,0670,Angata Nanyokie,015,United Democratic Alliance,UDA,County Assembly,Yes
+97,Leting,Shaffle Korir,029,Nandi,154,Chesumei,0765,Chemundu/Kapng'etuny,033,Kenya African National Union,KANU,County Assembly,Yes
+98,Kipchumba,David Too,029,Nandi,154,Chesumei,0765,Chemundu/Kapng'etuny,0100,The Equitable Party,TEP,County Assembly,Yes
+99,Kirwa,Robert Kipchirchir,029,Nandi,154,Chesumei,0765,Chemundu/Kapng'etuny,040,The New Democrats,TND,County Assembly,Yes
+100,Ruto,Vincent Kiplimo,029,Nandi,154,Chesumei,0765,Chemundu/Kapng'etuny,015,United Democratic Alliance,UDA,County Assembly,Yes
+101,Masikonde,Douglas Twala,033,Narok,179,Narok North,0893,Narok Town,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+102,Nkere,Tobiko Mbugua,033,Narok,179,Narok North,0893,Narok Town,013,Democratic Party of Kenya,DP,County Assembly,Yes
+103,Sino,Peter Odhiambo,033,Narok,179,Narok North,0893,Narok Town,093,Entrust Pioneer Party,EPP,County Assembly,Yes
+104,Kaputah,Joshua Kitaro,033,Narok,179,Narok North,0893,Narok Town,027,Jubilee Party,JP,County Assembly,Yes
+105,Kago,Ian Duncan,033,Narok,179,Narok North,0893,Narok Town,011,Kenya Moja Movement,KMM,County Assembly,Yes
+106,Pere,Alfred Kailet,033,Narok,179,Narok North,0893,Narok Town,021,Orange Democratic Movement,ODM,County Assembly,Yes
+107,Ndungu,Anthony Gichuki,033,Narok,179,Narok North,0893,Narok Town,058,Republican Liberty Party,RLP,County Assembly,Yes
+108,Opondo,Musinya Okuparu,033,Narok,179,Narok North,0893,Narok Town,034,Safina Party,SAFINA,County Assembly,Yes
+109,Kudate,Robert Kanyinke Ole,033,Narok,179,Narok North,0893,Narok Town,015,United Democratic Alliance,UDA,County Assembly,Yes
+110,Njapit,Felix Johanah,033,Narok,179,Narok North,0893,Narok Town,064,United Democratic Party,UDP,County Assembly,Yes
+111,Ontita,Erick,033,Narok,179,Narok North,0893,Narok Town,081,United Progressive Alliance,UPA,County Assembly,Yes
+112,Tirike,Evanson Parsimei,033,Narok,179,Narok North,0893,Narok Town,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+113,Saidimu,Sanare Tipatet,034,Kajiado,184,Kajiado Central,0916,Purko,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+114,Naikuni,Daniel Turpesio,034,Kajiado,184,Kajiado Central,0916,Purko,021,Orange Democratic Movement,ODM,County Assembly,Yes
+115,Mpusia,Amos Maayiai,034,Kajiado,184,Kajiado Central,0916,Purko,015,United Democratic Alliance,UDA,County Assembly,Yes
+116,Muchelule,David Moi Henry,037,Kakamega,208,Khwisero,1038,Kisa East,017,Agano National Party,AGANO,County Assembly,Yes
+117,Isaiah,Ayaya Abraham,037,Kakamega,208,Khwisero,1038,Kisa East,085,Democratic Action Party - Kenya,DAP-K,County Assembly,Yes
+118,Okwiri,Dickson Aduda,037,Kakamega,208,Khwisero,1038,Kisa East,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+119,Namai,Raphael Mukolwe,037,Kakamega,208,Khwisero,1038,Kisa East,090,Democratic National Alliance,DNA,County Assembly,Yes
+120,Uside,Pauline,,037,Kakamega,208,Khwisero,1038,Kisa East,077,Justice and Freedom Party of Kenya,JFP,County Assembly,Yes
+121,Mumia,Maclean Khatete,037,Kakamega,208,Khwisero,1038,Kisa East,033,Kenya African National Union,KANU,County Assembly,Yes
+122,Otwoma,Joel Ongoro,037,Kakamega,208,Khwisero,1038,Kisa East,072,Movement for Democracy and Growth,MDG,County Assembly,Yes
+123,Shikunyi,John Masetu,037,Kakamega,208,Khwisero,1038,Kisa East,021,Orange Democratic Movement,ODM,County Assembly,Yes
+124,Shiraku,James,,037,Kakamega,208,Khwisero,1038,Kisa East,015,United Democratic Alliance,UDA,County Assembly,Yes
+125,Nyabuto,Stephen Amwayi,037,Kakamega,208,Khwisero,1038,Kisa East,041,United Democratic Movement,UDM,County Assembly,Yes
+126,Okumali,Douglas Shirote,037,Kakamega,208,Khwisero,1038,Kisa East,064,United Democratic Party,UDP,County Assembly,Yes
+127,Kutswa,Phanice Sebenzia,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,085,Democratic Action Party - Kenya,DAP-K,County Assembly,Yes
+128,Maunda,Vincent Wekesa,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,023,Forum for Restoration of Democracy - Kenya,FORD-KENYA,County Assembly,Yes
+129,Wekesa,Eric,,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,IND,Independent,IND,County Assembly,Yes
+130,Barasa,Samwel Joel,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,077,Justice and Freedom Party of Kenya,JFP,County Assembly,Yes
+131,Wanyonyi,Evans Barasa,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,011,Kenya Moja Movement,KMM,County Assembly,Yes
+132,Tanganyika,Dan Simiyu,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,0100,The Equitable Party,TEP,County Assembly,Yes
+133,Totli,Margaret Nabwala,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,040,The New Democrats,TND,County Assembly,Yes
+134,Mukhongo,Kizito Matimbai,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,0102,The We Alliance Party,TWAP,County Assembly,Yes
+135,Murunga,Elizabeth Situma,039,Bungoma,218,Kabuchai,1085,Kabuchai/Chwele,015,United Democratic Alliance,UDA,County Assembly,Yes
+136,Saul,Twabe Nyonga,046,Nyamira,271,West Mugirango,1352,Nyamaiya,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+137,Nyambati,Evans James,046,Nyamira,271,West Mugirango,1352,Nyamaiya,090,Democratic National Alliance,DNA,County Assembly,Yes
+138,Omboto,Richard Monyancha,046,Nyamira,271,West Mugirango,1352,Nyamaiya,087,Chama Cha Kazi,KAZI,County Assembly,Yes
+139,Kihore,Martin Nyangan,046,Nyamira,271,West Mugirango,1352,Nyamaiya,021,Orange Democratic Movement,ODM,County Assembly,Yes
+140,Sese,Rose Mona,046,Nyamira,271,West Mugirango,1352,Nyamaiya,025,Progressive Party of Kenya,PPOK,County Assembly,Yes
+141,Nyandieka,Thomas Onchaba,046,Nyamira,271,West Mugirango,1352,Nyamaiya,015,United Democratic Alliance,UDA,County Assembly,Yes
+142,Christopher,Moturi Osiemo,046,Nyamira,271,West Mugirango,1352,Nyamaiya,081,United Progressive Alliance,UPA,County Assembly,Yes
+143,Nyangaresi,Daniel Amoro,046,Nyamira,271,West Mugirango,1352,Nyamaiya,046,United Party of Independent Alliance,UPIA,County Assembly,Yes
+144,Tweya,James Tweya,046,Nyamira,271,West Mugirango,1352,Nyamaiya,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+145,Nyang'au,Silus Kerosi,046,Nyamira,272,North Mugirango,1361,Ekerenyo,055,Alliance for Change Party,AFC,County Assembly,Yes
+146,Kongo,Dominic Gesora,046,Nyamira,272,North Mugirango,1361,Ekerenyo,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+147,Ongori,Margret Nyanchama,046,Nyamira,272,North Mugirango,1361,Ekerenyo,023,Forum for Restoration of Democracy - Kenya,FORD-KENYA,County Assembly,Yes
+148,Morara,Hyline Kerubo,046,Nyamira,272,North Mugirango,1361,Ekerenyo,009,Kenya National Congress,KNC,County Assembly,Yes
+149,Mong'iti,Philip Masenge,046,Nyamira,272,North Mugirango,1361,Ekerenyo,019,Kenya Social Congress,KSC,County Assembly,Yes
+150,Nyamasege,Nicoluse Omoti,046,Nyamira,272,North Mugirango,1361,Ekerenyo,044,Party of Democratic Unity,PDU,County Assembly,Yes
+151,Ndubi,Francis Amenya,046,Nyamira,272,North Mugirango,1361,Ekerenyo,015,United Democratic Alliance,UDA,County Assembly,Yes
+152,Ongaro,Jeremiah Njenga,046,Nyamira,272,North Mugirango,1361,Ekerenyo,081,United Progressive Alliance,UPA,County Assembly,Yes
+153,Nyanumba,Shem Makori,046,Nyamira,272,North Mugirango,1361,Ekerenyo,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+154,Oeri,John Obai,046,Nyamira,273,Borabu,1364,Nyansiongo,013,Democratic Party of Kenya,DP,County Assembly,Yes
+155,Mosebi,Alexander Mogeni,046,Nyamira,273,Borabu,1364,Nyansiongo,033,Kenya African National Union,KANU,County Assembly,Yes
+156,Moganda,Ogata,,046,Nyamira,273,Borabu,1364,Nyansiongo,011,Kenya Moja Movement,KMM,County Assembly,Yes
+157,Mogaka,Dickson Machungo,046,Nyamira,273,Borabu,1364,Nyansiongo,021,Orange Democratic Movement,ODM,County Assembly,Yes
+158,Mochumbe,Jackson Mogusu,046,Nyamira,273,Borabu,1364,Nyansiongo,039,Peoples Democratic Party,PDP,County Assembly,Yes
+159,Onsase,Vincent Nyanchoka,046,Nyamira,273,Borabu,1364,Nyansiongo,025,Progressive Party of Kenya,PPOK,County Assembly,Yes
+160,Nyaribo,Dennis Kebaso,046,Nyamira,273,Borabu,1364,Nyansiongo,015,United Democratic Alliance,UDA,County Assembly,Yes
+161,Omwancha,Kevin Maranga,046,Nyamira,273,Borabu,1364,Nyansiongo,081,United Progressive Alliance,UPA,County Assembly,Yes
+162,Nyantika,Alex Obare,046,Nyamira,273,Borabu,1364,Nyansiongo,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+163,Mbutiha,Joseph Macharia,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,055,Alliance for Change Party,AFC,County Assembly,Yes
+164,Warui,David Wanyolke,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,0103,Democracy for the Citizens Party,DCP,County Assembly,Yes
+165,Mala,Daniel Odhiambo,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,IND,Independent,IND,County Assembly,Yes
+166,Kimanzi,John Katua,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,IND,Independent,IND,County Assembly,Yes
+167,Mukuni,Simon Kageche,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,052,Jirani Mzalendo Asili Party of Kenya,J-MAPK,County Assembly,Yes
+168,Ng'ang'a,Peter Kariuki,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,033,Kenya African National Union,KANU,County Assembly,Yes
+169,Mukoya,Gabriel Ormondi,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,011,Kenya Moja Movement,KMM,County Assembly,Yes
+170,Agutu,Geoffrey Owino,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,031,Kenya Patriots Party,KPP,County Assembly,Yes
+171,Mwema,Charles Evans,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,071,National Liberal Party,NLP,County Assembly,Yes
+172,Majua,Michael Ouma,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,021,Orange Democratic Movement,ODM,County Assembly,Yes
+173,Kithu,John Njeru,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,044,Party of Democratic Unity,PDU,County Assembly,Yes
+174,Ochieng,Christopher Wandera,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,034,Safina Party,SAFINA,County Assembly,Yes
+175,Njoka,Julius Maina,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,015,United Democratic Alliance,UDA,County Assembly,Yes
+176,Musyoka,Antony Ndeto,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,045,Umoja Na Maendeleo Party,UMP,County Assembly,Yes
+177,Naftal,Onchari Nyaberi Ongeri,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,081,United Progressive Alliance,UPA,County Assembly,Yes
+178,Munyoki,Kavali,,047,Nairobi City,283,Embakasi North,1411,Kariobangi North,012,Wiper Patriotic Front,WPF,County Assembly,Yes
+179,Tobosei,Reuben Kigen,027,Uasin Gishu,143,Moiben,0714,Tembelio,015,United Democratic Alliance,UDA,County Assembly,No
+180,Kiprutto,Philip Kipkosgei,028,Elgeyo Marakwet,150,Keiyo South,0750,Metkei,015,United Democratic Alliance,UDA,County Assembly,No

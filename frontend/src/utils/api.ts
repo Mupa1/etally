@@ -44,58 +44,79 @@ function generateUUID(): string {
   });
 }
 
+function sanitizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+function resolveEnvApiUrl(): string | null {
+  const raw = import.meta.env.VITE_API_URL?.trim();
+  return raw ? sanitizeBaseUrl(raw) : null;
+}
+
+function ensureApiV1Url(baseUrl: string): string {
+  if (baseUrl.endsWith('/api/v1')) {
+    return baseUrl;
+  }
+  if (baseUrl.endsWith('/api')) {
+    return `${baseUrl}/v1`;
+  }
+  return `${baseUrl}/api/v1`;
+}
+
+function ensureAgentApiUrl(baseUrl: string): string {
+  if (baseUrl.endsWith('/api')) {
+    return baseUrl;
+  }
+  if (baseUrl.endsWith('/api/v1')) {
+    return baseUrl.replace(/\/api\/v1$/, '/api');
+  }
+  return `${baseUrl}/api`;
+}
+
 // Determine API base URL
 // In browser, use relative paths or detect from current hostname
 export function getApiBaseUrl(): string {
-  // If VITE_API_URL is set, use it (highest priority)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const envBase = resolveEnvApiUrl();
+  if (envBase) {
+    return ensureApiV1Url(envBase);
   }
   
-  // If running in browser, detect hostname and port
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
+    const origin = window.location.origin;
     const backendPort = '3000';
     
-    // Build API URL based on current hostname
-    // Always use backend port (3000) regardless of frontend port
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${protocol}//${hostname}:${backendPort}/api/v1`;
-    } else {
-      // For LAN IP or domain, use same hostname but backend port 3000
-      return `${protocol}//${hostname}:${backendPort}/api/v1`;
     }
+
+    return `${origin}/api/v1`;
   }
   
-  // Fallback for SSR or non-browser environments
   return 'http://localhost:3000/api/v1';
 }
 
 // Get base URL for agent API routes (/api/agent)
 export function getAgentApiBaseUrl(): string {
-  // If VITE_API_URL is set, use it but remove /v1 if present
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace('/api/v1', '/api');
+  const envBase = resolveEnvApiUrl();
+  if (envBase) {
+    return ensureAgentApiUrl(envBase);
   }
   
-  // If running in browser, detect hostname and port
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
+    const origin = window.location.origin;
     const backendPort = '3000';
     
-    // Build API URL based on current hostname
-    // Always use backend port (3000) regardless of frontend port
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${protocol}//${hostname}:${backendPort}/api`;
-    } else {
-      // For LAN IP or domain, use same hostname but backend port 3000
-      return `${protocol}//${hostname}:${backendPort}/api`;
     }
+
+    return `${origin}/api`;
   }
   
-  // Fallback for SSR or non-browser environments
   return 'http://localhost:3000/api';
 }
 

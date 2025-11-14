@@ -5,13 +5,34 @@
       v-model="localCountyId"
       type="select"
       :label="countyLabel"
+      :disabled="loadingCounties"
+      @click="handleCountyFieldInteraction"
       @update:modelValue="handleCountyChange"
+      :required="true"
     >
-      <option value="">{{ countyPlaceholder }}</option>
+      <option value="">
+        {{ loadingCounties ? 'Loading counties...' : countyPlaceholder }}
+      </option>
       <option v-for="county in counties" :key="county.id" :value="county.id">
         {{ county.name }}
       </option>
     </FormField>
+
+    <div
+      v-if="!loadingCounties && counties.length === 0 && countyError"
+      class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center justify-between"
+    >
+      <p class="text-sm text-yellow-800">
+        {{ countyError }}
+      </p>
+      <button
+        type="button"
+        class="text-sm font-medium text-yellow-900 underline"
+        @click="reloadHierarchy"
+      >
+        Reload
+      </button>
+    </div>
 
     <!-- Constituency Selection -->
     <FormField
@@ -94,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import api, { getAgentApiBaseUrl } from '@/utils/api';
 import FormField from './FormField.vue';
 
@@ -129,13 +150,13 @@ const props = withDefaults(defineProps<Props>(), {
   constituencyLabel: 'Preferred Constituency',
   wardLabel: 'Preferred Ward',
   stationLabel: 'Preferred Polling Station',
-  countyPlaceholder: 'Select county (optional)...',
+  countyPlaceholder: 'Select county...',
   constituencyPlaceholder: 'Select constituency (optional)...',
   wardPlaceholder: 'Select ward (optional)...',
-  stationPlaceholder: 'Select polling station (optional)...',
+  stationPlaceholder: 'Select polling station (recommended)...',
   showHelpText: true,
   helpText:
-    "You don't have to select a specific polling station. You can stop at county, constituency, or ward level. Final assignment will be made by election administrators based on coverage needs.",
+    'Please select at least your preferred county. We recommend choosing the polling station closest to your voting location to speed up assignment. Administrators may adjust final placements based on coverage needs.',
 });
 
 const emit = defineEmits<{
@@ -158,29 +179,56 @@ const wards = ref<Geographic[]>([]);
 const pollingStations = ref<Geographic[]>([]);
 
 // Loading states
+const loadingCounties = ref(false);
 const loadingConstituencies = ref(false);
 const loadingWards = ref(false);
 const loadingStations = ref(false);
+const countyError = ref('');
 
 // Computed
 const selectedStation = computed(() => {
   return pollingStations.value.find((s) => s.id === localStationId.value);
 });
 
-// Load counties on mount
-(async () => {
+async function loadCounties(force = false) {
+  if (counties.value.length > 0 && !force) {
+    countyError.value = '';
+    return;
+  }
+
+  loadingCounties.value = true;
+  countyError.value = '';
+
   try {
-    // Use full URL to bypass baseURL (agent endpoints are at /api/agent, not /api/v1)
     const response = await api.get('/agent/geographic/counties', {
       baseURL: getAgentApiBaseUrl(),
     });
+
     if (response.data.success) {
       counties.value = response.data.data;
+      countyError.value = '';
+      if (!counties.value.length) {
+        countyError.value = 'No counties were returned. Please try again.';
+      }
+    } else if (!force) {
+      await nextTick();
+      await loadCounties(true);
+    } else {
+      countyError.value =
+        response.data.message || 'Unable to load counties. Please retry.';
     }
   } catch (err) {
     console.error('Failed to load counties:', err);
+    countyError.value =
+      'Unable to load counties due to a network error. Please retry.';
+  } finally {
+    loadingCounties.value = false;
   }
-})();
+}
+
+onMounted(() => {
+  loadCounties();
+});
 
 // Watch for external changes
 watch(
@@ -305,4 +353,33 @@ function handleStationChange(value: string) {
   localStationId.value = value;
   emit('update:stationId', value);
 }
+
+function handleCountyFieldInteraction() {
+  if (!loadingCounties.value && counties.value.length === 0) {
+    loadCounties(true);
+  }
+}
+
+function resetSelections() {
+  localCountyId.value = '';
+  localConstituencyId.value = '';
+  localWardId.value = '';
+  localStationId.value = '';
+  constituencies.value = [];
+  wards.value = [];
+  pollingStations.value = [];
+  emit('update:countyId', '');
+  emit('update:constituencyId', '');
+  emit('update:wardId', '');
+  emit('update:stationId', '');
+}
+
+async function reloadHierarchy() {
+  resetSelections();
+  await loadCounties(true);
+}
+
+defineExpose({
+  reloadHierarchy,
+});
 </script>

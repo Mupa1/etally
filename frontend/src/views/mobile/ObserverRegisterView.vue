@@ -106,16 +106,9 @@
 
           <!-- Step 2: Preferred Assignment -->
           <div v-if="currentStep === 1">
-            <h2 class="text-xl font-semibold mb-4">
-              Preferred Assignment (Optional)
-            </h2>
-            <p class="text-sm text-gray-600 mb-4">
-              Select your preferred location. You can choose to specify down to
-              the polling station level, or just select county, constituency, or
-              ward.
-            </p>
-
+            <h2 class="text-xl font-semibold mb-4">Preferred Assignment</h2>
             <GeographicCascadeSelector
+              ref="geographicSelector"
               v-model:county-id="form.preferredCountyId"
               v-model:constituency-id="form.preferredConstituencyId"
               v-model:ward-id="form.preferredWardId"
@@ -234,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import api, { getAgentApiBaseUrl } from '@/utils/api';
 import { handleError } from '@/utils/errorHandler';
@@ -264,6 +257,9 @@ import GeographicCascadeSelector from '@/components/mobile/GeographicCascadeSele
 import ProgressSteps from '@/components/mobile/ProgressSteps.vue';
 
 const router = useRouter();
+const geographicSelector = ref<InstanceType<
+  typeof GeographicCascadeSelector
+> | null>(null);
 
 const steps = [
   'Personal Info',
@@ -286,15 +282,10 @@ const formSaver = new ProgressiveFormSaver('observer-registration', {
 onMounted(() => {
   performanceMonitor.mark('observer-register-mounted');
 
-  // Load saved form data
-  const savedData = formSaver.loadFormData();
-  if (savedData) {
-    // Restore form data
-    Object.assign(form.value, savedData);
-    console.log('Form data restored from previous session');
-  }
+  // Always start with a clean slate to avoid prefilled data
+  formSaver.clearFormData();
 
-  // Start auto-saving
+  // Start auto-saving (only for the current session)
   formSaver.startAutoSave(form.value);
 
   // Add touch interactions to form elements
@@ -312,6 +303,9 @@ onUnmounted(() => {
 
   // Stop auto-saving
   formSaver.stopAutoSave();
+
+  // Ensure no residual data remains when leaving the page
+  formSaver.clearFormData();
 });
 
 // Form data
@@ -362,6 +356,18 @@ watch(
   { deep: true }
 );
 
+watch(
+  currentStep,
+  (step) => {
+    if (step === 1) {
+      nextTick(() => {
+        geographicSelector.value?.reloadHierarchy?.();
+      });
+    }
+  },
+  { immediate: true }
+);
+
 // Handle file upload errors
 function handleFileError(message: string) {
   error.value = message;
@@ -377,6 +383,8 @@ function handleNext() {
   // Validate current step
   if (currentStep.value === 0) {
     if (!validatePersonalInfo()) return;
+  } else if (currentStep.value === 1) {
+    if (!validatePreferredAssignment()) return;
   } else if (currentStep.value === 2) {
     if (!validateDocuments()) return;
   }
@@ -429,6 +437,15 @@ function validatePersonalInfo(): boolean {
     return false;
   }
 
+  return true;
+}
+
+// Validate preferred assignment
+function validatePreferredAssignment(): boolean {
+  if (!form.value.preferredCountyId) {
+    error.value = 'Please select your preferred county before proceeding.';
+    return false;
+  }
   return true;
 }
 
