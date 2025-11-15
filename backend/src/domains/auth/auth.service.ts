@@ -137,7 +137,7 @@ class AuthService {
     if (loginData.identifierType === 'email') {
       user = await this.prisma.user.findFirst({
         where: { email: loginData.identifier.toLowerCase() },
-      });
+    });
     } else {
       const phoneCandidates = this.buildPhoneCandidates(
         loginData.identifier

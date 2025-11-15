@@ -138,7 +138,7 @@ const userOptions = computed(() => [
   ...users.value.map((user) => {
     const displayEmail = user.email ?? 'No email';
     return {
-      value: user.id,
+    value: user.id,
       label: `${user.firstName} ${user.lastName} (${displayEmail}) - ${user.role}`,
     };
   }),

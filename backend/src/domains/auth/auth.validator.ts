@@ -53,8 +53,8 @@ export const loginSchema = z
     username: identifierSchema.optional(),
     email: identifierSchema.optional(),
     phoneNumber: identifierSchema.optional(),
-    password: z.string().min(1, 'Password is required'),
-    deviceInfo: deviceInfoSchema,
+  password: z.string().min(1, 'Password is required'),
+  deviceInfo: deviceInfoSchema,
   })
   .refine(
     (data) =>

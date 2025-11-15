@@ -131,6 +131,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       PORT: 3000
+      LOG_DIR: /app/logs
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://localhost:80,http://localhost:5173}
     depends_on:
       database:
@@ -146,6 +147,7 @@ services:
     volumes:
       - ./backend/src:/app/src:ro
       - ./backend/prisma:/app/prisma:ro
+      - api_logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -304,6 +306,8 @@ volumes:
   grafana_data:
     driver: local
   pgadmin_data:
+    driver: local
+  api_logs:
     driver: local
 
 networks:
