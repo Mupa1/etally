@@ -77,7 +77,9 @@ function ensureAgentApiUrl(baseUrl: string): string {
 // In browser, use relative paths or detect from current hostname
 export function getApiBaseUrl(): string {
   const envBase = resolveEnvApiUrl();
-  if (envBase) {
+  
+  // If VITE_API_URL is explicitly set and not localhost, use it
+  if (envBase && !envBase.includes('localhost') && !envBase.includes('127.0.0.1')) {
     return ensureApiV1Url(envBase);
   }
   
@@ -87,11 +89,14 @@ export function getApiBaseUrl(): string {
     const origin = window.location.origin;
     const backendPort = '3000';
     
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:${backendPort}/api/v1`;
+    // In production (not localhost), use relative URLs via nginx proxy
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // Use relative URL - nginx will proxy /api/ to backend
+      return '/api/v1';
     }
-
-    return `${origin}/api/v1`;
+    
+    // Development: use explicit localhost with port
+    return `${protocol}//${hostname}:${backendPort}/api/v1`;
   }
   
   return 'http://localhost:3000/api/v1';
@@ -100,7 +105,9 @@ export function getApiBaseUrl(): string {
 // Get base URL for agent API routes (/api/agent)
 export function getAgentApiBaseUrl(): string {
   const envBase = resolveEnvApiUrl();
-  if (envBase) {
+  
+  // If VITE_API_URL is explicitly set and not localhost, use it
+  if (envBase && !envBase.includes('localhost') && !envBase.includes('127.0.0.1')) {
     return ensureAgentApiUrl(envBase);
   }
   
@@ -110,11 +117,14 @@ export function getAgentApiBaseUrl(): string {
     const origin = window.location.origin;
     const backendPort = '3000';
     
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:${backendPort}/api`;
+    // In production (not localhost), use relative URLs via nginx proxy
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // Use relative URL - nginx will proxy /api/ to backend
+      return '/api';
     }
-
-    return `${origin}/api`;
+    
+    // Development: use explicit localhost with port
+    return `${protocol}//${hostname}:${backendPort}/api`;
   }
   
   return 'http://localhost:3000/api';
