@@ -9,7 +9,6 @@ on:
 env:
   NODE_VERSION: "20"
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/etally
 
 jobs:
   build-and-push:
@@ -21,6 +20,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set image prefix (lowercase)
+        id: image-prefix
+        run: |
+          REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "prefix=${REPO_OWNER_LOWER}/etally" >> $GITHUB_OUTPUT
+          echo "Using image prefix: ${REPO_OWNER_LOWER}/etally"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,7 +42,7 @@ jobs:
         id: meta-api
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api
+          images: ${{ env.REGISTRY }}/${{ steps.image-prefix.outputs.prefix }}-api
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -60,7 +66,7 @@ jobs:
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          images: ${{ env.REGISTRY }}/${{ steps.image-prefix.outputs.prefix }}-frontend
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
@@ -95,20 +101,25 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          envs: GITHUB_TOKEN,GITHUB_ACTOR,REGISTRY,IMAGE_PREFIX
           script: |
             cd /opt/etally
             git pull origin main
+            # Determine image prefix (lowercase repository owner)
+            REPO_OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_PREFIX="${REPO_OWNER_LOWER}/etally"
             # Log in to GitHub Container Registry (use PAT if available, otherwise GITHUB_TOKEN)
             if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
               echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             else
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             fi
-            # Pull latest images
-            docker compose --env-file .env -f deployment/docker-compose.prod.yml pull api frontend
+            # Set image prefix in environment for docker-compose
+            export DOCKER_REGISTRY=${{ env.REGISTRY }}
+            export DOCKER_IMAGE_PREFIX=${IMAGE_PREFIX}
+            # Pull latest images (pass env vars explicitly)
+            DOCKER_REGISTRY=${{ env.REGISTRY }} DOCKER_IMAGE_PREFIX=${IMAGE_PREFIX} docker compose --env-file .env -f deployment/docker-compose.prod.yml pull api frontend
             # Stop and remove old containers, then start new ones
-            docker compose --env-file .env -f deployment/docker-compose.prod.yml up -d api frontend
+            DOCKER_REGISTRY=${{ env.REGISTRY }} DOCKER_IMAGE_PREFIX=${IMAGE_PREFIX} docker compose --env-file .env -f deployment/docker-compose.prod.yml up -d api frontend
             # Run migrations
             docker compose --env-file .env -f deployment/docker-compose.prod.yml run --rm api npx prisma migrate deploy
             # Clean up old images

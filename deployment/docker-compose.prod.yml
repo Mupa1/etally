@@ -87,7 +87,7 @@ services:
       - etally
 
   api:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-Mupa1/etally}-api:latest
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-mupa1/etally}-api:latest
     container_name: etally-api
     restart: unless-stopped
     env_file:
@@ -123,7 +123,7 @@ services:
       - "3000:3000"
 
   frontend:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-Mupa1/etally}-frontend:latest
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-mupa1/etally}-frontend:latest
     container_name: etally-frontend
     restart: unless-stopped
     env_file:
