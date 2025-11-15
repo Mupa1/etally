@@ -17,7 +17,7 @@ scrape_configs:
         labels:
           job: api
           service: application
-          __path__: /var/log/api/*.log
+          __path__: /app/logs/*.log
 
   # System logs
   - job_name: system

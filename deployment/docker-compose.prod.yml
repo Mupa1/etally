@@ -102,9 +102,9 @@ services:
       MINIO_USE_SSL: "false"
       HOST: 0.0.0.0
       PORT: 3000
-      LOG_DIR: /var/log/api
+      LOG_DIR: /app/logs
     volumes:
-      - /var/log/api:/var/log/api
+      - api_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -198,6 +198,7 @@ services:
     restart: unless-stopped
     volumes:
       - /var/log:/var/log:ro
+      - api_logs:/app/logs:ro
       - ./promtail/config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
@@ -234,6 +235,7 @@ volumes:
   prometheus_data:
   grafana_data:
   loki_data:
+  api_logs:
 
 networks:
   etally:
