@@ -8,54 +8,81 @@ on:
 
 env:
   NODE_VERSION: "20"
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/etally
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache backend dependencies
-        uses: actions/cache@v4
+      - name: Extract metadata for API
+        id: meta-api
+        uses: docker/metadata-action@v5
         with:
-          path: backend/node_modules
-          key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-backend-
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Install backend dependencies
-        working-directory: backend
-        run: npm ci
-
-      - name: Build backend
-        working-directory: backend
-        run: npm run build
-
-      - name: Cache frontend dependencies
-        uses: actions/cache@v4
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
         with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-frontend-
+          context: ./backend
+          file: ./backend/Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_DIR=.
 
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
+      - name: Extract metadata for Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          target: production
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_DIR=.
+            VITE_API_URL=${{ secrets.VITE_API_URL || 'http://localhost:3000/api/v1' }}
 
   deploy:
-    needs: build
+    needs: build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -68,9 +95,21 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,REGISTRY,IMAGE_PREFIX
           script: |
             cd /opt/etally
             git pull origin main
-            docker compose --env-file .env -f deployment/docker-compose.prod.yml build api frontend
+            # Log in to GitHub Container Registry (use PAT if available, otherwise GITHUB_TOKEN)
+            if [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+            else
+              echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+            fi
+            # Pull latest images
+            docker compose --env-file .env -f deployment/docker-compose.prod.yml pull api frontend
+            # Stop and remove old containers, then start new ones
             docker compose --env-file .env -f deployment/docker-compose.prod.yml up -d api frontend
+            # Run migrations
             docker compose --env-file .env -f deployment/docker-compose.prod.yml run --rm api npx prisma migrate deploy
+            # Clean up old images
+            docker image prune -f

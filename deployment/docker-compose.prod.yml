@@ -87,12 +87,7 @@ services:
       - etally
 
   api:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
-      target: production
-      args:
-        APP_DIR: .
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-Mupa1/etally}-api:latest
     container_name: etally-api
     restart: unless-stopped
     env_file:
@@ -128,13 +123,7 @@ services:
       - "3000:3000"
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-      target: production
-      args:
-        APP_DIR: .
-        VITE_API_URL: ${VITE_API_URL}
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_PREFIX:-Mupa1/etally}-frontend:latest
     container_name: etally-frontend
     restart: unless-stopped
     env_file:
