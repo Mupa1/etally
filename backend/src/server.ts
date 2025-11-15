@@ -52,7 +52,7 @@ app.use(helmet());
 
 // CORS configuration
 // Allow requests from localhost and LAN IP addresses
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || [
   'http://localhost:80',
   'http://localhost:5173',
   'http://192.168.178.72',
@@ -66,8 +66,14 @@ app.use(
       // Allow requests with no origin (like mobile apps or Postman)
       if (!origin) return callback(null, true);
 
-      // Check if origin is in allowed list
-      if (allowedOrigins.includes(origin)) {
+      // Check if origin is in allowed list (exact match or without port)
+      const originWithoutPort = origin.replace(/:\d+$/, '');
+      const isAllowed = allowedOrigins.some(allowed => {
+        const allowedWithoutPort = allowed.replace(/:\d+$/, '');
+        return origin === allowed || originWithoutPort === allowedWithoutPort;
+      });
+
+      if (isAllowed) {
         return callback(null, true);
       }
 
@@ -86,9 +92,22 @@ app.use(
         }
       }
 
+      // In production, if behind nginx proxy, allow same-origin requests
+      // (nginx proxies /api/ to backend, so origin should match frontend)
+      if (NODE_ENV === 'production') {
+        console.log(`[CORS] Production request from origin: ${origin}`);
+        // Allow if origin matches any allowed origin (with or without port)
+        if (isAllowed) {
+          return callback(null, true);
+        }
+      }
+
+      console.error(`[CORS] Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
