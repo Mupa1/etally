@@ -191,6 +191,73 @@
               </p>
             </div>
             <div class="flex items-center gap-2">
+              <!-- Status Management Buttons -->
+              <template v-if="canManageStatus(election.status)">
+                <Button
+                  v-if="
+                    election.status === 'draft' ||
+                    election.status === 'scheduled'
+                  "
+                  variant="success"
+                  size="sm"
+                  @click.stop="activateElection(election)"
+                  :disabled="updatingStatus === election.id"
+                >
+                  <svg
+                    class="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Activate
+                </Button>
+                <Button
+                  v-if="
+                    election.status === 'active' || election.status === 'paused'
+                  "
+                  variant="warning"
+                  size="sm"
+                  @click.stop="closeElection(election)"
+                  :disabled="updatingStatus === election.id"
+                >
+                  <svg
+                    class="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  Close
+                </Button>
+                <Button
+                  v-if="election.status === 'active'"
+                  variant="secondary"
+                  size="sm"
+                  @click.stop="pauseElection(election)"
+                  :disabled="updatingStatus === election.id"
+                >
+                  Pause
+                </Button>
+              </template>
               <Button
                 variant="secondary"
                 size="sm"
@@ -233,6 +300,7 @@ const error = ref('');
 const searchQuery = ref('');
 const selectedStatus = ref<StatusOptionValue | ''>('');
 const selectedType = ref<ElectionTypeOptionValue | ''>('');
+const updatingStatus = ref<string | null>(null);
 
 type StatusOptionValue =
   | 'draft'
@@ -387,5 +455,85 @@ function formatElectionType(type: string): string {
     re_run_election: 'Re-Run',
   };
   return typeMap[type] || type;
+}
+
+function canManageStatus(status: string): boolean {
+  return ['draft', 'scheduled', 'active', 'paused'].includes(status);
+}
+
+async function activateElection(election: any) {
+  if (!confirm(`Are you sure you want to activate "${election.title}"?`)) {
+    return;
+  }
+
+  // Validate that election has contests
+  if (!election.contests || election.contests.length === 0) {
+    toast.error(
+      'Cannot activate election without contests. Please add contests first.'
+    );
+    return;
+  }
+
+  updatingStatus.value = election.id;
+  try {
+    await api.put(`/elections/${election.id}`, {
+      status: 'active',
+    });
+    toast.success('Election activated successfully');
+    await loadElections();
+  } catch (err: any) {
+    const errorMsg =
+      err.response?.data?.message || 'Failed to activate election';
+    toast.error(errorMsg);
+    error.value = errorMsg;
+  } finally {
+    updatingStatus.value = null;
+  }
+}
+
+async function closeElection(election: any) {
+  if (
+    !confirm(
+      `Are you sure you want to close "${election.title}"? This will mark the election as completed.`
+    )
+  ) {
+    return;
+  }
+
+  updatingStatus.value = election.id;
+  try {
+    await api.put(`/elections/${election.id}`, {
+      status: 'completed',
+    });
+    toast.success('Election closed successfully');
+    await loadElections();
+  } catch (err: any) {
+    const errorMsg = err.response?.data?.message || 'Failed to close election';
+    toast.error(errorMsg);
+    error.value = errorMsg;
+  } finally {
+    updatingStatus.value = null;
+  }
+}
+
+async function pauseElection(election: any) {
+  if (!confirm(`Are you sure you want to pause "${election.title}"?`)) {
+    return;
+  }
+
+  updatingStatus.value = election.id;
+  try {
+    await api.put(`/elections/${election.id}`, {
+      status: 'paused',
+    });
+    toast.success('Election paused successfully');
+    await loadElections();
+  } catch (err: any) {
+    const errorMsg = err.response?.data?.message || 'Failed to pause election';
+    toast.error(errorMsg);
+    error.value = errorMsg;
+  } finally {
+    updatingStatus.value = null;
+  }
 }
 </script>

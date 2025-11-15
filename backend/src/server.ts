@@ -30,6 +30,7 @@ import coalitionRouter from '@/domains/coalitions/coalition.routes';
 import observerMobileRoutes from '@/domains/mobile/observer-mobile.routes';
 import observerAdminRoutes from '@/domains/mobile/observer-admin.routes';
 import observerApplicationsRoutes from '@/domains/mobile/observer-applications.routes';
+import observerAssignmentsRoutes from '@/domains/mobile/observer-assignments.routes';
 import { createObserverRoutes } from '@/domains/mobile/observer.routes';
 import { ObserverService } from '@/domains/mobile/observer.service';
 import { ObserverMinIOService } from '@/domains/mobile/minio.service';
@@ -81,7 +82,8 @@ app.use(
       if (NODE_ENV === 'development') {
         // Allow localhost and private IP ranges (with or without ports)
         if (
-          origin.startsWith('http://localhost') ||
+          origin === 'http://localhost' ||
+          origin.startsWith('http://localhost:') ||
           origin.startsWith('http://127.0.0.1') ||
           origin.match(/^http:\/\/192\.168\.\d+\.\d+(:\d+)?/) ||
           origin.match(/^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?/) ||
@@ -107,7 +109,7 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-ID'],
   })
 );
 
@@ -164,6 +166,7 @@ app.use('/api/v1', policyRouter); // Policy management (scopes, permissions, aud
 app.use('/api/v1/observers/mobile', observerMobileRoutes); // Mobile PWA observer routes
 app.use('/api/v1/admin/observers', observerAdminRoutes); // Admin observer management
 app.use('/api/v1/admin/observer-applications', observerApplicationsRoutes); // Observer applications management
+app.use('/api/v1/admin/observer-assignments', observerAssignmentsRoutes); // Observer assignments management
 app.use('/api/v1/communication/templates', emailTemplateRoutes); // Email template management
 app.use(
   '/api/v1/communication/sms-templates',

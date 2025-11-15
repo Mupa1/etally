@@ -471,6 +471,12 @@ const adminItems = computed<NavigationItem[]>(() => {
         path: '/admin/observers',
         icon: BriefcaseIcon,
       },
+      {
+        name: 'agent-assignment',
+        label: 'Agent Assignment',
+        path: '/admin/agent-assignment',
+        icon: UsersIcon,
+      },
     ],
   });
 

@@ -206,6 +206,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/agent-assignment',
+    name: 'admin-agent-assignment',
+    component: () => import('@/views/admin/AgentAssignmentView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresRole: ['super_admin', 'election_manager'],
+    },
+  },
+  {
     path: '/admin/policies',
     name: 'admin-policies',
     component: () => import('@/views/admin/PolicyManagementView.vue'),
